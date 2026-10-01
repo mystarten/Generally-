@@ -8,7 +8,11 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Generally — Quiz de culture générale">
 <meta property="og:description" content="888 questions de culture générale, une carte du monde interactive et des duels entre amis.">
-<meta property="og:image" content="icones/icone-512.png">
+<meta property="og:image" content="https://mystarten.github.io/Generally-/icones/icone-512.png">
+<meta property="og:url" content="https://mystarten.github.io/Generally-/">
+<meta property="og:site_name" content="Generally">
+<meta property="og:locale" content="fr_FR">
+<link rel="canonical" href="https://mystarten.github.io/Generally-/">
 <meta name="twitter:card" content="summary_large_image">
 
 <!--
@@ -40,6 +44,17 @@
 <link rel="apple-touch-icon" href="icones/icone-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Generally">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"Generally",
+ "url":"https://mystarten.github.io/Generally-/","inLanguage":"fr",
+ "description":"Jeu de culture générale gratuit en français : 888 questions expliquées, huit thèmes, trois niveaux."}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Generally",
+ "url":"https://mystarten.github.io/Generally-/","applicationCategory":"GameApplication",
+ "operatingSystem":"Tout navigateur web","inLanguage":"fr",
+ "offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}}
+</script>
 <link rel="stylesheet" href="polices/polices.css">
 <style>
 /* =============================================================================
@@ -584,6 +599,15 @@ button,input{font:inherit;color:inherit;font-family:var(--police-texte)}
   padding:4px 9px;border-radius:99px;background:var(--ac);color:#fff}
 .badge-moi{font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
   padding:4px 9px;border-radius:99px;background:var(--bord);color:var(--txt-2)}
+/* ------------------------------------------------ liens vers le contenu */
+.pied-liens{
+  border-top:1px solid var(--bord);margin-top:26px;padding-top:18px;
+  color:var(--txt-2);font-size:.88rem;
+}
+.pied-liens nav{display:flex;gap:7px 20px;flex-wrap:wrap;margin-bottom:9px}
+.pied-liens a{color:var(--txt-2);font-weight:600;text-decoration:none}
+.pied-liens a:hover{color:var(--ac);text-decoration:underline}
+.pied-liens p{margin:0;max-width:62ch;line-height:1.55}
 .tour-info .decompte{display:inline-block;font-variant-numeric:tabular-nums;
   animation:battement .45s cubic-bezier(.2,1.3,.4,1) both}
 @keyframes battement{0%{transform:scale(1.5)}100%{transform:scale(1)}}
@@ -1059,6 +1083,23 @@ kbd{
         <button id="btn-effacer" class="btn btn-mini" type="button">Effacer les données locales</button>
       </div>
     </div>
+
+    <!-- Liens HTML ordinaires : ils rendent les pages de contenu explorables
+         par les moteurs, et donnent au joueur de quoi lire sans jouer. -->
+    <footer class="pied-liens">
+      <nav aria-label="Pages de contenu">
+        <a href="quiz/culture-generale/">Quiz de culture générale</a>
+        <a href="quiz/">Tous les thèmes</a>
+        <a href="quiz/histoire/">Quiz histoire</a>
+        <a href="quiz/geographie/">Quiz géographie</a>
+        <a href="quiz/sciences/">Quiz sciences</a>
+        <a href="questions/culture-generale-avec-reponses/">Questions avec réponses</a>
+        <a href="guides/comment-ameliorer-sa-culture-generale/">Améliorer sa culture générale</a>
+      </nav>
+      <p>Generally est un jeu de culture générale gratuit, en français, sans
+      inscription et sans publicité. Les questions sont toutes accompagnées
+      d’une explication, et les scores restent sur votre ordinateur.</p>
+    </footer>
   </section>
 
   <!-- ================================ JEU ================================ -->
@@ -1108,7 +1149,7 @@ kbd{
   <!-- ============================== ÉDITEUR ============================== -->
   <section id="ecran-salon" class="ecran" hidden>
     <div class="hero">
-      <h1 class="titre">Jouer en <span class="accent">ligne</span></h1>
+      <h2 class="titre">Jouer en <span class="accent">ligne</span></h2>
       <p class="sous-titre">Créez un salon, partagez le code à vos amis : vous répondrez
         tous aux mêmes questions, chacun depuis son ordinateur, avec le classement
         qui se met à jour en direct.</p>
@@ -1167,7 +1208,7 @@ kbd{
 
   <section id="ecran-duels" class="ecran" hidden>
     <div class="hero">
-      <h1 class="titre">Duels</h1>
+      <h2 class="titre">Duels</h2>
       <p class="sous-titre">Défiez vos amis sur exactement les mêmes questions. Tout passe
         par un lien : ni compte, ni inscription.</p>
     </div>
@@ -1196,7 +1237,7 @@ kbd{
   <section id="ecran-editeur" class="ecran" hidden>
     <div class="hero">
       <p class="sur-titre" id="compte-perso"></p>
-      <h1 class="titre">Mes <span class="accent">questions</span></h1>
+      <h2 class="titre">Mes <span class="accent">questions</span></h2>
       <p class="sous-titre">Ajoutez vos propres questions : elles se mélangent aux autres dans toutes les parties, et restent sur cet ordinateur.</p>
     </div>
 
@@ -1262,7 +1303,7 @@ kbd{
   <section id="ecran-fin" class="ecran" hidden>
     <div class="hero">
       <p class="sur-titre" id="resume-fin"></p>
-      <h1 class="titre">Fin de partie</h1>
+      <h2 class="titre">Fin de partie</h2>
     </div>
     <div class="podium" id="classement"></div>
 
@@ -5589,6 +5630,20 @@ $('#btn-installer').addEventListener('click', function () {
   if (!m) return;
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   setTimeout(function () { if (m[1] === 'defi') jouerDefi(); else jouerBlitz(); }, 300);
+})();
+
+/* Les pages de contenu pointent vers ?quiz=<thème> : on sélectionne la
+   catégorie et on lance, pour que le lecteur arrive directement sur le quiz
+   qu’il est venu chercher plutôt que sur un écran de réglages. */
+(function () {
+  var m = /[?&]quiz=([a-z]+)/.exec(location.search);
+  if (!m) return;
+  var connue = CATEGORIES.some(function (c) { return c.id === m[1]; });
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  if (!connue) return;
+  config.categorie = m[1];
+  majAccueil();
+  setTimeout(function () { jouerNormal(); }, 300);
 })();
 
 lireLienSalon();

@@ -10,7 +10,7 @@
    À chaque publication, incrémenter VERSION : les anciens caches sont alors
    supprimés à l'activation.
    ============================================================================= */
-const VERSION = 'cg-v1';
+const VERSION = 'generally-v2';
 
 const COQUILLE = [
   './',
@@ -27,6 +27,7 @@ const COQUILLE = [
   './data/sciences.js',
   './data/arts.js',
   './data/sport.js',
+  './pages.css',
   './polices/polices.css',
   './polices/fredoka-500-latin.woff2',
   './polices/fredoka-500-latin-ext.woff2',
@@ -65,12 +66,20 @@ self.addEventListener('fetch', (e) => {
                   (req.headers.get('accept') || '').includes('text/html');
 
   if (estPage) {
-    /* réseau d'abord : une nouvelle version se voit immédiatement */
+    /* Réseau d'abord : une nouvelle version se voit immédiatement.
+
+       On ne remet en cache QUE la page d'accueil. Mettre en cache n'importe
+       quelle navigation sous la clé index.html reviendrait à remplacer le jeu
+       par la dernière page de contenu visitée. */
+    const estAccueil = url.pathname === self.registration.scope.replace(self.location.origin, '')
+                    || /\/(index\.html)?$/.test(url.pathname) && !/\/(quiz|guides|questions)\//.test(url.pathname);
     e.respondWith(
       fetch(req)
         .then((rep) => {
-          const copie = rep.clone();
-          caches.open(VERSION).then((c) => c.put('./index.html', copie));
+          if (estAccueil && rep && rep.ok) {
+            const copie = rep.clone();
+            caches.open(VERSION).then((c) => c.put('./index.html', copie));
+          }
           return rep;
         })
         .catch(() => caches.match('./index.html').then((r) => r || caches.match('./')))

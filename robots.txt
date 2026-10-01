@@ -1,0 +1,47 @@
+# =============================================================================
+# Generally — https://mystarten.github.io/Generally-/
+#
+# Tout le contenu public est destiné à être exploré et indexé. Aucune zone
+# privée, aucun contenu payant : il n'y a donc rien à interdire.
+#
+# Les robots des moteurs de recherche assistés par IA sont nommés
+# explicitement, non pour leur accorder un traitement différent, mais pour que
+# l'intention soit lisible : leur accès est volontaire, pas un oubli.
+#
+# Distinction utile : OAI-SearchBot alimente la recherche de ChatGPT, tandis
+# que GPTBot sert à l'entraînement de modèles. Ce sont deux décisions
+# différentes ; les deux sont ici autorisées, et GPTBot peut être retiré sans
+# conséquence sur le référencement.
+# =============================================================================
+
+User-agent: *
+Allow: /
+
+# --- moteurs classiques ---
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# --- recherche assistée par IA ---
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# --- entraînement de modèles (décision distincte du référencement) ---
+User-agent: GPTBot
+Allow: /
+
+Sitemap: https://mystarten.github.io/Generally-/sitemap.xml
