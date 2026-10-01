@@ -546,6 +546,44 @@ button,input{font:inherit;color:inherit;font-family:var(--police-texte)}
 .direct li.moi .n{color:var(--ac);font-weight:700}
 .direct li.fini .n::after{content:" \u2713";opacity:.6}
 @media(max-width:1100px){.direct{display:none}}
+/* ------------------------------------- bloc multijoueur sur l'accueil */
+.bloc-multi{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:17px 20px;border-radius:20px;background:var(--carte);
+  box-shadow:0 2px 0 var(--bord);margin-bottom:18px;
+  border:2px solid transparent;transition:border-color .2s}
+.bloc-multi:hover{border-color:var(--ac-pale)}
+.bloc-multi .rond{width:46px;height:46px;border-radius:15px;background:var(--ac);
+  display:grid;place-items:center;flex:0 0 auto;box-shadow:0 3px 0 var(--ac-b)}
+.bloc-multi .rond svg{width:25px;height:25px;stroke:#fff;fill:none;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round}
+.bloc-multi .txt{flex:1 1 230px;min-width:0}
+.bloc-multi .txt b{display:block;font-family:var(--police-titre);font-size:1.12rem}
+.bloc-multi .txt em{font-style:normal;font-size:.88rem;opacity:.62;line-height:1.35}
+.bloc-multi .agir{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.bloc-multi input{font-family:var(--police-titre);font-size:1.05rem;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;width:7.4ch;text-align:center;
+  padding:10px 8px;border-radius:13px;border:2px solid var(--bord);background:var(--fond);
+  color:inherit;outline:none}
+.bloc-multi input:focus{border-color:var(--ac)}
+.bloc-multi input::placeholder{letter-spacing:.1em;opacity:.38;font-weight:600}
+
+/* ------------------------------------------ salle d'attente retravaillee */
+.billet{position:relative;border-radius:20px;background:var(--fond);
+  border:2px dashed var(--ac);padding:20px 18px 16px;text-align:center}
+.billet .mention{font-size:.74rem;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;opacity:.5}
+.salon-joueur .avatar{width:30px;height:30px;border-radius:50%;display:grid;
+  place-items:center;color:#fff;font-family:var(--police-titre);font-weight:700;
+  font-size:.86rem;flex:0 0 auto}
+.salon-joueur{animation:arrive-joueur .34s cubic-bezier(.2,1.2,.3,1) both}
+@keyframes arrive-joueur{0%{opacity:0;transform:translateY(-6px) scale(.98)}
+  100%{opacity:1;transform:none}}
+.salon-joueur.vide{background:transparent;border:2px dashed var(--bord);opacity:.5}
+.salon-joueur.vide .avatar{background:var(--bord)}
+.badge-hote{font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  padding:4px 9px;border-radius:99px;background:var(--ac);color:#fff}
+.badge-moi{font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  padding:4px 9px;border-radius:99px;background:var(--bord);color:var(--txt-2)}
 .tour-info .decompte{display:inline-block;font-variant-numeric:tabular-nums;
   animation:battement .45s cubic-bezier(.2,1.3,.4,1) both}
 @keyframes battement{0%{transform:scale(1.5)}100%{transform:scale(1)}}
@@ -912,6 +950,27 @@ kbd{
     <div id="alerte-carte" class="alerte" hidden></div>
 
     <div class="banniere-duel" id="banniere-duel" hidden></div>
+
+    <div class="bloc-multi">
+      <span class="rond">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9 11a3.2 3.2 0 100-6.4A3.2 3.2 0 009 11zM2.8 20v-1.6A4.4 4.4 0 017.2 14h3.6a4.4 4.4 0 014.4 4.4V20"/>
+          <path d="M16.6 4.8a3.2 3.2 0 010 6.2M18.4 14.2a4.4 4.4 0 012.8 4.1V20"/>
+        </svg>
+      </span>
+      <span class="txt">
+        <b>Jouer en ligne avec des amis</b>
+        <em>Créez un salon, partagez le code : chacun joue depuis son ordinateur,
+          sur les mêmes questions, avec le classement en direct.</em>
+      </span>
+      <span class="agir">
+        <button id="btn-multi-creer" class="btn btn-principal" type="button">Créer un salon</button>
+        <input id="multi-code" type="text" maxlength="6" placeholder="CODE"
+               autocomplete="off" spellcheck="false" aria-label="Code d’invitation">
+        <button id="btn-multi-rejoindre" class="btn btn-mini" type="button">Rejoindre</button>
+      </span>
+    </div>
+
     <div class="profil" id="bandeau-profil"></div>
 
     <div class="panneau">
@@ -995,7 +1054,6 @@ kbd{
         <label class="switch"><input type="checkbox" id="opt-nuit"><span>Thème nuit</span></label>
         <button id="btn-succes" class="btn btn-mini" type="button">Succès</button>
         <button id="btn-duels" class="btn btn-mini" type="button">Duels</button>
-        <button id="btn-salon" class="btn btn-mini" type="button">Jouer en ligne</button>
         <button id="btn-installer" class="btn btn-mini" type="button" hidden>Installer l’application</button>
         <button id="btn-palmares" class="btn btn-mini" type="button">Palmarès</button>
         <button id="btn-effacer" class="btn btn-mini" type="button">Effacer les données locales</button>
@@ -1082,12 +1140,14 @@ kbd{
     <!-- salle d'attente -->
     <div class="panneau" id="salon-attente" hidden>
       <div class="section">
-        <span class="etiquette">Code d’invitation</span>
-        <div class="code-salon" id="salon-code-affiche"></div>
-        <p class="code-aide" id="salon-reglages"></p>
-        <div class="rangee-btn" style="justify-content:center">
-          <button id="btn-salon-copier-code" class="btn btn-mini" type="button">Copier le code</button>
-          <button id="btn-salon-copier-lien" class="btn btn-mini" type="button">Copier le lien</button>
+        <div class="billet">
+          <p class="mention">Code d’invitation</p>
+          <div class="code-salon" id="salon-code-affiche"></div>
+          <p class="code-aide" id="salon-reglages"></p>
+          <div class="rangee-btn" style="justify-content:center">
+            <button id="btn-salon-copier-code" class="btn btn-mini" type="button">Copier le code</button>
+            <button id="btn-salon-copier-lien" class="btn btn-mini" type="button">Copier le lien</button>
+          </div>
         </div>
       </div>
       <div class="section">
@@ -4352,6 +4412,16 @@ function messageErreur(e) {
 }
 
 /* --- affichage de la salle d’attente ----------------------------------- */
+/* Une couleur stable par pseudo : le même joueur garde la sienne d’un
+   rafraîchissement à l’autre, sans qu’il faille la stocker. */
+var TEINTES_SALON = ['#F5A623', '#4EA3F5', '#F27BA9', '#3ECF9B',
+                     '#8B7BE8', '#2FC7C7', '#E8875A', '#A2578F'];
+function couleurDeNom(nom) {
+  var h = 0, t = String(nom || '');
+  for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
+  return TEINTES_SALON[h % TEINTES_SALON.length];
+}
+
 function peindreSalon() {
   var dansSalon = !!salon;
   $('#salon-accueil').hidden = dansSalon;
@@ -4369,15 +4439,29 @@ function peindreSalon() {
 
   var liste = vide($('#salon-liste'));
   var moi = jetonLocal();
-  (salon.joueurs || []).forEach(function (j) {
+  var presents = salon.joueurs || [];
+  presents.forEach(function (j) {
     var d = el('div', 'salon-joueur' + (j.jeton === moi ? ' moi' : ''));
-    d.appendChild(el('span', 'pastille'));
+    var a = el('span', 'avatar', String(j.nom || '?').trim().charAt(0).toUpperCase());
+    a.style.background = couleurDeNom(j.nom);
+    d.appendChild(a);
     d.appendChild(el('span', 'nom', j.nom));
-    d.appendChild(el('span', 'etiq', j.jeton === salon.hoteJeton ? 'hôte' : ''));
+    if (j.est_hote) d.appendChild(el('span', 'badge-hote', 'hôte'));
+    else if (j.jeton === moi) d.appendChild(el('span', 'badge-moi', 'vous'));
+    else d.appendChild(el('span', 'etiq', ''));
     liste.appendChild(d);
   });
+  /* deux emplacements libres suffisent à dire qu’il reste de la place */
+  var libres = Math.min(2, NB_SALON - presents.length);
+  for (var v = 0; v < libres; v++) {
+    var e = el('div', 'salon-joueur vide');
+    e.appendChild(el('span', 'avatar', '+'));
+    e.appendChild(el('span', 'nom', 'En attente…'));
+    e.appendChild(el('span', 'etiq', ''));
+    liste.appendChild(e);
+  }
   $('#salon-titre-joueurs').textContent =
-    'Joueurs — ' + (salon.joueurs || []).length + ' sur ' + NB_SALON;
+    'Joueurs — ' + presents.length + ' sur ' + NB_SALON;
 
   var assez = (salon.joueurs || []).length >= 2;
   $('#btn-salon-lancer').disabled = !assez;
@@ -4416,7 +4500,7 @@ function ecouterSalon() {
 function rafraichirSalon() {
   if (!salon || !sb) return;
   var code = salon.code;
-  sb.from('generally_joueurs').select('jeton,nom,score,avancement,bonnes,fini')
+  sb.from('generally_joueurs').select('jeton,nom,score,avancement,bonnes,fini,est_hote')
     .eq('salon', code).order('rejoint_le')
     .then(function (r) {
       if (!salon || salon.code !== code || r.error) return;
@@ -4556,6 +4640,20 @@ function peindreClassementDirect() {
 }
 
 /* --- écran -------------------------------------------------------------- */
+/* Depuis l’accueil : on bascule sur l’écran puis on enchaîne, sauf si le
+   pseudo manque. Dans ce cas on amène le curseur dessus, ce qui est plus
+   utile qu’un message d’erreur. */
+function allerAuSalon(action, code) {
+  montrerEcranSalon();
+  if (code) $('#salon-code').value = code;
+  if (!pseudoSalon()) {
+    direSalon('Choisissez d’abord un pseudo.', true);
+    try { $('#salon-pseudo').focus(); } catch (e) {}
+    return;
+  }
+  if (action === 'creer') creerSalon(); else rejoindreSalon(code);
+}
+
 function montrerEcranSalon() {
   var p = lire('cg.pseudo', '') || (config.noms[0] || '');
   if (!$('#salon-pseudo').value) $('#salon-pseudo').value = p;
@@ -4731,6 +4829,10 @@ function segments(hote, items, estActif, onChoix) {
 function majAccueil() {
   majBandeauProfil();
   majBanniereDuel();
+  if (salonEnAttente) {
+    var codeRecu = salonEnAttente; salonEnAttente = null;
+    setTimeout(function () { allerAuSalon('rejoindre', codeRecu); }, 250);
+  }
   segments($('#choix-nb'),
     [1, 2, 3, 4].map(function (n) { return { id: n, nom: n + (n > 1 ? ' joueurs' : ' joueur') }; }),
     function (it) { return it.id === config.nb; },
@@ -5248,7 +5350,19 @@ function majListePerso() {
 $('#btn-jouer').addEventListener('click', jouerNormal);
 $('#btn-succes').addEventListener('click', montrerSucces);
 $('#btn-duels').addEventListener('click', montrerEcranDuels);
-$('#btn-salon').addEventListener('click', montrerEcranSalon);
+$('#btn-multi-creer').addEventListener('click', function () { allerAuSalon('creer'); });
+$('#btn-multi-rejoindre').addEventListener('click', function () {
+  var c = ($('#multi-code').value || '').trim().toUpperCase();
+  if (c.length !== 6) {
+    try { $('#multi-code').focus(); } catch (e) {}
+    dialogue('Code incomplet', 'Un code d’invitation comporte six caractères.', null, 'Fermer');
+    return;
+  }
+  allerAuSalon('rejoindre', c);
+});
+$('#multi-code').addEventListener('keydown', function (ev) {
+  if (ev.key === 'Enter') { ev.preventDefault(); $('#btn-multi-rejoindre').click(); }
+});
 $('#btn-salon-retour').addEventListener('click', function () { ecran('accueil'); majAccueil(); });
 $('#btn-salon-creer').addEventListener('click', creerSalon);
 $('#btn-salon-rejoindre').addEventListener('click', function () { rejoindreSalon(); });
