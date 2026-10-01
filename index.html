@@ -409,6 +409,56 @@ button,input{font:inherit;color:inherit;font-family:var(--police-texte)}
   white-space:nowrap}
 .palmares-ligne .pl-score{font-family:var(--police-titre);font-weight:700}
 .palmares-ligne .pl-detail{grid-column:2/4;font-size:.8rem;opacity:.6}
+/* ---------------------------------------------------- bandeau de profil */
+.profil{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:13px 16px;border-radius:18px;background:var(--carte);
+  box-shadow:0 2px 0 var(--bord);margin-bottom:18px}
+.profil .niv{display:flex;align-items:baseline;gap:7px;font-family:var(--police-titre)}
+.profil .niv b{font-size:1.35rem;font-weight:700;color:var(--ac)}
+.profil .niv span{font-size:.82rem;opacity:.65;font-weight:600}
+.profil .barre{flex:1 1 170px;min-width:120px}
+.profil .piste{height:9px;border-radius:99px;background:var(--fond);overflow:hidden}
+.profil .piste i{display:block;height:100%;border-radius:99px;background:var(--ac);
+  transition:width .6s cubic-bezier(.2,1,.3,1)}
+.profil .xp{font-size:.74rem;opacity:.6;margin-top:4px;display:block}
+.profil .puce{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;
+  border-radius:99px;background:var(--fond);font-size:.85rem;font-weight:600;white-space:nowrap}
+.profil .puce.flamme{background:#FFE9D6;color:#C2550C}
+.profil .puce.menace{animation:pulse-flamme 1.4s ease-in-out infinite}
+@keyframes pulse-flamme{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+:root[data-theme="nuit"] .profil .puce.flamme,
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .profil .puce.flamme{
+  background:#4A2A14;color:#FFB071}}
+
+/* ------------------------------------------------------------- combo */
+.combo{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:70;
+  font-family:var(--police-titre);font-size:clamp(2.6rem,9vw,4.4rem);font-weight:700;
+  pointer-events:none;text-shadow:0 4px 0 rgba(0,0,0,.12);
+  animation:combo-pop .9s cubic-bezier(.2,1.3,.3,1) both}
+@keyframes combo-pop{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-8deg)}
+  30%{opacity:1;transform:translate(-50%,-50%) scale(1.15) rotate(3deg)}
+  55%{transform:translate(-50%,-50%) scale(1) rotate(0)}
+  100%{opacity:0;transform:translate(-50%,-110%) scale(.95)}}
+
+/* ------------------------------------------------------------- succes */
+.toast-succes{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:80;
+  display:flex;align-items:center;gap:12px;padding:13px 19px;border-radius:16px;
+  background:var(--carte);box-shadow:0 10px 30px rgba(0,0,0,.18);max-width:min(420px,92vw);
+  animation:toast-arrive .5s cubic-bezier(.2,1.2,.3,1) both}
+@keyframes toast-arrive{0%{opacity:0;transform:translate(-50%,26px)}100%{opacity:1;transform:translate(-50%,0)}}
+.toast-succes.part{animation:toast-part .4s ease-in both}
+@keyframes toast-part{to{opacity:0;transform:translate(-50%,26px)}}
+.toast-succes .medaille{font-size:1.7rem;line-height:1}
+.toast-succes b{display:block;font-family:var(--police-titre);font-size:.95rem}
+.toast-succes em{font-style:normal;font-size:.8rem;opacity:.65}
+.grille-succes{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));
+  gap:9px;margin:4px 0 20px}
+.succes-case{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;
+  border-radius:14px;background:var(--fond)}
+.succes-case.verrou{opacity:.42}
+.succes-case .medaille{font-size:1.3rem;line-height:1.1}
+.succes-case b{display:block;font-size:.86rem;font-family:var(--police-titre)}
+.succes-case em{font-style:normal;font-size:.75rem;opacity:.7}
 .tour-info .decompte{display:inline-block;font-variant-numeric:tabular-nums;
   animation:battement .45s cubic-bezier(.2,1.3,.4,1) both}
 @keyframes battement{0%{transform:scale(1.5)}100%{transform:scale(1)}}
@@ -774,6 +824,8 @@ kbd{
 
     <div id="alerte-carte" class="alerte" hidden></div>
 
+    <div class="profil" id="bandeau-profil"></div>
+
     <div class="panneau">
       <div class="section">
         <span class="etiquette">Joueurs</span>
@@ -852,6 +904,7 @@ kbd{
       <div class="pied-options">
         <label class="switch"><input type="checkbox" id="opt-son"><span>Sons</span></label>
         <label class="switch"><input type="checkbox" id="opt-nuit"><span>Thème nuit</span></label>
+        <button id="btn-succes" class="btn btn-mini" type="button">Succès</button>
         <button id="btn-palmares" class="btn btn-mini" type="button">Palmarès</button>
         <button id="btn-effacer" class="btn btn-mini" type="button">Effacer les données locales</button>
       </div>
@@ -1249,6 +1302,7 @@ function ecrire(cle, val) {
 function effacerTout() {
   try {
     ['cg.options', 'cg.stats', 'cg.historique', 'cg.rates', 'cg.palmares',
+     'cg.profil', 'cg.succes',
      'cg.vues', 'cg.defi', 'cg.survie'].forEach(function (k) { localStorage.removeItem(k); });
   } catch (e) {}
 }
@@ -2955,6 +3009,11 @@ function conclure(resultats) {
     secouer($('#texte-question'));
   }
 
+  /* combo : dès trois bonnes réponses d'affilée, le multiplicateur s'affiche */
+  lignes.forEach(function (l) {
+    if (l.fraction >= 1 && l.joueur.serie >= 3) montrerCombo(l.joueur.serie, l.joueur.couleur);
+  });
+
   afficherFeedback(q, lignes, auMoinsUn);
   mancheJouee();
   var an = $('#annonce');
@@ -2974,6 +3033,8 @@ function appliquer(j, q, fraction, reste) {
   } else {
     pts = pointsQuestion(q, fraction, reste, serie, partie.tour ? partie.tour.bonus : 1) * facteur;
   }
+  /* « éclair » : répondre juste alors qu'il reste plus de 80 %% du temps */
+  if (reussi && tempsTour && reste > tempsTour * 0.8 && partie) partie.eclair = true;
   j.gain = pts;
   j.score += pts;
   j.serie = serie;
@@ -3264,6 +3325,196 @@ function montrerPalmares() {
   dialogueAjout(z);
 }
 
+/* =========================================================================
+   PROGRESSION — XP, niveaux et succès
+   -------------------------------------------------------------------------
+   Les scores d'une partie disparaissaient avec elle. L'expérience, elle,
+   s'accumule et ne retombe jamais : c'est le seul compteur qui donne le
+   sentiment d'avancer d'une soirée à l'autre.
+   ========================================================================= */
+var TITRES = [
+  { min: 1,  nom: 'Curieux' },      { min: 3,  nom: 'Amateur éclairé' },
+  { min: 5,  nom: 'Connaisseur' },  { min: 7,  nom: 'Érudit' },
+  { min: 10, nom: 'Savant' },       { min: 15, nom: 'Encyclopédiste' },
+  { min: 20, nom: 'Légende' }
+];
+/* palier n : 500 * (n-1)^2 — environ une partie pour le niveau 2,
+   une dizaine pour le niveau 5, une quarantaine pour le niveau 10 */
+function xpPalier(n) { return 500 * (n - 1) * (n - 1); }
+function niveauDeXp(xp) {
+  var n = Math.floor(Math.sqrt(Math.max(0, xp) / 500)) + 1;
+  var titre = TITRES[0].nom;
+  TITRES.forEach(function (t) { if (n >= t.min) titre = t.nom; });
+  return { niveau: n, titre: titre, bas: xpPalier(n), haut: xpPalier(n + 1) };
+}
+function profil() {
+  var p = lire('cg.profil', { xp: 0, parties: 0, meilleureSerie: 0, blitz: 0, duels: 0 });
+  p.xp = p.xp || 0; p.parties = p.parties || 0;
+  p.meilleureSerie = p.meilleureSerie || 0; p.blitz = p.blitz || 0; p.duels = p.duels || 0;
+  return p;
+}
+
+/* --- succès ------------------------------------------------------------
+   Chaque test reçoit le contexte de fin de partie ; aucun ne dépend d'un
+   serveur, tout se déduit de ce qui est déjà stocké localement. */
+var SUCCES = [
+  { id: 'debut',     m: '\u{1F3C1}', nom: 'Première partie',   d: 'Terminer une partie',
+    t: function (c) { return c.prof.parties >= 1; } },
+  { id: 'dix',       m: '\u{1F3AF}', nom: 'Habitué',            d: 'Terminer 10 parties',
+    t: function (c) { return c.prof.parties >= 10; } },
+  { id: 'cinquante', m: '\u{1F3C6}', nom: 'Pilier du jeu',       d: 'Terminer 50 parties',
+    t: function (c) { return c.prof.parties >= 50; } },
+  { id: 'parfait',   m: '\u{2B50}',  nom: 'Sans faute',          d: 'Une partie sans la moindre erreur',
+    t: function (c) { return c.sansFaute; } },
+  { id: 'serie5',    m: '\u{1F525}', nom: 'En feu',              d: '5 bonnes réponses d'affilée',
+    t: function (c) { return c.prof.meilleureSerie >= 5; } },
+  { id: 'serie10',   m: '\u{1F4A5}', nom: 'Incandescent',        d: '10 bonnes réponses d'affilée',
+    t: function (c) { return c.prof.meilleureSerie >= 10; } },
+  { id: 'jour3',     m: '\u{1F305}', nom: 'Trois jours',         d: '3 jours de suite au défi',
+    t: function (c) { return c.serieJours >= 3; } },
+  { id: 'jour7',     m: '\u{1F4C5}', nom: 'Une semaine',         d: '7 jours de suite au défi',
+    t: function (c) { return c.serieJours >= 7; } },
+  { id: 'jour30',    m: '\u{1F48E}', nom: 'Un mois entier',      d: '30 jours de suite au défi',
+    t: function (c) { return c.serieJours >= 30; } },
+  { id: 'niv5',      m: '\u{1F331}', nom: 'Connaisseur',         d: 'Atteindre le niveau 5',
+    t: function (c) { return c.niv >= 5; } },
+  { id: 'niv10',     m: '\u{1F333}', nom: 'Savant',              d: 'Atteindre le niveau 10',
+    t: function (c) { return c.niv >= 10; } },
+  { id: 'acquis100', m: '\u{1F4DA}', nom: 'Cent questions',      d: '100 questions acquises',
+    t: function (c) { return c.acquises >= 100; } },
+  { id: 'acquis500', m: '\u{1F9E0}', nom: 'Cinq cents',          d: '500 questions acquises',
+    t: function (c) { return c.acquises >= 500; } },
+  { id: 'polyvalent',m: '\u{1F308}', nom: 'Polyvalent',          d: '20 acquises dans chaque catégorie',
+    t: function (c) { return c.miniCategorie >= 20; } },
+  { id: 'explorateur',m:'\u{1F9ED}', nom: 'Explorateur',         d: 'Jouer les huit catégories',
+    t: function (c) { return c.categoriesJouees >= 8; } },
+  { id: 'survivant', m: '\u{1F6E1}', nom: 'Survivant',           d: '15 questions en mode Survie',
+    t: function (c) { return c.survie >= 15; } },
+  { id: 'eclair',    m: '\u{26A1}',  nom: 'Éclair',              d: 'Répondre juste en moins d'un cinquième du temps',
+    t: function (c) { return c.eclair; } }
+];
+
+function succesObtenus() { return lire('cg.succes', {}); }
+
+/* Construit le contexte puis débloque ce qui doit l'être. Retourne la liste
+   des succès nouvellement obtenus, pour les annoncer. */
+function verifierSucces(extra) {
+  var prof = profil();
+  var vus = lire('cg.vues', {});
+  var acquises = Object.keys(vus).length;
+  var parCat = {};
+  CATEGORIES.forEach(function (c) { if (c.id !== 'toutes') parCat[c.id] = 0; });
+  TOUTES.forEach(function (q) { if (vus[q.id] && parCat[q.categorie] != null) parCat[q.categorie]++; });
+  var valeurs = Object.keys(parCat).map(function (k) { return parCat[k]; });
+  var st = lire('cg.stats', {});
+
+  var ctx = {
+    prof: prof,
+    niv: niveauDeXp(prof.xp).niveau,
+    acquises: acquises,
+    miniCategorie: valeurs.length ? Math.min.apply(null, valeurs) : 0,
+    categoriesJouees: valeurs.filter(function (v) { return v > 0; }).length,
+    serieJours: (lire('cg.defi', {}).serie) || 0,
+    survie: prof.survieRecord || 0,
+    sansFaute: false, eclair: false
+  };
+  Object.keys(extra || {}).forEach(function (k) { ctx[k] = extra[k]; });
+
+  var obtenus = succesObtenus(), nouveaux = [];
+  SUCCES.forEach(function (sc) {
+    if (obtenus[sc.id]) return;
+    var ok = false;
+    try { ok = !!sc.t(ctx); } catch (e) { ok = false; }
+    if (ok) { obtenus[sc.id] = Date.now(); nouveaux.push(sc); }
+  });
+  if (nouveaux.length) ecrire('cg.succes', obtenus);
+  return nouveaux;
+}
+
+/* annonce les succès un par un, sans empiler les bandeaux */
+function annoncerSucces(liste) {
+  if (!liste || !liste.length) return;
+  var i = 0;
+  (function suivant() {
+    if (i >= liste.length) return;
+    var sc = liste[i++];
+    var t = el('div', 'toast-succes');
+    t.appendChild(el('span', 'medaille', sc.m));
+    var txt = el('div');
+    txt.appendChild(el('b', null, 'Succès — ' + sc.nom));
+    txt.appendChild(el('em', null, sc.d));
+    t.appendChild(txt);
+    document.body.appendChild(t);
+    Son.bon();
+    setTimeout(function () {
+      t.classList.add('part');
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); suivant(); }, 400);
+    }, 2600);
+  })();
+}
+
+function montrerSucces() {
+  var obtenus = succesObtenus();
+  var n = SUCCES.filter(function (sc) { return obtenus[sc.id]; }).length;
+  dialogue('Succès', n + ' sur ' + SUCCES.length + ' débloqués.', null, 'Fermer');
+  var z = el('div', 'grille-succes');
+  SUCCES.forEach(function (sc) {
+    var d = el('div', 'succes-case' + (obtenus[sc.id] ? '' : ' verrou'));
+    d.appendChild(el('span', 'medaille', obtenus[sc.id] ? sc.m : '\u{1F512}'));
+    var t = el('div');
+    t.appendChild(el('b', null, sc.nom));
+    t.appendChild(el('em', null, sc.d));
+    d.appendChild(t);
+    z.appendChild(d);
+  });
+  dialogueAjout(z);
+}
+
+/* --- bandeau de l'accueil ------------------------------------------------ */
+function majBandeauProfil() {
+  var pr = profil(), n = niveauDeXp(pr.xp);
+  var z = vide($('#bandeau-profil'));
+
+  var niv = el('div', 'niv');
+  niv.appendChild(el('b', null, 'Niv. ' + n.niveau));
+  niv.appendChild(el('span', null, n.titre));
+  z.appendChild(niv);
+
+  var barre = el('div', 'barre');
+  var piste = el('div', 'piste');
+  var dedans = Math.max(0, pr.xp - n.bas), large = Math.max(1, n.haut - n.bas);
+  var i = el('i'); i.style.width = Math.min(100, Math.round(dedans / large * 100)) + '%';
+  piste.appendChild(i);
+  barre.appendChild(piste);
+  barre.appendChild(el('span', 'xp', dedans + ' / ' + large + ' XP vers le niveau ' + (n.niveau + 1)));
+  z.appendChild(barre);
+
+  var d = lire('cg.defi', { jour: null, serie: 0 });
+  var vivante = d.serie > 0 && (d.jour === jourCourant() || d.jour === jourCourant(-1));
+  if (vivante) {
+    var menace = d.jour === jourCourant(-1);
+    var f = el('span', 'puce flamme' + (menace ? ' menace' : ''),
+      '\u{1F525} ' + d.serie + ' jour' + (d.serie > 1 ? 's' : '') + (menace ? ' — à jouer !' : ''));
+    z.appendChild(f);
+  }
+
+  var obt = succesObtenus();
+  var nb = SUCCES.filter(function (sc) { return obt[sc.id]; }).length;
+  z.appendChild(el('span', 'puce', '\u{1F3C5} ' + nb + ' / ' + SUCCES.length));
+}
+
+/* --- combo ---------------------------------------------------------------
+   Le multiplicateur de série existait déjà dans le calcul des points, mais
+   rien ne le montrait : le joueur ne savait pas qu'il était récompensé. */
+function montrerCombo(serie, couleur) {
+  if (sobre) return;
+  var mult = serie >= 5 ? '×2' : '×1,5';
+  var d = el('div', 'combo', mult + ' — ' + serie + ' d'affilée');
+  d.style.color = couleur || 'var(--ac)';
+  document.body.appendChild(d);
+  setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 950);
+}
+
 function finPartie() {
   chronoArreter();
   Son.fin();
@@ -3287,6 +3538,32 @@ function finPartie() {
   }
 
   majPalmares();
+
+  /* progression : l'XP d'une partie est le total marqué par le joueur local */
+  var pr = profil();
+  var avant = niveauDeXp(pr.xp).niveau;
+  var gagne = Math.max(0, partie.joueurs[0].score);
+  pr.xp += gagne;
+  pr.parties += 1;
+  partie.joueurs.forEach(function (j) {
+    if (j.meilleure > pr.meilleureSerie) pr.meilleureSerie = j.meilleure;
+  });
+  if (partie.survie) pr.survieRecord = Math.max(pr.survieRecord || 0, partie.recap.length);
+  ecrire('cg.profil', pr);
+  var apres = niveauDeXp(pr.xp).niveau;
+
+  var sansFaute = partie.recap.length > 0 &&
+                  partie.recap.every(function (r) { return r.juste; });
+  var nouveaux = verifierSucces({
+    sansFaute: sansFaute,
+    survie: pr.survieRecord || 0,
+    eclair: !!partie.eclair
+  });
+  if (apres > avant) {
+    nouveaux.unshift({ m: '\u{1F3C6}', nom: 'Niveau ' + apres + ' — ' + niveauDeXp(pr.xp).titre,
+                       d: 'Nouveau palier atteint' });
+  }
+  setTimeout(function () { annoncerSucces(nouveaux); }, 700);
 
   /* statistiques par catégorie */
   var st = lire('cg.stats', {});
@@ -3395,6 +3672,7 @@ function segments(hote, items, estActif, onChoix) {
 }
 
 function majAccueil() {
+  majBandeauProfil();
   segments($('#choix-nb'),
     [1, 2, 3, 4].map(function (n) { return { id: n, nom: n + (n > 1 ? ' joueurs' : ' joueur') }; }),
     function (it) { return it.id === config.nb; },
@@ -3908,6 +4186,7 @@ function majListePerso() {
    12. BRANCHEMENTS
    ========================================================================= */
 $('#btn-jouer').addEventListener('click', jouerNormal);
+$('#btn-succes').addEventListener('click', montrerSucces);
 $('#btn-palmares').addEventListener('click', montrerPalmares);
 $('#btn-defi').addEventListener('click', jouerDefi);
 $('#btn-survie').addEventListener('click', jouerSurvie);
