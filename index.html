@@ -1,0 +1,4110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Culture Générale</title>
+
+<!--
+  ============================================================================
+  JEU ENTIÈREMENT HORS LIGNE
+  ============================================================================
+  Aucune ressource distante : le dossier se copie sur une clé USB et s'ouvre
+  par double-clic, sans serveur ni connexion.
+
+      lib/d3.min.js              D3 v7            (ISC)
+      lib/topojson-client.min.js topojson-client 3 (BSD-3)
+      data/monde.js              world-atlas 2, countries-110m, enveloppé en
+                                 window.WORLD_TOPO = { ... };
+      polices/*.woff2            Fredoka et Nunito (SIL OFL 1.1)
+
+  Le JSON de la carte est livré en .js et non en .json : en file://, un fetch()
+  vers un fichier local est bloqué par le navigateur, alors qu'un chargement
+  par balise de script passe. Le moteur lit window.WORLD_TOPO en priorité.
+
+  Pour régénérer la carte depuis la source amont :
+      curl -o c.json https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json
+      (printf 'window.WORLD_TOPO='; cat c.json; printf ';') > data/monde.js
+  ============================================================================
+-->
+
+<link rel="stylesheet" href="polices/polices.css">
+<style>
+/* =============================================================================
+   CHARTE — clair, pastel, arrondi, avec du relief.
+   Une couleur par catégorie : c'est elle qui colore tout l'écran de jeu.
+   ============================================================================= */
+:root{
+  --fond:#FFF6EC;
+  --carte:#FFFFFF;
+  --creux:#F7F0E6;
+  --bord:#ECE0D2;
+  --bord-fort:#DCCBB6;
+
+  --txt:#2E2A3B;
+  --txt-2:#857D95;
+  --txt-3:#ABA3B8;
+
+  /* couleur de contexte : remplacée par celle de la catégorie en cours */
+  --ac:#F5A623;
+  --ac-b:#CE8110;
+  --ac-pale:#FFF1D9;
+
+  --ok:#34C77B;   --ok-b:#25A461;  --ok-pale:#E4F8ED;
+  --ko:#FF6B6B;   --ko-b:#D94A4A;  --ko-pale:#FFEAEA;
+  --or:#FFC531;
+
+  --p1:#F5A623; --p1b:#CE8110;
+  --p2:#4EA3F5; --p2b:#3580C9;
+  --p3:#F27BA9; --p3b:#CD5D89;
+  --p4:#3ECF9B; --p4b:#2BA87B;
+
+  --r-s:14px; --r:22px; --r-l:30px;
+  --relief:4px;
+  --t:.16s cubic-bezier(.34,1.3,.64,1);
+  --police-titre:"Fredoka","Nunito",system-ui,sans-serif;
+  --police-texte:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+
+/* Variante nuit : mêmes couleurs de catégorie, mais posées sur un violet
+   profond plutôt que sur du crème. */
+:root[data-theme="nuit"]{
+  --fond:#191530;
+  --carte:#241E42;
+  --creux:#1F1A39;
+  --bord:#332B58;
+  --bord-fort:#473C75;
+  --txt:#F1EDFC;
+  --txt-2:#A79FC6;
+  --txt-3:#7B7299;
+  --ok-pale:rgba(52,199,123,.17);
+  --ko-pale:rgba(255,107,107,.17);
+}
+:root[data-theme="nuit"] body::before{
+  background:
+    radial-gradient(620px 460px at 8% -4%,  rgba(62,207,155,.16), transparent 64%),
+    radial-gradient(560px 460px at 94% 2%,  rgba(78,163,245,.15), transparent 64%),
+    radial-gradient(760px 520px at 50% 102%,rgba(242,123,169,.12), transparent 66%);
+}
+:root[data-theme="nuit"] .carte{background:#10203A}
+:root[data-theme="nuit"] .carte .fond{fill:#12253F;stroke:#1C3A5E}
+:root[data-theme="nuit"] .carte .grat{stroke:#183050}
+:root[data-theme="nuit"] .carte .pays{fill:#2E2A4E;stroke:#181430}
+:root[data-theme="nuit"] .carte .pays.survol{fill:#463F73}
+:root[data-theme="nuit"] .carte .marque{stroke:#191530}
+:root[data-theme="nuit"] .bascule .piste{background:#3A3163}
+:root[data-theme="nuit"] .annonce{background:rgba(255,197,49,.14);color:#FFD98A}
+:root[data-theme="nuit"] .feedback.est-mi{background:rgba(255,197,49,.12)}
+:root[data-theme="nuit"] .rang-joueur.premier{background:rgba(255,197,49,.12)}
+:root[data-theme="nuit"] .depart{background:rgba(25,21,48,.93)}
+:root[data-theme="nuit"] .voile{background:rgba(10,8,22,.62)}
+:root[data-theme="nuit"] .alerte{color:#FFB3B3}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none !important}
+html{-webkit-text-size-adjust:100%}
+
+body{
+  margin:0;min-height:100vh;
+  background:var(--fond);
+  color:var(--txt);
+  font-family:var(--police-texte);
+  font-size:17px;line-height:1.6;font-weight:500;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+}
+/* halo pastel très diffus + semis d'étoiles pâles */
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(620px 460px at 8% -4%,  rgba(62,207,155,.20), transparent 64%),
+    radial-gradient(560px 460px at 94% 2%,  rgba(78,163,245,.18), transparent 64%),
+    radial-gradient(760px 520px at 50% 102%,rgba(242,123,169,.14), transparent 66%);
+}
+#app{max-width:1000px;margin:0 auto;padding:26px 20px 90px;position:relative}
+
+h1,h2,h3{margin:0;font-family:var(--police-titre);font-weight:600;line-height:1.12;letter-spacing:-.01em}
+p{margin:0}
+button,input{font:inherit;color:inherit;font-family:var(--police-texte)}
+:focus-visible{outline:3px solid var(--ac);outline-offset:3px;border-radius:8px}
+::selection{background:var(--ac-pale)}
+.muted{color:var(--txt-2)}
+
+/* ------------------------------------------------------------------ écrans */
+.ecran{animation:arrivee .4s cubic-bezier(.2,1.1,.3,1) both}
+@keyframes arrivee{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+
+/* -------------------------------------------------------------------- hero */
+.hero{margin-bottom:30px;position:relative}
+.sur-titre{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--police-titre);font-size:12.5px;font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--txt-2);margin-bottom:14px;
+  background:var(--carte);border:2px solid var(--bord);border-radius:999px;padding:7px 16px;
+  max-width:calc(100% - 126px);   /* laisse la place à la mascotte */
+}
+.sur-titre::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--or)}
+.titre{font-size:clamp(2.5rem,7vw,4rem);font-weight:700;letter-spacing:-.015em}
+.titre .accent{color:var(--ac)}
+.sous-titre{color:var(--txt-2);max-width:52ch;margin-top:12px;font-size:1.04rem}
+
+/* mascotte */
+.mascotte{position:absolute;right:4px;top:-6px;width:112px;height:112px}
+@media(max-width:700px){
+  .mascotte{width:78px;height:78px;right:0;top:-4px}
+  .sur-titre{max-width:calc(100% - 92px)}
+}
+.mascotte .corps{transform-origin:50% 62%;animation:flotte 3.4s ease-in-out infinite}
+@keyframes flotte{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)}}
+
+/* ----------------------------------------------------------------- panneau */
+.panneau{
+  background:var(--carte);border:2px solid var(--bord);border-radius:var(--r-l);
+  box-shadow:0 4px 0 var(--bord);overflow:hidden;margin-bottom:18px;
+}
+.section{padding:22px 24px}
+.section + .section{border-top:2px solid var(--bord)}
+.section-double{display:grid;grid-template-columns:1fr 1fr;padding:0}
+.section-double > div{padding:22px 24px}
+.section-double > div + div{border-left:2px solid var(--bord)}
+@media(max-width:680px){
+  .section-double{grid-template-columns:1fr}
+  .section-double > div + div{border-left:0;border-top:2px solid var(--bord)}
+}
+.etiquette{
+  display:block;font-family:var(--police-titre);font-size:12px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--txt-3);margin-bottom:14px;
+}
+
+/* ------------------------------------------------- boutons à relief pressable */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  font-family:var(--police-titre);font-weight:600;font-size:1rem;
+  color:var(--txt);background:var(--carte);
+  border:2px solid var(--bord);border-radius:999px;
+  padding:13px 26px;cursor:pointer;
+  box-shadow:0 var(--relief) 0 var(--bord);
+  transition:transform var(--t),box-shadow var(--t),filter var(--t),opacity var(--t);
+}
+.btn:hover:not(:disabled){filter:brightness(.98)}
+.btn:active:not(:disabled){transform:translateY(var(--relief));box-shadow:0 0 0 var(--bord)}
+.btn:disabled{opacity:.42;cursor:not-allowed;box-shadow:0 var(--relief) 0 var(--bord)}
+.btn-principal{
+  color:#fff;background:var(--ac);border-color:var(--ac);box-shadow:0 var(--relief) 0 var(--ac-b);
+}
+.btn-principal:active:not(:disabled){box-shadow:0 0 0 var(--ac-b)}
+.btn-principal:disabled{box-shadow:0 var(--relief) 0 var(--ac-b)}
+.btn-fantome{background:var(--carte)}
+.btn-mini{
+  padding:9px 18px;font-size:.88rem;color:var(--txt-2);
+  box-shadow:0 3px 0 var(--bord);--relief:3px;
+}
+
+/* ---------------------------------------------------------- choix segmentés */
+.segment{display:flex;flex-wrap:wrap;gap:8px}
+.seg{
+  font-family:var(--police-titre);font-size:.94rem;font-weight:600;color:var(--txt-2);
+  background:var(--carte);border:2px solid var(--bord);border-radius:999px;
+  padding:9px 18px;cursor:pointer;box-shadow:0 3px 0 var(--bord);
+  transition:transform var(--t),box-shadow var(--t),color var(--t),background var(--t),border-color var(--t);
+}
+.seg:hover:not(:disabled):not([aria-pressed="true"]){color:var(--txt)}
+.seg:active:not(:disabled){transform:translateY(3px);box-shadow:0 0 0 var(--bord)}
+.seg[aria-pressed="true"]{
+  background:var(--ac);border-color:var(--ac);color:#fff;box-shadow:0 3px 0 var(--ac-b);
+}
+.seg[aria-pressed="true"]:active{box-shadow:0 0 0 var(--ac-b)}
+.seg:disabled{opacity:.34;cursor:not-allowed}
+
+/* --------------------------------------------------- tuiles de catégorie */
+.grille-cat{display:grid;grid-template-columns:repeat(auto-fit,minmax(156px,1fr));gap:10px}
+.tuile{
+  --c:var(--ac); --cb:var(--ac-b);
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+  background:var(--carte);border:2px solid var(--bord);border-radius:var(--r);
+  padding:15px 16px 14px;cursor:pointer;text-align:left;
+  font-family:var(--police-titre);font-weight:600;font-size:1rem;color:var(--txt);
+  box-shadow:0 var(--relief) 0 var(--bord);
+  transition:transform var(--t),box-shadow var(--t),background var(--t),border-color var(--t),color var(--t);
+}
+.tuile .rond{
+  width:38px;height:38px;border-radius:13px;display:grid;place-items:center;
+  background:var(--c);transition:background var(--t);
+}
+.tuile .rond svg{width:21px;height:21px;stroke:#fff;fill:none;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round}
+.tuile:active{transform:translateY(var(--relief));box-shadow:0 0 0 var(--bord)}
+.tuile[aria-pressed="true"]{
+  background:var(--c);border-color:var(--c);color:#fff;box-shadow:0 var(--relief) 0 var(--cb);
+}
+.tuile[aria-pressed="true"]:active{box-shadow:0 0 0 var(--cb)}
+.tuile[aria-pressed="true"] .rond{background:rgba(255,255,255,.26)}
+.tuile .cpt{font-family:var(--police-texte);font-size:.78rem;font-weight:600;opacity:.62}
+.jauge-m{display:block;width:100%;height:5px;border-radius:99px;background:var(--creux);
+  overflow:hidden;margin-top:2px}
+.jauge-m i{display:block;height:100%;border-radius:99px;background:var(--c);
+  transition:width .5s cubic-bezier(.2,1,.3,1)}
+.tuile[aria-pressed="true"] .jauge-m{background:rgba(255,255,255,.3)}
+.tuile[aria-pressed="true"] .jauge-m i{background:#fff}
+.resume-maitrise{font-size:.95rem;color:var(--txt-2);margin-bottom:16px}
+.resume-maitrise b{font-family:var(--police-titre);font-size:1.25rem;color:var(--ac)}
+
+/* ------------------------------------------------------------------ joueurs */
+.noms{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:10px;margin-top:15px}
+.champ-nom{
+  display:flex;align-items:center;gap:10px;
+  background:var(--creux);border:2px solid var(--bord);border-radius:999px;
+  padding:3px 16px;transition:border-color var(--t),background var(--t);
+}
+.champ-nom:focus-within{border-color:var(--c);background:var(--carte)}
+.champ-nom i{width:12px;height:12px;border-radius:50%;background:var(--c);flex:0 0 auto}
+.champ-nom input{background:none;border:0;outline:none;padding:10px 0;width:100%;min-width:0;font-weight:600}
+.champ-nom input::placeholder{color:var(--txt-3);font-weight:500}
+
+/* ------------------------------------------------------------------ actions */
+.actions{display:flex;flex-wrap:wrap;gap:11px;margin:8px 0 14px}
+.note{color:var(--txt-2);font-size:.88rem;margin-bottom:28px;line-height:1.55}
+.indice{color:var(--txt-2);font-size:.85rem;margin-top:11px}
+
+/* -------------------------------------------------------------- bascules */
+.bascules{display:grid;grid-template-columns:repeat(auto-fit,minmax(262px,1fr));gap:11px}
+.bascule{
+  display:flex;align-items:flex-start;gap:13px;cursor:pointer;user-select:none;
+  background:var(--creux);border:2px solid var(--bord);border-radius:var(--r);
+  padding:15px 17px;transition:border-color var(--t),background var(--t);
+}
+.bascule input{position:absolute;opacity:0;width:0;height:0}
+.bascule .piste{
+  flex:0 0 auto;width:44px;height:26px;border-radius:999px;margin-top:1px;
+  background:#E3D8C8;position:relative;transition:background var(--t);
+}
+.bascule .piste::after{
+  content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);
+  transition:transform var(--t);
+}
+.bascule input:checked + .piste{background:var(--ok)}
+.bascule input:checked + .piste::after{transform:translateX(18px)}
+.bascule input:focus-visible + .piste{outline:3px solid var(--ac);outline-offset:3px}
+.bascule:has(input:checked){border-color:var(--ok);background:var(--ok-pale)}
+.bascule .texte{display:flex;flex-direction:column;gap:3px;min-width:0}
+.bascule .texte b{font-family:var(--police-titre);font-size:.98rem;font-weight:600}
+.bascule .texte em{font-style:normal;color:var(--txt-2);font-size:.83rem;line-height:1.4}
+.bascule.inactive{opacity:.42;cursor:not-allowed}
+
+/* ------------------------------------------------------------------- stats */
+.tab-stats{width:100%;border-collapse:collapse;font-size:.94rem;font-variant-numeric:tabular-nums}
+.tab-stats th{
+  text-align:left;color:var(--txt-3);font-family:var(--police-titre);font-weight:600;
+  font-size:11px;letter-spacing:.09em;text-transform:uppercase;padding:0 12px 11px 0;
+}
+.tab-stats th:not(:first-child),.tab-stats td:not(:first-child){text-align:right;padding-right:0}
+.tab-stats td{padding:10px 12px 10px 0;border-top:2px solid var(--bord)}
+.tab-stats td:first-child{font-weight:700}
+.pied-options{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding:16px 24px;border-top:2px solid var(--bord);background:var(--creux);
+}
+.switch{display:flex;align-items:center;gap:10px;color:var(--txt-2);font-size:.94rem;cursor:pointer;user-select:none}
+.switch input{accent-color:var(--ok);width:18px;height:18px;cursor:pointer}
+
+/* ============================================================== ÉCRAN JEU == */
+.bandeau{
+  position:sticky;top:0;z-index:30;margin:-26px -20px 0;padding:14px 20px 12px;
+  background:var(--fond);
+}
+.scores{display:flex;gap:9px;flex-wrap:wrap}
+.carte-joueur{
+  --c:var(--p1); --cb:var(--p1b);
+  flex:1 1 130px;min-width:116px;position:relative;
+  background:var(--carte);border:2px solid var(--bord);border-radius:var(--r-s);
+  padding:8px 13px 9px;box-shadow:0 3px 0 var(--bord);
+  transition:background var(--t),border-color var(--t),box-shadow var(--t),opacity var(--t),transform var(--t);
+}
+.carte-joueur:only-child{flex:0 0 250px}   /* en solo, inutile d'occuper toute la largeur */
+.carte-joueur.actif{border-color:var(--c);box-shadow:0 3px 0 var(--cb);transform:translateY(-2px)}
+.carte-joueur.bloque{opacity:.36}
+.carte-joueur .nom{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  font-family:var(--police-titre);font-size:.82rem;font-weight:600;color:var(--txt-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.carte-joueur.actif .nom{color:var(--c)}
+.carte-joueur .pts{
+  font-family:var(--police-titre);font-size:1.6rem;font-weight:600;
+  font-variant-numeric:tabular-nums;line-height:1.2;
+}
+.carte-joueur .serie{
+  font-family:var(--police-titre);font-size:.66rem;font-weight:600;color:#7A5200;flex:0 0 auto;
+  background:var(--or);border-radius:99px;padding:2px 8px;white-space:nowrap;
+  animation:pop .34s cubic-bezier(.2,1.6,.4,1) both;
+}
+.carte-joueur .serie.chaude{
+  background:linear-gradient(100deg,#FF9F1C,#FF6B6B);color:#fff;
+  box-shadow:0 0 0 3px rgba(255,107,107,.18);
+}
+.carte-joueur .sortie{font-size:.68rem;font-weight:700;color:var(--ko);text-transform:uppercase;letter-spacing:.06em}
+.carte-joueur.sorti{opacity:.4;filter:grayscale(.85)}
+.carte-joueur.sorti .pts{text-decoration:line-through}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.18)}100%{transform:scale(1)}}
+
+.gain{
+  position:absolute;right:12px;top:6px;
+  font-family:var(--police-titre);font-size:1rem;font-weight:600;font-variant-numeric:tabular-nums;
+  pointer-events:none;animation:envol 1.2s cubic-bezier(.2,.8,.3,1) forwards;
+}
+.gain.plus{color:var(--ok)} .gain.moins{color:var(--ko)}
+@keyframes envol{
+  0%{opacity:0;transform:translateY(10px) scale(.7)}
+  20%{opacity:1;transform:translateY(0) scale(1.25)}
+  34%{transform:translateY(0) scale(1)}
+  72%{opacity:1}
+  100%{opacity:0;transform:translateY(-22px)}
+}
+
+/* ------------------------------------------------------- chrono en anneau */
+.ligne-chrono{display:flex;align-items:center;gap:14px;padding-top:12px}
+.anneau{position:relative;width:56px;height:56px;flex:0 0 auto}
+.anneau svg{width:56px;height:56px;transform:rotate(-90deg)}
+.anneau .fond-a{fill:none;stroke:var(--bord);stroke-width:6}
+.anneau .jauge-a{fill:none;stroke:var(--ac);stroke-width:6;stroke-linecap:round;
+  transition:stroke .35s ease}
+.anneau .txt{
+  position:absolute;inset:0;display:grid;place-items:center;
+  font-family:var(--police-titre);font-size:1.05rem;font-weight:600;
+  font-variant-numeric:tabular-nums;color:var(--txt);
+}
+.ligne-chrono.urgent .jauge-a{stroke:var(--ko)}
+.ligne-chrono.urgent .anneau{animation:battement .9s ease-in-out infinite}
+@keyframes battement{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+
+/* pastilles de progression */
+.pastilles{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.pastille{
+  width:13px;height:13px;border-radius:50%;background:var(--bord);
+  transition:background var(--t),transform var(--t);
+}
+.pastille.ok{background:var(--ok)}
+.pastille.ko{background:var(--ko)}
+.pastille.mi{background:var(--or)}
+.pastille.encours{background:var(--ac);transform:scale(1.35)}
+
+/* ---------------------------------------------------------------- question */
+.entete-question{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:18px 0 14px}
+.badge{
+  font-family:var(--police-titre);font-size:11.5px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;color:#fff;background:var(--ac);
+  border-radius:999px;padding:5px 13px;
+}
+.badge.n1{background:var(--ok)} .badge.n2{background:var(--or);color:#7A5200} .badge.n3{background:var(--ko)}
+.progression{margin-left:auto;color:var(--txt-3);font-size:.86rem;font-variant-numeric:tabular-nums}
+.tour-info{font-family:var(--police-titre);font-size:1rem;font-weight:600;margin-bottom:10px}
+.tour-info:empty{display:none}
+/* ------------------------------------------------------------- palmarès */
+.palmares{display:flex;flex-direction:column;gap:6px;margin:4px 0 20px}
+.palmares-ligne{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;
+  align-items:baseline;padding:9px 13px;border-radius:12px;background:var(--fond)}
+.palmares-ligne .pl-rang{font-family:var(--police-titre);font-weight:700;opacity:.45;
+  min-width:1.3em}
+.palmares-ligne .pl-nom{font-weight:600;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.palmares-ligne .pl-score{font-family:var(--police-titre);font-weight:700}
+.palmares-ligne .pl-detail{grid-column:2/4;font-size:.8rem;opacity:.6}
+.tour-info .decompte{display:inline-block;font-variant-numeric:tabular-nums;
+  animation:battement .45s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes battement{0%{transform:scale(1.5)}100%{transform:scale(1)}}
+.question{
+  font-family:var(--police-titre);font-size:clamp(1.5rem,3.1vw,2.2rem);font-weight:600;
+  line-height:1.24;margin-bottom:24px;max-width:26ch;text-wrap:balance;
+}
+.question.compacte{font-size:clamp(1.2rem,2.2vw,1.55rem);max-width:52ch;margin-bottom:16px}
+.question{animation:arrivee .34s cubic-bezier(.2,1.1,.3,1) both}
+.question.secousse{animation:secousse .42s cubic-bezier(.36,.07,.19,.97) both}
+@keyframes secousse{
+  10%,90%{transform:translateX(-2px)} 20%,80%{transform:translateX(4px)}
+  30%,50%,70%{transform:translateX(-7px)} 40%,60%{transform:translateX(7px)}
+}
+
+/* ---------------------------------------------------------------- réponses */
+#zone-reponse{transition:opacity var(--t)}
+.choix{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:780px}
+.choix.vf{max-width:440px}
+@media(max-width:620px){.choix{grid-template-columns:1fr}}
+.choix-btn{
+  position:relative;display:flex;align-items:center;gap:14px;text-align:left;
+  font-size:1.05rem;font-weight:600;line-height:1.35;color:var(--txt);
+  background:var(--carte);border:2px solid var(--bord);border-radius:var(--r);
+  padding:16px 18px;cursor:pointer;box-shadow:0 var(--relief) 0 var(--bord);
+  transition:transform var(--t),box-shadow var(--t),background var(--t),border-color var(--t),opacity var(--t);
+  animation:cascade .38s cubic-bezier(.2,1.1,.3,1) both;
+}
+.choix-btn:nth-child(1){animation-delay:.02s}
+.choix-btn:nth-child(2){animation-delay:.08s}
+.choix-btn:nth-child(3){animation-delay:.14s}
+.choix-btn:nth-child(4){animation-delay:.20s}
+@keyframes cascade{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+.choix-btn:hover:not(:disabled){border-color:var(--ac)}
+.choix-btn:active:not(:disabled){transform:translateY(var(--relief));box-shadow:0 0 0 var(--bord)}
+.choix-btn:disabled{cursor:default}
+.choix-btn .cle{
+  flex:0 0 auto;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;
+  font-family:var(--police-titre);font-size:.84rem;font-weight:600;
+  color:var(--txt-2);background:var(--creux);transition:all var(--t);
+}
+.choix-btn .lib{flex:1;min-width:0}
+.choix-btn.emoji{font-size:2.6rem;justify-content:center;padding:18px}
+.choix-btn.ok{border-color:var(--ok);background:var(--ok-pale);box-shadow:0 var(--relief) 0 var(--ok-b);
+  animation:bonne .45s cubic-bezier(.2,1.5,.4,1) both}
+.choix-btn.ok .cle{background:var(--ok);color:#fff}
+@keyframes bonne{0%{transform:scale(1)}45%{transform:scale(1.035)}100%{transform:scale(1)}}
+.choix-btn.ko{border-color:var(--ko);background:var(--ko-pale);box-shadow:0 var(--relief) 0 var(--ko-b)}
+.choix-btn.ko .cle{background:var(--ko);color:#fff}
+.choix-btn.pale{opacity:.45}
+.choix-btn.elimine{opacity:.4;text-decoration:line-through;text-decoration-color:var(--ko)}
+
+.outils{display:flex;flex-wrap:wrap;gap:13px;align-items:center;margin-top:14px}
+.compteur{color:var(--txt-2);font-size:.9rem;font-weight:600}
+
+/* -------------------------------------------------------------------- mise */
+.mises{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;max-width:760px}
+.mise-btn{
+  display:flex;flex-direction:column;align-items:flex-start;gap:3px;
+  background:var(--carte);border:2px solid var(--bord);border-radius:var(--r);
+  padding:18px 20px;cursor:pointer;text-align:left;
+  box-shadow:0 var(--relief) 0 var(--bord);
+  transition:transform var(--t),box-shadow var(--t),border-color var(--t);
+}
+.mise-btn:hover{border-color:var(--ac)}
+.mise-btn:active{transform:translateY(var(--relief));box-shadow:0 0 0 var(--bord)}
+.mise-btn .m-f{font-family:var(--police-titre);font-size:1.7rem;font-weight:600;color:var(--ac);line-height:1}
+.mise-btn .m-nom{font-family:var(--police-titre);font-size:1.02rem;font-weight:600}
+.mise-btn .m-detail{font-size:.8rem;color:var(--txt-2);line-height:1.35}
+
+/* ------------------------------------------------------------------ jokers */
+.jokers{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.joker{
+  display:flex;flex-direction:column;align-items:flex-start;gap:1px;
+  background:var(--carte);border:2px solid var(--bord);border-radius:var(--r-s);
+  padding:9px 15px;cursor:pointer;text-align:left;
+  box-shadow:0 3px 0 var(--bord);
+  transition:transform var(--t),box-shadow var(--t),border-color var(--t),opacity var(--t);
+}
+.joker:hover:not(:disabled){border-color:var(--ac)}
+.joker:active:not(:disabled){transform:translateY(3px);box-shadow:0 0 0 var(--bord)}
+.joker:disabled{opacity:.4;cursor:not-allowed}
+.joker .j-nom{font-family:var(--police-titre);font-weight:600;font-size:.94rem;color:var(--txt)}
+.joker .j-detail{font-size:.74rem;color:var(--txt-2)}
+.joker.use{text-decoration:line-through;text-decoration-color:var(--txt-3)}
+.choix-btn.retiree{opacity:.22;filter:grayscale(1)}
+.pastille.passe{background:var(--txt-3)}
+.vie{font-size:1.25rem;line-height:1;color:var(--ko)}
+.vie.perdue{color:var(--bord)}
+
+/* ------------------------------------------------------------------- carte */
+.bloc-carte{max-width:min(100%,86vh);margin-inline:auto}
+.chapeau-carte{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.zoom-carte{display:flex;gap:7px;align-items:center;flex:0 0 auto}
+.rond-zoom{width:38px;padding:9px 0;font-size:1.1rem;font-weight:700;justify-content:center}
+.aide-carte{color:var(--txt-2);font-size:.88rem;max-width:62ch}
+.carte{
+  display:block;width:100%;height:auto;max-width:min(100%,86vh);margin-inline:auto;
+  background:#EAF4FB;border:2px solid var(--bord);border-radius:var(--r);
+  box-shadow:0 var(--relief) 0 var(--bord);touch-action:none;
+}
+.carte .fond{fill:#DCEDF8;stroke:#C3DDEE;stroke-width:1}
+.carte .grat{fill:none;stroke:#CFE4F2;stroke-width:.5;vector-effect:non-scaling-stroke}
+.carte .pays{fill:#FFF3E0;stroke:#D9C3A5;stroke-width:.6;vector-effect:non-scaling-stroke;
+  transition:fill .13s ease}
+.carte.cliquable .zone-clic,.carte.cliquable .halo-clic{cursor:pointer}
+.carte .pays.survol{fill:#FFD79A}
+/* cibles invisibles : le halo rattrape les clics à côté, l'intérieur reste prioritaire */
+.carte .halo-clic{fill:none;stroke:transparent;stroke-width:7;
+  vector-effect:non-scaling-stroke;pointer-events:all}
+.carte .zone-clic{fill:transparent;stroke:none;pointer-events:all}
+.carte:not(.cliquable) .zone-clic,
+.carte:not(.cliquable) .halo-clic{pointer-events:none}
+.carte .pays.sel{fill:var(--ac)}
+.carte .pays.ok{fill:var(--ok)}
+.carte .pays.ko{fill:var(--ko)}
+.carte.point{cursor:crosshair}
+.carte .trait{fill:none;stroke:var(--ac);stroke-width:2.2;stroke-dasharray:6 5;
+  vector-effect:non-scaling-stroke;pointer-events:none}
+.carte .marque{stroke:#fff;stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
+.carte .marque.vrai{fill:var(--ok);animation:chute .5s cubic-bezier(.3,1.5,.5,1) both}
+.carte .marque.joueur{fill:var(--ac)}
+@keyframes chute{0%{transform:translateY(-16px);opacity:0}60%{transform:translateY(2px);opacity:1}100%{transform:none}}
+
+/* ---------------------------------------------------------------- planètes */
+.systeme{display:block;width:100%;height:auto;background:#1B1740;border:2px solid var(--bord);
+  border-radius:var(--r);box-shadow:0 var(--relief) 0 var(--bord)}
+.systeme .astre{cursor:pointer}
+.systeme .halo{fill:none;stroke:#fff;stroke-width:3;opacity:0;transition:opacity .15s ease}
+.systeme .cible:hover + .halo{opacity:.65}
+.systeme .halo.ok{stroke:var(--ok);opacity:1} .systeme .halo.ko{stroke:var(--ko);opacity:1}
+.systeme .nom-planete{fill:#C9C2E8;font-family:var(--police-titre);font-size:12px;font-weight:600;
+  text-anchor:middle;transition:opacity .3s ease}
+
+/* ------------------------------------------------------------- chronologie */
+.chrono-liste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;max-width:660px}
+.chrono-item{
+  display:flex;align-items:center;gap:13px;background:var(--carte);
+  border:2px solid var(--bord);border-radius:var(--r);padding:13px 15px;cursor:grab;
+  box-shadow:0 3px 0 var(--bord);
+  transition:border-color var(--t),background var(--t),opacity var(--t);
+}
+.chrono-item:hover{border-color:var(--ac)}
+.chrono-item.drag{opacity:.4;cursor:grabbing}
+.chrono-item .rang{
+  flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:var(--creux);
+  color:var(--txt-2);font-family:var(--police-titre);font-size:.82rem;font-weight:600;
+  display:grid;place-items:center;
+}
+.chrono-item .lib{flex:1;font-weight:600;line-height:1.35}
+.chrono-item .fleches{display:flex;flex-direction:column;gap:3px;flex:0 0 auto}
+.chrono-item .fleches button{
+  font-size:10px;line-height:1;color:var(--txt-2);background:var(--creux);
+  border:2px solid var(--bord);border-radius:8px;padding:3px 9px;cursor:pointer;
+  transition:color var(--t),background var(--t);
+}
+.chrono-item .fleches button:hover:not(:disabled){color:var(--txt);background:var(--bord)}
+.chrono-item .fleches button:disabled{opacity:.3;cursor:default}
+.chrono-item.ok{border-color:var(--ok);background:var(--ok-pale);box-shadow:0 3px 0 var(--ok-b)}
+.chrono-item.ok .rang{background:var(--ok);color:#fff}
+.chrono-item.ko{border-color:var(--ko);background:var(--ko-pale);box-shadow:0 3px 0 var(--ko-b)}
+
+/* ---------------------------------------------------------------- buzzers */
+.buzzers{display:flex;gap:11px;flex-wrap:wrap;margin-top:22px}
+.buzz-btn{
+  --c:var(--p1); --cb:var(--p1b);
+  flex:1 1 140px;font-family:var(--police-titre);font-weight:600;font-size:1.06rem;color:#fff;
+  background:var(--c);border:0;border-radius:var(--r);padding:17px 12px;cursor:pointer;
+  box-shadow:0 5px 0 var(--cb);
+  transition:transform var(--t),box-shadow var(--t),opacity var(--t);
+}
+.buzz-btn:active:not(:disabled){transform:translateY(5px);box-shadow:0 0 0 var(--cb)}
+.buzz-btn:disabled{opacity:.28;cursor:not-allowed}
+.buzz-btn small{display:block;font-size:.72rem;font-weight:600;opacity:.75;margin-top:2px}
+
+/* --------------------------------------------------------------- feedback */
+.feedback{
+  margin-top:26px;padding:20px 22px;background:var(--carte);
+  border:2px solid var(--bord);border-radius:var(--r);box-shadow:0 var(--relief) 0 var(--bord);
+  animation:arrivee .3s cubic-bezier(.2,1.1,.3,1) both;
+}
+.feedback.est-ok{border-color:var(--ok);box-shadow:0 var(--relief) 0 var(--ok-b);background:var(--ok-pale)}
+.feedback.est-ko{border-color:var(--ko);box-shadow:0 var(--relief) 0 var(--ko-b);background:var(--ko-pale)}
+.feedback.est-mi{border-color:var(--or);box-shadow:0 var(--relief) 0 #C79A16;background:#FFF6DF}
+.verdict{display:flex;align-items:center;gap:11px;font-family:var(--police-titre);
+  font-size:1.4rem;font-weight:600;margin-bottom:9px}
+.verdict.ok{color:var(--ok-b)} .verdict.ko{color:var(--ko-b)} .verdict.mi{color:#A57C00}
+.frimousse{width:38px;height:38px;flex:0 0 auto;
+  animation:pop .42s cubic-bezier(.2,1.6,.4,1) both}
+.bonne-reponse{font-weight:700;margin-bottom:8px;line-height:1.45}
+.explication{color:var(--txt-2);max-width:66ch;margin-bottom:18px;font-size:.97rem}
+.annonce{
+  display:flex;align-items:center;gap:10px;font-family:var(--police-titre);
+  font-weight:600;font-size:.98rem;color:#7A5200;
+  background:#FFF0CC;border:2px solid var(--or);border-radius:var(--r-s);
+  padding:11px 15px;margin-bottom:18px;
+}
+.annonce::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--or);flex:0 0 auto}
+
+/* ------------------------------------------------------------ saisie libre */
+.saisie{display:flex;gap:11px;flex-wrap:wrap;max-width:580px}
+.saisie input{
+  flex:1 1 250px;min-width:0;background:var(--carte);
+  border:2px solid var(--bord-fort);border-radius:999px;
+  padding:15px 22px;font-size:1.1rem;font-weight:600;outline:none;
+  box-shadow:0 3px 0 var(--bord);transition:border-color var(--t),box-shadow var(--t);
+}
+.saisie input::placeholder{color:var(--txt-3);font-weight:500}
+.saisie input:focus{border-color:var(--ac);box-shadow:0 3px 0 var(--ac-b)}
+.saisie.ok input{border-color:var(--ok);box-shadow:0 3px 0 var(--ok-b)}
+.saisie.ko input{border-color:var(--ko);box-shadow:0 3px 0 var(--ko-b)}
+.saisie-rappel{color:var(--txt-2);font-size:.9rem;margin-top:10px}
+
+.pied-jeu{margin-top:28px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.raccourcis{color:var(--txt-3);font-size:.8rem}
+kbd{
+  display:inline-block;font-family:var(--police-titre);font-size:.74rem;font-weight:600;
+  background:var(--carte);border:2px solid var(--bord);border-bottom-width:3px;
+  border-radius:7px;padding:1px 7px;color:var(--txt-2);
+}
+
+/* ============================================================== ÉCRAN FIN == */
+.podium{display:flex;flex-direction:column;gap:11px;margin-bottom:26px}
+.rang-joueur{
+  --c:var(--p1); --cb:var(--p1b);
+  display:grid;grid-template-columns:46px 1fr auto;align-items:center;gap:16px;
+  background:var(--carte);border:2px solid var(--bord);border-radius:var(--r);
+  padding:17px 20px;box-shadow:0 var(--relief) 0 var(--bord);
+  animation:arrivee .45s cubic-bezier(.2,1.15,.3,1) both;
+}
+.rang-joueur:nth-child(1){animation-delay:.05s}
+.rang-joueur:nth-child(2){animation-delay:.16s}
+.rang-joueur:nth-child(3){animation-delay:.27s}
+.rang-joueur:nth-child(4){animation-delay:.38s}
+.rang-joueur.premier{border-color:var(--or);box-shadow:0 var(--relief) 0 #C79A16;background:#FFFAEE;padding:22px 20px}
+.rang-joueur .pos{
+  width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  background:var(--creux);font-family:var(--police-titre);font-size:1.05rem;font-weight:600;color:var(--txt-2);
+}
+.rang-joueur.premier .pos{background:var(--or);color:#7A5200;font-size:1.3rem}
+.rang-joueur .nom-j{font-family:var(--police-titre);font-size:1.16rem;font-weight:600}
+.rang-joueur.premier .nom-j{font-size:1.4rem}
+.rang-joueur .detail{color:var(--txt-2);font-size:.87rem}
+.rang-joueur .total{font-family:var(--police-titre);font-size:1.7rem;font-weight:600;font-variant-numeric:tabular-nums}
+.rang-joueur.premier .total{font-size:2.1rem;color:#B98A00}
+
+/* ------------------------------------------------------------------ revue */
+.revue{display:flex;flex-direction:column}
+.revue-item{padding:16px 0;border-top:2px solid var(--bord)}
+.revue-item:first-child{border-top:0;padding-top:2px}
+.revue-q{font-family:var(--police-titre);font-weight:600;font-size:1.02rem;line-height:1.4;margin-bottom:6px}
+.revue-r{color:var(--ok-b);font-weight:700;font-size:.94rem;margin-bottom:5px}
+.revue-e{color:var(--txt-2);font-size:.9rem;line-height:1.5;max-width:70ch}
+
+/* ------------------------------------------------------------------ éditeur */
+.form-ligne{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
+.champ{display:flex;flex-direction:column;gap:6px}
+.champ.plein{margin-bottom:14px}
+.champ > span{font-family:var(--police-titre);font-size:.82rem;font-weight:600;color:var(--txt-2)}
+.champ > span em{font-style:normal;font-weight:500;color:var(--txt-3)}
+.champ select,.champ textarea,.ed-prop input[type="text"],.ed-json{
+  font-family:var(--police-texte);font-size:1rem;font-weight:500;color:var(--txt);
+  background:var(--creux);border:2px solid var(--bord);border-radius:var(--r-s);
+  padding:11px 14px;outline:none;width:100%;resize:vertical;
+  transition:border-color var(--t),background var(--t);
+}
+.champ select:focus,.champ textarea:focus,.ed-prop input:focus,.ed-json:focus{
+  border-color:var(--ac);background:var(--carte);
+}
+.ed-aide{color:var(--txt-2);font-size:.87rem;margin-bottom:10px}
+.ed-choix{display:flex;flex-direction:column;gap:9px;margin-bottom:16px}
+.ed-prop{display:flex;align-items:center;gap:11px}
+.ed-prop input[type="radio"]{accent-color:var(--ok);width:20px;height:20px;flex:0 0 auto;cursor:pointer}
+.ed-rang{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--creux);
+  border:2px solid var(--bord);color:var(--txt-2);font-family:var(--police-titre);
+  font-size:.78rem;font-weight:600;display:grid;place-items:center}
+.ed-erreur{color:var(--ko);font-weight:600;font-size:.92rem;margin-bottom:12px}
+.ed-item{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:13px 0;border-top:2px solid var(--bord)}
+.ed-item:first-child{border-top:0;padding-top:2px}
+.ed-item-q{font-weight:600;line-height:1.35}
+.ed-item-meta{color:var(--txt-3);font-size:.8rem;margin-top:2px}
+.ed-json{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;margin-bottom:20px}
+
+/* ---------------------------------------------------------------- alertes */
+.alerte{
+  display:flex;gap:12px;align-items:flex-start;background:var(--ko-pale);
+  border:2px solid var(--ko);border-radius:var(--r);padding:14px 17px;margin-bottom:22px;
+  font-size:.92rem;color:#8E2F2F;box-shadow:0 3px 0 var(--ko-b);
+}
+.alerte::before{content:"!";flex:0 0 auto;width:21px;height:21px;border-radius:50%;
+  background:var(--ko);color:#fff;font-family:var(--police-titre);font-weight:600;font-size:.8rem;
+  display:grid;place-items:center;margin-top:1px}
+.alerte-txt{display:flex;flex-direction:column;gap:7px;min-width:0}
+
+/* --------------------------------------------------------------- dialogue */
+.voile{
+  position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;
+  background:rgba(46,42,59,.45);backdrop-filter:blur(3px);animation:fondu .18s ease both;
+}
+@keyframes fondu{from{opacity:0}to{opacity:1}}
+.dialogue{
+  width:min(430px,100%);background:var(--carte);border:2px solid var(--bord);
+  border-radius:var(--r-l);padding:28px;box-shadow:0 8px 0 var(--bord);
+  animation:arrivee .26s cubic-bezier(.2,1.2,.3,1) both;
+}
+.dialogue.pause{text-align:center}
+.dialogue.pause .actions{justify-content:center}
+.dialogue h3{font-size:1.3rem;margin-bottom:10px}
+.dialogue p{color:var(--txt-2);font-size:.97rem;margin-bottom:22px}
+.dialogue .actions{margin:0;justify-content:flex-end}
+.en-pause #zone-reponse,.en-pause #texte-question,
+.en-pause .entete-question,.en-pause #zone-buzzers{filter:blur(10px);opacity:.4;pointer-events:none}
+
+/* ------------------------------------------------- compte à rebours + confettis */
+#confettis{position:fixed;inset:0;z-index:90;pointer-events:none}
+.depart{
+  position:fixed;inset:0;z-index:95;display:grid;place-items:center;
+  background:rgba(255,246,236,.92);
+}
+.depart span{
+  font-family:var(--police-titre);font-size:clamp(5rem,20vw,11rem);font-weight:700;color:var(--ac);
+  animation:tic .8s cubic-bezier(.2,1.3,.4,1) both;
+}
+@keyframes tic{0%{opacity:0;transform:scale(.4)}35%{opacity:1;transform:scale(1.1)}
+  70%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.85)}}
+
+@media(max-width:560px){
+  #app{padding:20px 15px 70px}
+  .bandeau{margin:-20px -15px 0;padding:12px 15px 10px}
+  .section,.section-double > div{padding:18px 16px}
+  .pied-options{padding:14px 16px}
+  .carte{max-width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;
+    transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============================== ACCUEIL ============================== -->
+  <section id="ecran-accueil" class="ecran">
+    <div class="hero">
+      <svg class="mascotte" viewBox="0 0 100 100" aria-hidden="true">
+        <g class="corps">
+          <circle cx="50" cy="54" r="33" fill="#4EA3F5"/>
+          <path d="M23 44q11-9 22-3t19-2q6 9 2 17t-16 11-22-6-5-17z" fill="#3ECF9B" opacity=".92"/>
+          <ellipse cx="50" cy="54" rx="33" ry="33" fill="none" stroke="#3580C9" stroke-width="3"/>
+          <circle cx="40" cy="48" r="6" fill="#fff"/><circle cx="41.5" cy="49" r="3" fill="#2E2A3B"/>
+          <circle cx="61" cy="48" r="6" fill="#fff"/><circle cx="62.5" cy="49" r="3" fill="#2E2A3B"/>
+          <path d="M42 63q8 7 16 0" stroke="#2E2A3B" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+          <circle cx="31" cy="60" r="3.6" fill="#F27BA9" opacity=".55"/>
+          <circle cx="70" cy="60" r="3.6" fill="#F27BA9" opacity=".55"/>
+        </g>
+      </svg>
+      <p class="sur-titre">Huit catégories · Huit types de questions</p>
+      <h1 class="titre">Culture <span class="accent">Générale</span></h1>
+      <p class="sous-titre">Une carte du monde interactive, un système solaire cliquable et des frises à remettre dans l'ordre. De 1 à 4 joueurs sur le même écran.</p>
+    </div>
+
+    <div id="alerte-carte" class="alerte" hidden></div>
+
+    <div class="panneau">
+      <div class="section">
+        <span class="etiquette">Joueurs</span>
+        <div class="segment" id="choix-nb"></div>
+        <div class="noms" id="noms-joueurs"></div>
+      </div>
+
+      <div class="section">
+        <span class="etiquette">Catégorie</span>
+        <div class="grille-cat" id="choix-categorie"></div>
+      </div>
+
+      <div class="section section-double">
+        <div>
+          <span class="etiquette">Niveau</span>
+          <div class="segment" id="choix-niveau"></div>
+          <p class="indice" id="indice-niveau"></p>
+        </div>
+        <div>
+          <span class="etiquette">Mode</span>
+          <div class="segment" id="choix-mode"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <span class="etiquette">Rythme</span>
+        <div class="segment" id="choix-rythme"></div>
+        <p class="indice" id="indice-rythme"></p>
+      </div>
+
+      <div class="section">
+        <span class="etiquette">Corser la partie</span>
+        <div class="bascules">
+          <label class="bascule" id="lab-saisie">
+            <input type="checkbox" id="opt-saisie">
+            <span class="piste"></span>
+            <span class="texte">
+              <b>Saisie libre</b>
+              <em>Plus de QCM : on tape la réponse. Points majorés de 40 %.</em>
+            </span>
+          </label>
+          <label class="bascule" id="lab-mise">
+            <input type="checkbox" id="opt-mise">
+            <span class="piste"></span>
+            <span class="texte">
+              <b>Mise</b>
+              <em>On parie avant de voir la question. Gros gains, grosses pertes.</em>
+            </span>
+          </label>
+          <label class="bascule" id="lab-elim">
+            <input type="checkbox" id="opt-elim">
+            <span class="piste"></span>
+            <span class="texte">
+              <b>Élimination</b>
+              <em>Toutes les 3 manches, le dernier au score quitte la partie.</em>
+            </span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="btn-jouer" class="btn btn-principal" type="button">Lancer la partie</button>
+      <button id="btn-defi" class="btn btn-fantome" type="button">Défi du jour</button>
+      <button id="btn-survie" class="btn btn-fantome" type="button">Survie</button>
+      <button id="btn-editeur" class="btn btn-fantome" type="button">Mes questions</button>
+      <button id="btn-revision" class="btn btn-fantome" type="button">Révision</button>
+    </div>
+    <p class="note" id="note-pool"></p>
+
+    <div class="panneau">
+      <div class="section">
+        <span class="etiquette">Statistiques</span>
+        <div id="stats"></div>
+      </div>
+      <div class="pied-options">
+        <label class="switch"><input type="checkbox" id="opt-son"><span>Sons</span></label>
+        <label class="switch"><input type="checkbox" id="opt-nuit"><span>Thème nuit</span></label>
+        <button id="btn-palmares" class="btn btn-mini" type="button">Palmarès</button>
+        <button id="btn-effacer" class="btn btn-mini" type="button">Effacer les données locales</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================ JEU ================================ -->
+  <section id="ecran-jeu" class="ecran" hidden>
+    <div class="bandeau">
+      <div class="scores" id="tableau-scores"></div>
+      <div class="ligne-chrono" id="ligne-chrono">
+        <div class="anneau">
+          <svg viewBox="0 0 56 56" aria-hidden="true">
+            <circle class="fond-a" cx="28" cy="28" r="24"></circle>
+            <circle class="jauge-a" id="jauge-chrono" cx="28" cy="28" r="24"></circle>
+          </svg>
+          <span class="txt" id="chrono-txt">25</span>
+        </div>
+        <div class="pastilles" id="pastilles"></div>
+      </div>
+    </div>
+
+    <div class="entete-question">
+      <span class="badge" id="badge-cat"></span>
+      <span class="badge" id="badge-niveau"></span>
+      <span class="progression" id="progression"></span>
+    </div>
+
+    <p class="tour-info" id="tour-info"></p>
+    <h2 class="question" id="texte-question"></h2>
+    <div id="zone-reponse"></div>
+    <div id="zone-jokers" class="jokers"></div>
+    <div id="zone-buzzers"></div>
+
+    <div class="feedback" id="zone-feedback" role="status" aria-live="polite" hidden>
+      <p class="verdict" id="verdict"></p>
+      <p class="bonne-reponse" id="bonne-reponse"></p>
+      <p class="explication" id="explication"></p>
+      <p class="annonce" id="annonce" hidden></p>
+      <button id="btn-suivant" class="btn btn-principal" type="button">Suivant</button>
+    </div>
+
+    <div class="pied-jeu">
+      <button id="btn-pause" class="btn btn-mini" type="button">Pause</button>
+      <button id="btn-quitter" class="btn btn-mini" type="button">Quitter la partie</button>
+      <span class="raccourcis" id="raccourcis"></span>
+    </div>
+  </section>
+
+  <!-- ============================== ÉDITEUR ============================== -->
+  <section id="ecran-editeur" class="ecran" hidden>
+    <div class="hero">
+      <p class="sur-titre" id="compte-perso"></p>
+      <h1 class="titre">Mes <span class="accent">questions</span></h1>
+      <p class="sous-titre">Ajoutez vos propres questions : elles se mélangent aux autres dans toutes les parties, et restent sur cet ordinateur.</p>
+    </div>
+
+    <div class="panneau">
+      <div class="section">
+        <span class="etiquette">Nouvelle question</span>
+        <div class="form-ligne">
+          <label class="champ">
+            <span>Catégorie</span>
+            <select id="ed-categorie"></select>
+          </label>
+          <label class="champ">
+            <span>Niveau</span>
+            <select id="ed-niveau">
+              <option value="1">Facile</option>
+              <option value="2">Moyen</option>
+              <option value="3">Expert</option>
+            </select>
+          </label>
+          <label class="champ">
+            <span>Type</span>
+            <select id="ed-type"></select>
+          </label>
+        </div>
+
+        <label class="champ plein">
+          <span>Énoncé</span>
+          <textarea id="ed-question" rows="2" placeholder="Quelle est la capitale de… ?"></textarea>
+        </label>
+
+        <div id="ed-reponse"></div>
+
+        <label class="champ plein">
+          <span>Explication <em>(affichée après la réponse)</em></span>
+          <textarea id="ed-explication" rows="2" placeholder="Une anecdote qui aide à retenir."></textarea>
+        </label>
+
+        <p class="ed-erreur" id="ed-erreur" hidden></p>
+        <div class="actions">
+          <button id="ed-enregistrer" class="btn btn-principal" type="button">Enregistrer</button>
+          <button id="ed-vider" class="btn btn-fantome" type="button">Vider le formulaire</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panneau">
+      <div class="section">
+        <span class="etiquette">Mes questions enregistrées</span>
+        <div id="ed-liste"></div>
+      </div>
+      <div class="pied-options">
+        <button id="ed-exporter" class="btn btn-mini" type="button">Exporter</button>
+        <button id="ed-importer" class="btn btn-mini" type="button">Importer</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="ed-retour" class="btn btn-principal" type="button">Retour à l'accueil</button>
+    </div>
+  </section>
+
+  <!-- ================================ FIN ================================ -->
+  <section id="ecran-fin" class="ecran" hidden>
+    <div class="hero">
+      <p class="sur-titre" id="resume-fin"></p>
+      <h1 class="titre">Fin de partie</h1>
+    </div>
+    <div class="podium" id="classement"></div>
+
+    <div class="panneau" id="panneau-revue" hidden>
+      <div class="section">
+        <span class="etiquette" id="titre-revue">À revoir</span>
+        <div class="revue" id="revue"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="btn-rejouer" class="btn btn-principal" type="button">Rejouer</button>
+      <button id="btn-accueil" class="btn btn-fantome" type="button">Accueil</button>
+    </div>
+  </section>
+
+</div>
+
+<canvas id="confettis" hidden></canvas>
+<div id="depart" class="depart" hidden><span></span></div>
+
+<!-- Voile de pause : masque la question et gèle le chrono -->
+<div id="voile-pause" class="voile" hidden>
+  <div class="dialogue pause">
+    <h3>Partie en pause</h3>
+    <p>Le chrono est arrêté et la question est masquée.</p>
+    <div class="actions"><button id="btn-reprendre" class="btn btn-principal" type="button">Reprendre</button></div>
+  </div>
+</div>
+
+<!-- Boîte de dialogue maison, en remplacement de alert() et confirm() -->
+<div id="voile" class="voile" hidden>
+  <div class="dialogue" role="dialog" aria-modal="true" aria-labelledby="dlg-titre">
+    <h3 id="dlg-titre"></h3>
+    <p id="dlg-texte"></p>
+    <div class="actions">
+      <button id="dlg-annuler" class="btn btn-fantome" type="button">Annuler</button>
+      <button id="dlg-ok" class="btn btn-principal" type="button">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tout est local : le jeu fonctionne sans aucune connexion. -->
+<script src="lib/d3.min.js"></script>
+<script src="lib/topojson-client.min.js"></script>
+<script src="data/monde.js"></script>
+
+<!-- Banques de questions -->
+<script src="data/geographie.js"></script>
+<script src="data/geopolitique.js"></script>
+<script src="data/politique.js"></script>
+<script src="data/histoire.js"></script>
+<script src="data/astronomie.js"></script>
+<script src="data/sciences.js"></script>
+<script src="data/arts.js"></script>
+<script src="data/sport.js"></script>
+
+<script>
+/* =========================================================================
+   MOTEUR
+   ========================================================================= */
+(function () {
+'use strict';
+
+/* ------------------------------- constantes ----------------------------- */
+/* Le temps accordé dépend du niveau ET du type : cocher un QCM prend quelques
+   secondes, mais zoomer sur une carte pour sélectionner cinq pays en demande
+   bien davantage. Sans ce facteur, une question de carte en expert était
+   matériellement injouable. */
+var TEMPS_NIVEAU   = { 1: 25000, 2: 20000, 3: 15000 };
+var FACTEUR_TYPE   = {
+  vrai_faux: 0.9, qcm: 1, planete: 1.15,
+  clic_pays: 1.5, chronologie: 1.6, distance: 1.7, multi_pays: 2
+};
+var FACTEUR_SAISIE = 1.35;                   // taper une réponse prend du temps
+var RALLONGE       = 15000;                  // le joker « +15 s »
+var VIES_SURVIE    = 3;
+/* La mise se choisit AVANT de voir l'énoncé : on ne connaît que la catégorie
+   et le niveau. Gagner multiplie les points, se tromper coûte une part des
+   points de base de la question. */
+var MISES = [
+  { f: 1, nom: 'Prudent',      detail: 'Points normaux, rien à perdre' },
+  { f: 2, nom: 'Risqué',       detail: 'Points doublés, moitié des points en jeu si erreur' },
+  { f: 3, nom: 'Tout ou rien', detail: 'Points triplés, tous les points en jeu si erreur' }
+];
+var JOKERS = [
+  { id: 'moitie', nom: '50 / 50', detail: 'Retire deux mauvaises réponses' },
+  { id: 'temps',  nom: '+15 s',   detail: 'Rallonge le chrono' },
+  { id: 'passer', nom: 'Passer',  detail: 'Question suivante, sans perdre de points' }
+];
+var TEMPS_MAX      = 60000;
+var TEMPS_QUESTION = 25000;                  // référence pour la jauge au repos
+var tempsTour      = 20000;                  // durée de la question en cours
+var BONUS_SAISIE   = 1.4;                    // prime pour une réponse tapée
+var PAS_ELIMINATION = 3;                     // une élimination toutes les 3 manches
+var NB_QUESTIONS   = 10;                     // 10 questions par joueur
+var POINTS_BASE    = { 1: 100, 2: 150, 3: 200 };
+var MALUS_BUZZ     = -50;
+var TEMPS_BUZZ     = 3000;                   // délai pour répondre après un buzz
+/* Se tromper élimine sa proposition pour les suivants : l'erreur renseigne la
+   table. Laisser filer les 3 s ne renseigne personne et bloque la question,
+   donc le réflexe sans réponse coûte plus cher que l'erreur de bonne foi. */
+var MALUS_EXPIRE   = -75;
+/* Buzzers : quatre coins du clavier AZERTY, le plus loin possible les uns des
+   autres. J1 'w' (bas gauche), J2 'n' (bas droite), J3 '²' (haut gauche),
+   J4 '=' (haut droite). Disposition AZERTY française. */
+var TOUCHES_BUZZ   = ['w', 'n', '²', '='];
+var COULEURS       = ['var(--p1)', 'var(--p2)', 'var(--p3)', 'var(--p4)'];
+var OMBRES         = ['var(--p1b)', 'var(--p2b)', 'var(--p3b)', 'var(--p4b)'];
+
+/* Une couleur par catégorie : c'est elle qui teinte tout l'écran de jeu.
+   [teinte, ombre portée, fond pâle] */
+var COULEUR_CAT = {
+  toutes:       ['#F5A623', '#CE8110', '#FFF1D9'],
+  geographie:   ['#3ECF9B', '#2BA87B', '#E4F9F1'],
+  geopolitique: ['#4EA3F5', '#3580C9', '#E6F2FE'],
+  histoire:     ['#E8875A', '#C56A41', '#FDEEE6'],
+  astronomie:   ['#8B7BE8', '#6E5DC4', '#EFECFC'],
+  sciences:     ['#2FC7C7', '#22A0A0', '#E1F8F8'],
+  arts:         ['#F27BA9', '#CD5D89', '#FDEBF2'],
+  politique:    ['#A2578F', '#7E3F6E', '#F7EAF3'],
+  sport:        ['#7CBF3F', '#5E9A29', '#EEF7E2']
+};
+function teinter(cat) {
+  var c = COULEUR_CAT[cat] || COULEUR_CAT.toutes;
+  var r = document.documentElement.style;
+  r.setProperty('--ac', c[0]);
+  r.setProperty('--ac-b', c[1]);
+  /* en thème nuit, le pastel clair jurerait : on prend la teinte en translucide */
+  r.setProperty('--ac-pale', options.theme === 'nuit' ? avecAlpha(c[0], 0.16) : c[2]);
+}
+
+function avecAlpha(hex, a) {
+  var n = parseInt(hex.slice(1), 16);
+  return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+}
+
+function appliquerTheme() {
+  if (options.theme === 'nuit') document.documentElement.setAttribute('data-theme', 'nuit');
+  else document.documentElement.removeAttribute('data-theme');
+  teinter(config.categorie);
+}
+var URL_TOPO       = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+
+/* pictogrammes tracés au trait, 24x24, sans dépendance externe */
+var ICONES = {
+  toutes:       'M12 3.2l2 5.6 5.6 2-5.6 2-2 5.6-2-5.6-5.6-2 5.6-2z',
+  geographie:   'M12 3a9 9 0 100 18 9 9 0 000-18zM3 12h18M12 3c2.6 2.7 2.6 15.3 0 18M12 3c-2.6 2.7-2.6 15.3 0 18',
+  geopolitique: 'M6 21V4M6 4.5h11l-2.6 3.9L17 12.4H6',
+  politique:    'M12 4.2v15.6M7.5 19.8h9M3.5 8h17M12 4.2 3.5 8M12 4.2 20.5 8M6.5 8 3.5 13.6h6zM17.5 8 14.5 13.6h6z',
+  histoire:     'M12 3l8 4.5H4zM6.5 9.5V19M12 9.5V19M17.5 9.5V19M4 19h16',
+  astronomie:   'M12 7.5a4.5 4.5 0 100 9 4.5 4.5 0 000-9M3.6 14.9c4.6 2.4 12.2 2.4 16.8 0',
+  sciences:     'M9.5 3h5M10.5 3v6.2L5.6 18a2 2 0 001.8 3h9.2a2 2 0 001.8-3l-4.9-8.8V3M8 14h8',
+  arts:         'M12 3.2c-4.9 0-8.8 3.9-8.8 8.8s3.9 8.8 8.8 8.8c1 0 1.7-.8 1.7-1.7 0-1.4 1.1-2.2 2.3-2.2h1.6a3.2 3.2 0 003.2-3.2c0-5.7-4-10.5-8.8-10.5zM8 10.2h.01M11 7.6h.01M15 8.8h.01',
+  sport:        'M12 7.5a6.2 6.2 0 100 12.4 6.2 6.2 0 000-12.4M12 7.5V4.4M9.9 4.4h4.2M12 13.7 15.1 11.4'
+};
+
+var CATEGORIES = [
+  { id: 'toutes',       nom: 'Tout mélangé' },
+  { id: 'geographie',   nom: 'Géographie' },
+  { id: 'geopolitique', nom: 'Géopolitique' },
+  { id: 'politique',    nom: 'Politique' },
+  { id: 'histoire',     nom: 'Histoire' },
+  { id: 'astronomie',   nom: 'Astronomie' },
+  { id: 'sciences',     nom: 'Sciences' },
+  { id: 'arts',         nom: 'Arts & culture' },
+  { id: 'sport',        nom: 'Sport' }
+];
+var NOM_CAT = {};
+CATEGORIES.forEach(function (c) { NOM_CAT[c.id] = c.nom; });
+
+/* Multiplicateurs appliqués au temps de chaque question. Le barème de
+   rapidité se rapporte toujours au temps réellement alloué : allonger le
+   chrono ne pénalise donc personne, cela laisse seulement respirer. */
+var RYTHMES = [
+  { id: 'detendu', nom: 'Détendu', f: 1.8,
+    indice: 'Près du double de temps. Pour jouer en discutant, ou avec des enfants.' },
+  { id: 'normal',  nom: 'Normal',  f: 1,
+    indice: 'Le réglage d\'origine : de 23 à 50 secondes selon le type de question.' },
+  { id: 'rapide',  nom: 'Rapide',  f: 0.65,
+    indice: 'Un tiers de temps en moins. Réservé aux habitués.' }
+];
+var NIVEAUX = [
+  { id: 1, nom: 'Facile' },
+  { id: 2, nom: 'Moyen' },
+  { id: 3, nom: 'Expert' },
+  { id: 0, nom: 'Mixte' }
+];
+var NOM_NIVEAU = { 1: 'Facile', 2: 'Moyen', 3: 'Expert' };
+
+var TYPES_CARTE = { clic_pays: 1, multi_pays: 1, distance: 1 };
+var TYPES_SANS_BUZZ = { distance: 1, multi_pays: 1 };
+
+var PLANETES = [
+  { nom: 'Mercure', r: 7,  c: '#a3a3a3' },
+  { nom: 'Vénus',   r: 11, c: '#e0b579' },
+  { nom: 'Terre',   r: 12, c: '#4a90d9' },
+  { nom: 'Mars',    r: 9,  c: '#c1552e' },
+  { nom: 'Jupiter', r: 30, c: '#d9a879' },
+  { nom: 'Saturne', r: 26, c: '#e6d7a8' },
+  { nom: 'Uranus',  r: 18, c: '#a7dde4' },
+  { nom: 'Neptune', r: 17, c: '#5570d6' }
+];
+
+/* Quelques ids sont à -99 dans certaines versions de world-atlas. */
+var CORRECTIF_ID = {
+  'France': '250', 'Norway': '578', 'Kosovo': '383',
+  'Somaliland': '706', 'N. Cyprus': '792'
+};
+
+/* Noms français des pays utilisés comme réponses (repli : nom anglais du fichier). */
+var NOMS_FR = {
+  '004':'Afghanistan','008':'Albanie','012':'Algérie','024':'Angola','031':'Azerbaïdjan',
+  '032':'Argentine','036':'Australie','040':'Autriche','048':'Bahreïn','050':'Bangladesh',
+  '051':'Arménie','056':'Belgique','064':'Bhoutan','068':'Bolivie','070':'Bosnie-Herzégovine',
+  '072':'Botswana','076':'Brésil','084':'Belize','096':'Brunei','100':'Bulgarie',
+  '104':'Birmanie','108':'Burundi','112':'Biélorussie','116':'Cambodge','120':'Cameroun',
+  '124':'Canada','144':'Sri Lanka','148':'Tchad','152':'Chili','156':'Chine',
+  '170':'Colombie','178':'Congo','180':'République démocratique du Congo','188':'Costa Rica',
+  '191':'Croatie','192':'Cuba','196':'Chypre','203':'Tchéquie','204':'Bénin',
+  '208':'Danemark','214':'République dominicaine','218':'Équateur','222':'Salvador',
+  '231':'Éthiopie','232':'Érythrée','233':'Estonie','242':'Fidji','246':'Finlande',
+  '250':'France','262':'Djibouti','266':'Gabon','268':'Géorgie','276':'Allemagne',
+  '288':'Ghana','300':'Grèce','304':'Groenland','320':'Guatemala','324':'Guinée',
+  '328':'Guyana','332':'Haïti','340':'Honduras','348':'Hongrie','352':'Islande',
+  '356':'Inde','360':'Indonésie','364':'Iran','368':'Irak','372':'Irlande',
+  '376':'Israël','380':'Italie','384':"Côte d'Ivoire",'388':'Jamaïque','392':'Japon',
+  '398':'Kazakhstan','400':'Jordanie','404':'Kenya','408':'Corée du Nord','410':'Corée du Sud',
+  '414':'Koweït','417':'Kirghizistan','418':'Laos','422':'Liban','426':'Lesotho',
+  '428':'Lettonie','434':'Libye','440':'Lituanie','442':'Luxembourg','450':'Madagascar',
+  '454':'Malawi','458':'Malaisie','466':'Mali','478':'Mauritanie','484':'Mexique',
+  '496':'Mongolie','498':'Moldavie','504':'Maroc','508':'Mozambique','512':'Oman',
+  '516':'Namibie','524':'Népal','528':'Pays-Bas','554':'Nouvelle-Zélande','558':'Nicaragua',
+  '562':'Niger','566':'Nigeria','578':'Norvège','586':'Pakistan','591':'Panama',
+  '598':'Papouasie-Nouvelle-Guinée','600':'Paraguay','604':'Pérou','608':'Philippines',
+  '616':'Pologne','620':'Portugal','624':'Guinée-Bissau','626':'Timor oriental','634':'Qatar',
+  '642':'Roumanie','643':'Russie','646':'Rwanda','682':'Arabie saoudite','686':'Sénégal',
+  '688':'Serbie','694':'Sierra Leone','702':'Singapour','703':'Slovaquie','704':'Viêt Nam',
+  '705':'Slovénie','706':'Somalie','710':'Afrique du Sud','716':'Zimbabwe','724':'Espagne',
+  '728':'Soudan du Sud','729':'Soudan','732':'Sahara occidental','740':'Suriname',
+  '748':'Eswatini','752':'Suède','756':'Suisse','760':'Syrie','762':'Tadjikistan',
+  '764':'Thaïlande','768':'Togo','780':'Trinité-et-Tobago','784':'Émirats arabes unis',
+  '788':'Tunisie','792':'Turquie','795':'Turkménistan','800':'Ouganda','804':'Ukraine',
+  '807':'Macédoine du Nord','818':'Égypte','826':'Royaume-Uni','834':'Tanzanie',
+  '840':'États-Unis','854':'Burkina Faso','858':'Uruguay','860':'Ouzbékistan',
+  '862':'Venezuela','887':'Yémen','894':'Zambie'
+};
+
+/* ------------------------------- utilitaires ---------------------------- */
+function $(s) { return document.querySelector(s); }
+function vide(n) { while (n.firstChild) n.removeChild(n.firstChild); return n; }
+function el(tag, cls, txt) {
+  var n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (txt != null) n.textContent = txt;
+  return n;
+}
+function code3(c) { return String(c).padStart(3, '0'); }
+function nomPays(c) { var k = code3(c); return NOMS_FR[k] || (NOMS_EN[k] || 'pays ' + k); }
+function liste(arr) {
+  if (arr.length <= 1) return arr.join('');
+  return arr.slice(0, -1).join(', ') + ' et ' + arr[arr.length - 1];
+}
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+
+/* stockage local, toujours protégé */
+function lire(cle, defaut) {
+  try { var v = localStorage.getItem(cle); return v == null ? defaut : JSON.parse(v); }
+  catch (e) { return defaut; }
+}
+function ecrire(cle, val) {
+  try { localStorage.setItem(cle, JSON.stringify(val)); return true; }
+  catch (e) { return false; }
+}
+function effacerTout() {
+  try {
+    ['cg.options', 'cg.stats', 'cg.historique', 'cg.rates', 'cg.palmares',
+     'cg.vues', 'cg.defi', 'cg.survie'].forEach(function (k) { localStorage.removeItem(k); });
+  } catch (e) {}
+}
+
+/* générateur pseudo-aléatoire à graine (mulberry32) */
+function graine(str) {
+  var h = 2166136261;
+  for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+var hasard = Math.random;
+function melanger(arr, rnd) {
+  var r = rnd || hasard, a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(r() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+
+/* distance orthodromique */
+function haversine(lat1, lon1, lat2, lon2) {
+  var R = 6371, rad = Math.PI / 180;
+  var dLat = (lat2 - lat1) * rad, dLon = (lon2 - lon1) * rad;
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+/* ------------------------- réponses tapées au clavier -------------------- */
+/* Comparaison tolérante : on ignore casse, accents, ponctuation et article
+   initial, puis on accepte une ou deux fautes de frappe selon la longueur. */
+function normaliser(t) {
+  return String(t == null ? '' : t)
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[‘’ʼ`]/g, "'")
+    .replace(/^(l'|d'|le |la |les |un |une |des |du |de )/, '')
+    .replace(/[^a-z0-9' ]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function distanceEdition(a, b) {
+  if (a === b) return 0;
+  var n = a.length, m = b.length;
+  if (!n) return m;
+  if (!m) return n;
+  var ligne = new Array(m + 1), i, j, prec, tmp;
+  for (j = 0; j <= m; j++) ligne[j] = j;
+  for (i = 1; i <= n; i++) {
+    prec = ligne[0]; ligne[0] = i;
+    for (j = 1; j <= m; j++) {
+      tmp = ligne[j];
+      ligne[j] = Math.min(ligne[j] + 1, ligne[j - 1] + 1,
+                          prec + (a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1));
+      prec = tmp;
+    }
+  }
+  return ligne[m];
+}
+
+/* Toutes les réponses ne se tapent pas : « Une distance, celle parcourue par la
+   lumière en un an » ou « 299 792 458 m/s » sont injouables au clavier. On ne
+   bascule en saisie libre que pour les réponses courtes, ou pour un nombre seul
+   (une année, un effectif), qui font de très bonnes questions ouvertes. */
+function saisissable(q) {
+  if (q.type !== 'qcm') return false;
+  var r = normaliser(q.choix[q.reponse]);
+  if (!r) return false;
+  if (/^[0-9]+$/.test(r)) return true;
+  if (/[0-9]/.test(r)) return false;
+  return r.length <= 22 && r.split(' ').length <= 3;
+}
+
+function reponseTapeeJuste(saisi, attendu) {
+  var a = normaliser(saisi), b = normaliser(attendu);
+  if (!a) return false;
+  if (a === b) return true;
+  if (/^[0-9]+$/.test(b)) return false;              // un nombre, c'est exact ou rien
+  var marge = b.length <= 6 ? 1 : 2;
+  return distanceEdition(a, b) <= marge;
+}
+
+/* --------------------------------- sons --------------------------------- */
+var ctxAudio = null;
+function audio() {
+  if (!ctxAudio) {
+    var C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return null;
+    ctxAudio = new C();
+  }
+  if (ctxAudio.state === 'suspended') { try { ctxAudio.resume(); } catch (e) {} }
+  return ctxAudio;
+}
+function ton(freq, duree, forme, vol, delai) {
+  if (!options.son) return;
+  try {
+    var c = audio(); if (!c) return;
+    var o = c.createOscillator(), g = c.createGain();
+    o.type = forme || 'sine'; o.frequency.value = freq;
+    var t0 = c.currentTime + (delai || 0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(vol || 0.15, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
+    o.connect(g); g.connect(c.destination);
+    o.start(t0); o.stop(t0 + duree + 0.03);
+  } catch (e) {}
+}
+/* De petites mélodies plutôt que des bips : trois notes qui montent pour une
+   réussite, deux qui descendent pour une erreur. */
+var Son = {
+  bon:     function () { ton(659, .11, 'triangle', .15, 0); ton(831, .11, 'triangle', .15, .08);
+                         ton(988, .26, 'triangle', .14, .16); },
+  mauvais: function () { ton(311, .16, 'triangle', .13, 0); ton(233, .30, 'triangle', .12, .13); },
+  partiel: function () { ton(523, .12, 'triangle', .13, 0); ton(659, .20, 'triangle', .12, .1); },
+  buzz:    function () { ton(880, .07, 'square', .11, 0); ton(1175, .10, 'square', .10, .05); },
+  tic:     function () { ton(1046, .06, 'sine', .10, 0); },
+  fin:     function () { [523, 659, 784, 1046].forEach(function (f, i) { ton(f, i === 3 ? .42 : .13, 'triangle', .14, i * .12); }); }
+};
+
+/* --------------------------- effets visuels ----------------------------- */
+var sobre = false;
+try { sobre = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+/* Confettis maison : quelques centaines de rectangles qui tombent en tournant.
+   Pas de bibliothèque, et la boucle s'arrête d'elle-même. */
+function confettis(couleurs) {
+  if (sobre) return;
+  var cv = $('#confettis');
+  var ctx = cv.getContext ? cv.getContext('2d') : null;
+  if (!ctx) return;
+  var L = cv.width = window.innerWidth, H = cv.height = window.innerHeight;
+  cv.hidden = false;
+  var bouts = [], i;
+  for (i = 0; i < 130; i++) {
+    bouts.push({
+      x: L * (0.2 + 0.6 * Math.random()), y: H * 0.3 + Math.random() * 40,
+      vx: (Math.random() - 0.5) * 9, vy: -7 - Math.random() * 9,
+      l: 6 + Math.random() * 7, h: 9 + Math.random() * 9,
+      a: Math.random() * Math.PI, va: (Math.random() - 0.5) * 0.35,
+      c: couleurs[i % couleurs.length]
+    });
+  }
+  var debut = performance.now();
+  (function boucle(t) {
+    var age = t - debut;
+    ctx.clearRect(0, 0, L, H);
+    var vivants = 0;
+    bouts.forEach(function (b) {
+      b.vy += 0.32; b.x += b.vx; b.y += b.vy; b.a += b.va; b.vx *= 0.995;
+      if (b.y < H + 40) vivants++;
+      ctx.save();
+      ctx.translate(b.x, b.y); ctx.rotate(b.a);
+      ctx.globalAlpha = Math.max(0, 1 - age / 2600);
+      ctx.fillStyle = b.c;
+      ctx.fillRect(-b.l / 2, -b.h / 2, b.l, b.h);
+      ctx.restore();
+    });
+    if (vivants && age < 2600) requestAnimationFrame(boucle);
+    else { ctx.clearRect(0, 0, L, H); cv.hidden = true; }
+  })(debut);
+}
+
+function secouer(noeud) {
+  if (sobre || !noeud) return;
+  noeud.classList.remove('secousse');
+  void noeud.offsetWidth;
+  noeud.classList.add('secousse');
+}
+
+function vibrer(ms) {
+  try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
+}
+
+/* petite frimousse affichée à côté du verdict */
+var VISAGES = {
+  ok: '<circle cx="19" cy="19" r="17" fill="#34C77B"/><circle cx="13.5" cy="16" r="2.6" fill="#fff"/>' +
+      '<circle cx="24.5" cy="16" r="2.6" fill="#fff"/><path d="M12 23q7 6 14 0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>',
+  ko: '<circle cx="19" cy="19" r="17" fill="#FF6B6B"/><circle cx="13.5" cy="16" r="2.6" fill="#fff"/>' +
+      '<circle cx="24.5" cy="16" r="2.6" fill="#fff"/><path d="M12 27q7-6 14 0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>',
+  mi: '<circle cx="19" cy="19" r="17" fill="#FFC531"/><circle cx="13.5" cy="16" r="2.6" fill="#7A5200"/>' +
+      '<circle cx="24.5" cy="16" r="2.6" fill="#7A5200"/><path d="M12 25h14" stroke="#7A5200" stroke-width="3" fill="none" stroke-linecap="round"/>'
+};
+function frimousse(ton) {
+  var NS = 'http://www.w3.org/2000/svg';
+  var svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'frimousse');
+  svg.setAttribute('viewBox', '0 0 38 38');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.innerHTML = VISAGES[ton] || VISAGES.mi;
+  return svg;
+}
+
+/* compte à rebours avant le début d'une partie */
+function compteARebours(fin) {
+  if (sobre) { fin(); return; }
+  var z = $('#depart'), n = z.querySelector('span');
+  var suite = ['3', '2', '1', 'Top !'], i = 0;
+  z.hidden = false;
+  (function pas() {
+    if (i >= suite.length) { z.hidden = true; fin(); return; }
+    n.textContent = suite[i];
+    n.style.animation = 'none'; void n.offsetWidth; n.style.animation = '';
+    Son.tic();
+    i++;
+    setTimeout(pas, 620);
+  })();
+}
+
+/* ------------------------------ état global ----------------------------- */
+var TOUTES = (window.QUESTIONS || []).slice();
+
+/* Les questions ajoutées par le joueur vivent dans localStorage et se mêlent
+   aux autres. Elles portent un identifiant « perso-… » pour ne jamais entrer
+   en collision avec les banques livrées. */
+function questionsPerso() {
+  var l = lire('cg.perso', []);
+  return Array.isArray(l) ? l : [];
+}
+function enregistrerPerso(liste) {
+  var ok = ecrire('cg.perso', liste);
+  rechargerBanque();
+  return ok;
+}
+function rechargerBanque() {
+  TOUTES = (window.QUESTIONS || []).concat(questionsPerso());
+  oublierCacheVues();
+}
+var NOMS_EN = {};
+var options = lire('cg.options', { son: true });
+if (typeof options.son !== 'boolean') options.son = true;
+
+var config = {
+  nb: 1,
+  noms: ['', '', '', ''],
+  categorie: 'toutes',
+  niveau: 1,
+  mode: 'tour',
+  rythme: 'normal',       // multiplie le temps accordé à chaque question
+  saisie: false,          // réponse tapée au clavier au lieu du QCM
+  mise: false,            // on parie avant de découvrir l'énoncé
+  elimination: false      // le dernier au score saute toutes les 3 manches
+};
+var partie = null;
+
+/* =========================================================================
+   1. ÉCRANS ET BOÎTE DE DIALOGUE
+   ========================================================================= */
+function ecran(nom) {
+  ['accueil', 'jeu', 'fin', 'editeur'].forEach(function (n) {
+    var s = $('#ecran-' + n);
+    var visible = (n === nom);
+    if (visible && s.hidden) {                 // rejoue l'animation d'entrée
+      s.hidden = false;
+      s.style.animation = 'none';
+      void s.offsetWidth;
+      s.style.animation = '';
+    } else {
+      s.hidden = !visible;
+    }
+  });
+  window.scrollTo(0, 0);
+}
+
+/* Une question de carte rend la page très haute : sans cela, on reste là où on
+   était au moment du clic sur « Suivant », c'est-à-dire au milieu de la carte. */
+function remonter() {
+  try { window.scrollTo({ top: 0, behavior: 'auto' }); }
+  catch (e) { window.scrollTo(0, 0); }
+}
+
+/* Remplace alert() et confirm(), qui bloquent le fil et jurent avec le reste. */
+var dlgSuite = null;
+function dialogue(titre, texte, onOui, libelleOui) {
+  $('#dlg-titre').textContent = titre;
+  $('#dlg-texte').textContent = texte;
+  $('#dlg-ok').textContent = libelleOui || 'Confirmer';
+  $('#dlg-annuler').hidden = !onOui;
+  dlgSuite = onOui || null;
+  $('#voile').hidden = false;
+  $('#dlg-ok').focus();
+}
+function fermerDialogue(valider) {
+  var zone = $('#voile').querySelector('.ed-json');
+  if (zone && !valider) zone.parentNode.removeChild(zone);
+  $('#voile').hidden = true;
+  var f = dlgSuite; dlgSuite = null;
+  if (valider && f) f();
+  /* tout contenu glissé sous le texte du dialogue disparaît avec lui */
+  var restes = $('#voile').querySelectorAll('.ed-json, .dlg-extra');
+  for (var i = 0; i < restes.length; i++) restes[i].parentNode.removeChild(restes[i]);
+}
+/* insère un bloc sous le texte du dialogue courant */
+function dialogueAjout(noeud) {
+  noeud.classList.add('dlg-extra');
+  var t = $('#dlg-texte');
+  t.parentNode.insertBefore(noeud, t.nextSibling);
+}
+
+/* =========================================================================
+   2. SÉLECTION DES QUESTIONS
+   ========================================================================= */
+var ignorerHistorique = false;
+
+function pool(categorie, niveau) {
+  return TOUTES.filter(function (q) {
+    if (categorie !== 'toutes' && q.categorie !== categorie) return false;
+    if (niveau && q.niveau !== niveau) return false;
+    if (!carteOK && TYPES_CARTE[q.type]) return false;
+    return true;
+  });
+}
+
+/* ids vus lors des 3 dernières parties */
+function idsRecents() {
+  var h = lire('cg.historique', []);
+  var s = {};
+  h.slice(-3).forEach(function (lot) { (lot || []).forEach(function (id) { s[id] = 1; }); });
+  return s;
+}
+
+/* Tire n questions distinctes, en évitant d'abord celles des 3 dernières
+   parties.
+
+   Le tirage est réparti par catégorie, et non uniforme sur le tas : sinon une
+   catégorie deux fois plus fournie sortirait deux fois plus souvent, et
+   l'équilibre du jeu dépendrait de la taille des fichiers de données. On
+   remplit donc une file par catégorie, puis on sert chacune à tour de rôle.
+   Pour une catégorie unique, le comportement est inchangé. */
+function tirer(base, n, rnd) {
+  var recents = ignorerHistorique ? {} : idsRecents();
+
+  var paquets = {};
+  base.forEach(function (q) {
+    (paquets[q.categorie] = paquets[q.categorie] || []).push(q);
+  });
+
+  /* dans chaque catégorie : d'abord ce qui n'a pas été vu récemment */
+  var files = melanger(Object.keys(paquets), rnd).map(function (c) {
+    var lot = paquets[c];
+    return melanger(lot.filter(function (q) { return !recents[q.id]; }), rnd)
+      .concat(melanger(lot.filter(function (q) { return recents[q.id]; }), rnd));
+  });
+
+  var choix = [], encore = true;
+  while (choix.length < n && encore) {
+    encore = false;
+    for (var i = 0; i < files.length && choix.length < n; i++) {
+      if (files[i].length) { choix.push(files[i].shift()); encore = true; }
+    }
+  }
+  /* la sélection est équilibrée ; l'ordre, lui, ne doit pas être un cycle */
+  return melanger(choix, rnd);
+}
+
+/* =========================================================================
+   3. POINTS
+   ========================================================================= */
+function facteurRythme() {
+  var r = RYTHMES.filter(function (x) { return x.id === config.rythme; })[0];
+  return r ? r.f : 1;
+}
+function tempsDe(q, saisie) {
+  var t = (TEMPS_NIVEAU[q.niveau] || TEMPS_QUESTION) * (FACTEUR_TYPE[q.type] || 1);
+  if (saisie) t *= FACTEUR_SAISIE;
+  t *= facteurRythme();
+  return Math.min(TEMPS_MAX, Math.round(t / 1000) * 1000);
+}
+
+/* Le bonus de rapidité récompense le fait de SAVOIR vite. Sur une carte, le
+   chrono mesure surtout le temps de zoomer, de viser et de valider : sans
+   plancher, ces questions rapportaient mécaniquement un tiers de moins que
+   les QCM à maîtrise égale. */
+var PLANCHER_RAPIDITE = { clic_pays: 1.25, multi_pays: 1.3, distance: 1.3, chronologie: 1.2 };
+
+function pointsQuestion(q, fraction, resteMs, serieApres, bonus) {
+  if (fraction <= 0) return 0;
+  var base = POINTS_BASE[q.niveau] || 100;
+  var rapidite = Math.max(PLANCHER_RAPIDITE[q.type] || 1,
+                          1 + 0.5 * clamp(resteMs / (tempsTour || TEMPS_QUESTION), 0, 1));
+  var mult = serieApres >= 5 ? 2 : serieApres >= 3 ? 1.5 : 1;
+  return Math.round(base * fraction * rapidite * mult * (bonus || 1));
+}
+/* Trouver la bonne ville, ce n'est pas viser au pixel près : sur une carte du
+   monde, 150 km tiennent dans la pointe du curseur. On accorde donc le plein
+   de points dès qu'on a désigné la bonne région, puis la note décroît
+   doucement jusqu'à 500 km avant de chuter pour de bon. */
+function fractionDistance(km) {
+  if (km <= 150) return 1;
+  if (km >= 2000) return 0;
+  if (km <= 500) return 1 - 0.15 * (km - 150) / 350;   // 100 % -> 85 %
+  return 0.85 * (2000 - km) / 1500;                    //  85 % ->  0 %
+}
+
+/* =========================================================================
+   4. CHRONOMÈTRE
+   ========================================================================= */
+var chrono = { fin: 0, raf: 0, actif: false, fige: TEMPS_QUESTION, cb: null };
+
+var PERIMETRE = 2 * Math.PI * 24;      // rayon 24 dans le viewBox de l'anneau
+
+function jauge(fraction) {
+  fraction = clamp(fraction, 0, 1);
+  var arc = $('#jauge-chrono');
+  arc.style.strokeDasharray = PERIMETRE;
+  arc.style.strokeDashoffset = PERIMETRE * (1 - fraction);
+  $('#ligne-chrono').classList.toggle('urgent', fraction < 0.25);
+  var txt = String(Math.ceil(fraction * tempsTour / 1000));
+  var n = $('#chrono-txt');
+  if (n.textContent !== txt) n.textContent = txt;
+}
+
+/* pastilles : une par question, colorée selon le résultat */
+function majPastilles() {
+  var z = vide($('#pastilles'));
+
+  if (partie.survie) {                       // longueur inconnue : on montre les vies
+    for (var v = 0; v < VIES_SURVIE; v++) {
+      z.appendChild(el('span', 'vie' + (v < partie.vies ? '' : ' perdue'), '\u2665'));
+    }
+    return;
+  }
+
+  var total = partie.file.length;
+  for (var i = 0; i < total; i++) {
+    var d = el('span', 'pastille');
+    var r = partie.recap[i];
+    if (r) d.classList.add(r.passe ? 'passe' : r.juste ? 'ok' : r.partiel ? 'mi' : 'ko');
+    else if (i === partie.idx) d.classList.add('encours');
+    z.appendChild(d);
+  }
+}
+function chronoDemarrer(cb) {
+  chronoArreter();
+  chrono.fin = performance.now() + tempsTour;
+  chrono.fige = tempsTour;
+  chrono.cb = cb || null;
+  chrono.actif = true;
+  jauge(1);            // affiche tout de suite la durée allouée, sans attendre une frame
+  boucleChrono();
+}
+function boucleChrono() {
+  if (!chrono.actif) return;
+  var reste = chrono.fin - performance.now();
+  if (reste <= 0) {
+    chrono.actif = false; chrono.fige = 0; jauge(0);
+    var cb = chrono.cb; chrono.cb = null;
+    if (cb) cb();
+    return;
+  }
+  jauge(reste / tempsTour);
+  chrono.raf = requestAnimationFrame(boucleChrono);
+}
+/* En mode buzzer le chrono n'est jamais mis en pause : le temps court pour
+   tout le monde, y compris pour celui qui vient de buzzer. */
+function chronoArreter() { buzzArreter(); chrono.actif = false; cancelAnimationFrame(chrono.raf); }
+function chronoGeler() {
+  buzzGeler();
+  if (!chrono.actif) return;
+  chrono.fige = Math.max(0, chrono.fin - performance.now());
+  chrono.actif = false;
+  cancelAnimationFrame(chrono.raf);
+}
+function chronoRelancer() {
+  buzzRelancer();
+  if (chrono.actif || chrono.fige <= 0) return;
+  chrono.fin = performance.now() + chrono.fige;
+  chrono.actif = true;
+  boucleChrono();
+}
+function chronoReste() { return chrono.actif ? Math.max(0, chrono.fin - performance.now()) : chrono.fige; }
+
+/* --- fenêtre de réponse après un buzz ------------------------------------
+   Sans elle, buzzer revient à se réserver la question puis à réfléchir tout
+   à loisir : le joueur doit s'engager avant de connaître sa réponse. Ce
+   décompte est indépendant du chrono de la question, mais il se fige avec
+   lui (pause, onglet masqué). */
+var fenetreBuzz = { actif: false, fin: 0, fige: 0, raf: 0, cb: null, sec: -1 };
+
+function buzzDemarrer(cb) {
+  buzzArreter();
+  fenetreBuzz.fin = performance.now() + TEMPS_BUZZ;
+  fenetreBuzz.fige = TEMPS_BUZZ;
+  fenetreBuzz.cb = cb || null;
+  fenetreBuzz.actif = true;
+  fenetreBuzz.sec = -1;
+  boucleBuzz();
+}
+function boucleBuzz() {
+  if (!fenetreBuzz.actif) return;
+  var reste = fenetreBuzz.fin - performance.now();
+  if (reste <= 0) {
+    fenetreBuzz.actif = false; fenetreBuzz.fige = 0;
+    var cb = fenetreBuzz.cb; fenetreBuzz.cb = null;
+    if (cb) cb();
+    return;
+  }
+  afficherDecompteBuzz(reste);
+  fenetreBuzz.raf = requestAnimationFrame(boucleBuzz);
+}
+function buzzArreter() {
+  fenetreBuzz.actif = false; fenetreBuzz.cb = null; fenetreBuzz.fige = 0;
+  cancelAnimationFrame(fenetreBuzz.raf);
+}
+function buzzGeler() {
+  if (!fenetreBuzz.actif) return;
+  fenetreBuzz.fige = Math.max(0, fenetreBuzz.fin - performance.now());
+  fenetreBuzz.actif = false;
+  cancelAnimationFrame(fenetreBuzz.raf);
+}
+function buzzRelancer() {
+  if (fenetreBuzz.actif || fenetreBuzz.fige <= 0 || !fenetreBuzz.cb) return;
+  fenetreBuzz.fin = performance.now() + fenetreBuzz.fige;
+  fenetreBuzz.actif = true;
+  boucleBuzz();
+}
+/* le décompte occupe la ligne d'info : une seule écriture par seconde */
+function afficherDecompteBuzz(reste) {
+  var t = partie && partie.tour;
+  if (!t || t.buzzeur == null) return;
+  var s = Math.ceil(reste / 1000);
+  if (s === fenetreBuzz.sec) return;
+  fenetreBuzz.sec = s;
+  var j = partie.joueurs[t.buzzeur];
+  var z = vide($('#tour-info'));
+  z.appendChild(document.createTextNode(j.nom + ' — '));
+  z.appendChild(el('strong', 'decompte', s + ' s'));
+  z.appendChild(document.createTextNode(' pour répondre'));
+  z.style.color = j.couleur;
+  if (s * 1000 < TEMPS_BUZZ) Son.tic();   // pas sur la 1re, le buzz sonne deja
+}
+
+/* =========================================================================
+   5. CARTE DU MONDE (D3 + TopoJSON, projection Natural Earth)
+   ========================================================================= */
+var carteOK = false;
+var Carte = null;
+var promesseCarte = null;
+
+function chargerTopo() {
+  if (promesseCarte) return promesseCarte;
+  promesseCarte = new Promise(function (resolve) {
+    if (typeof d3 === 'undefined' || typeof topojson === 'undefined') { resolve(null); return; }
+    if (window.WORLD_TOPO) { resolve(window.WORLD_TOPO); return; }
+    d3.json(URL_TOPO).then(resolve).catch(function () { resolve(null); });
+  }).then(function (topo) {
+    if (!topo) return null;
+    try { Carte = construireCarte(topo); carteOK = true; return Carte; }
+    catch (e) { return null; }
+  });
+  return promesseCarte;
+}
+
+function construireCarte(topo) {
+  var L = 960, H = 500;
+  var geo = topojson.feature(topo, topo.objects.countries);
+
+  geo.features.forEach(function (f) {
+    var id = f.id;
+    if (id == null || id === '-99') id = CORRECTIF_ID[f.properties && f.properties.name];
+    f.__code = (id == null) ? null : code3(id);
+    if (f.__code && f.properties && f.properties.name) NOMS_EN[f.__code] = f.properties.name;
+  });
+
+  var svg = d3.create('svg').attr('viewBox', '0 0 ' + L + ' ' + H).attr('class', 'carte');
+  var racine = svg.append('g');
+  var projection = d3.geoNaturalEarth1().fitExtent([[4, 4], [L - 4, H - 4]], { type: 'Sphere' });
+  var chemin = d3.geoPath(projection);
+
+  racine.append('path').attr('class', 'fond').attr('d', chemin({ type: 'Sphere' }));
+  racine.append('path').attr('class', 'grat').attr('d', chemin(d3.geoGraticule10()));
+
+  var gPays = racine.append('g');
+  var gCalque = racine.append('g');
+  var gClics = racine.append('g');
+
+  var chemins = gPays.selectAll('path').data(geo.features).join('path')
+    .attr('class', 'pays').attr('d', chemin)
+    .each(function (d) { d.__noeud = this; });
+
+  /* Viser le Qatar ou la Belgique à l'échelle du monde relève de l'exploit. On
+     ajoute donc des cibles invisibles, en DEUX couches :
+       - en dessous, un halo de 7 px autour de chaque frontière, qui rattrape
+         les clics tombés à côté ;
+       - au-dessus, l'intérieur exact des pays, qui reste prioritaire.
+     L'ordre compte : si les halos passaient devant, celui du Luxembourg
+     recouvrirait à lui seul toute la Belgique. Dans chaque couche, les pays
+     vont du plus grand au plus petit pour que les minuscules soient au-dessus
+     de leurs voisins. */
+  var parTaille = geo.features.slice().sort(function (a, b) {
+    return chemin.area(b) - chemin.area(a);
+  });
+  var halos = gClics.selectAll('path.halo-clic').data(parTaille).join('path')
+    .attr('class', 'halo-clic').attr('d', chemin);
+  var zonesClic = gClics.selectAll('path.zone-clic').data(parTaille).join('path')
+    .attr('class', 'zone-clic').attr('d', chemin);
+
+  var transfo = d3.zoomIdentity;
+  var zoom = d3.zoom().scaleExtent([1, 40])
+    .translateExtent([[0, 0], [L, H]])
+    .on('zoom', function (ev) { transfo = ev.transform; racine.attr('transform', transfo); });
+  svg.call(zoom);
+
+  var mode = 'aucun';        // aucun | pays | multi | point
+  var selection = {};
+  var API = { node: svg.node(), surPays: null, surPoint: null, surSelection: null };
+
+  /* un clic qui suit un déplacement de carte est ignoré */
+  var depart = null, aBouge = false;
+  svg.on('pointerdown', function (ev) { depart = [ev.clientX, ev.clientY]; aBouge = false; });
+  svg.on('pointermove', function (ev) {
+    if (!depart) return;
+    if (Math.abs(ev.clientX - depart[0]) + Math.abs(ev.clientY - depart[1]) > 5) aBouge = true;
+  });
+  svg.on('pointerup', function () { depart = null; });
+
+  zonesClic.merge(halos)
+    .on('mouseenter', function (ev, d) {
+      if ((mode === 'pays' || mode === 'multi') && d.__noeud) d.__noeud.classList.add('survol');
+    })
+    .on('mouseleave', function (ev, d) {
+      if (d.__noeud) d.__noeud.classList.remove('survol');
+    })
+    .on('click', function (ev, d) {
+    if (aBouge || !d.__code) return;
+    if (mode === 'pays') { if (API.surPays) API.surPays(d.__code); }
+    else if (mode === 'multi') {
+      if (selection[d.__code]) delete selection[d.__code]; else selection[d.__code] = true;
+      chemins.classed('sel', function (f) { return !!(f.__code && selection[f.__code]); });
+      if (API.surSelection) API.surSelection(Object.keys(selection));
+    }
+  });
+
+  svg.on('click', function (ev) {
+    if (aBouge || mode !== 'point' || !API.surPoint) return;
+    var inv = transfo.invert(d3.pointer(ev, svg.node()));
+    var ll = projection.invert(inv);
+    if (!ll || !isFinite(ll[0]) || !isFinite(ll[1])) return;
+    /* un clic hors du globe peut renvoyer des coordonnées hors bornes */
+    if (Math.abs(ll[0]) > 180 || Math.abs(ll[1]) > 90) return;
+    API.surPoint([ll[1], ll[0]]);          // [lat, lon]
+  });
+
+  API.mode = function (m) {
+    mode = m;
+    svg.classed('cliquable', m === 'pays' || m === 'multi');
+    svg.classed('point', m === 'point');
+  };
+  API.reinit = function () {
+    mode = 'aucun'; selection = {};
+    chemins.attr('class', 'pays');
+    chemins.classed('survol', false);
+    gCalque.selectAll('*').remove();
+    svg.classed('cliquable', false).classed('point', false);
+    svg.call(zoom.transform, d3.zoomIdentity);
+    transfo = d3.zoomIdentity;
+    API.surPays = API.surPoint = API.surSelection = null;
+  };
+  API.marquer = function (codes, classe) {
+    var s = {};
+    (Array.isArray(codes) ? codes : [codes]).forEach(function (c) { s[code3(c)] = 1; });
+    chemins.each(function (d) {
+      if (d.__code && s[d.__code]) d3.select(this).classed('sel', false).classed(classe, true);
+    });
+  };
+  API.point = function (latlon, classe, couleur) {
+    var xy = projection([latlon[1], latlon[0]]);
+    if (!xy) return;
+    var c = gCalque.append('circle').attr('class', 'marque ' + classe)
+      .attr('cx', xy[0]).attr('cy', xy[1]).attr('r', 5);
+    if (couleur) c.style('fill', couleur);
+  };
+  API.trait = function (a, b, couleur) {
+    var p = gCalque.append('path').attr('class', 'trait')
+      .attr('d', chemin({ type: 'LineString', coordinates: [[a[1], a[0]], [b[1], b[0]]] }));
+    if (couleur) p.style('stroke', couleur);
+  };
+  API.effacerCalque = function () { gCalque.selectAll('*').remove(); };
+  API.deselectionner = function () { chemins.classed('sel', false); };
+  API.selectionUnique = function (code) {
+    var c = code == null ? null : code3(code);
+    chemins.classed('sel', function (d) { return !!(c && d.__code === c); });
+  };
+  API.recentrer = function () {
+    svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+  };
+  API.zoomer = function (facteur) {
+    svg.transition().duration(220).call(zoom.scaleBy, facteur);
+  };
+  return API;
+}
+
+/* =========================================================================
+   6. SYSTÈME SOLAIRE (SVG)
+   ========================================================================= */
+function construireSysteme(onClic) {
+  var NS = 'http://www.w3.org/2000/svg';
+  var svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'systeme');
+  svg.setAttribute('viewBox', '0 0 620 240');
+
+  function n(tag, attrs) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  var defs = n('defs');
+  var grad = n('radialGradient', { id: 'gsoleil' });
+  grad.appendChild(n('stop', { offset: '0%', 'stop-color': '#fff3c4' }));
+  grad.appendChild(n('stop', { offset: '60%', 'stop-color': '#f5a623' }));
+  grad.appendChild(n('stop', { offset: '100%', 'stop-color': '#c2660a' }));
+  defs.appendChild(grad);
+  svg.appendChild(defs);
+
+  svg.appendChild(n('circle', { cx: 6, cy: 120, r: 78, fill: 'url(#gsoleil)', opacity: '.9' }));
+  var lbl = n('text', { x: 46, y: 216, fill: '#8a94a6' });
+  lbl.textContent = 'Soleil';
+  svg.appendChild(lbl);
+
+  var halos = {};
+  var x = 140;
+  PLANETES.forEach(function (p, i) {
+    if (i > 0) x += PLANETES[i - 1].r + p.r + 26;
+    var g = n('g', { class: 'astre' });
+
+    if (p.nom === 'Saturne') {
+      g.appendChild(n('ellipse', {
+        cx: x, cy: 120, rx: p.r * 1.95, ry: p.r * 0.42,
+        fill: 'none', stroke: '#c9b887', 'stroke-width': 3,
+        transform: 'rotate(-16 ' + x + ' 120)'
+      }));
+    }
+    g.appendChild(n('circle', { cx: x, cy: 120, r: p.r, fill: p.c }));
+    var cible = n('circle', { cx: x, cy: 120, r: Math.max(p.r + 6, 18), fill: 'transparent', class: 'cible' });
+    var halo = n('circle', { cx: x, cy: 120, r: p.r + 9, class: 'halo' });
+    g.appendChild(cible);
+    g.appendChild(halo);
+    halos[p.nom] = halo;
+
+    var t = n('text', { x: x, y: 214, class: 'nom-planete', opacity: '0' });
+    t.textContent = p.nom;
+    g.appendChild(t);
+
+    g.addEventListener('click', function () { if (onClic) onClic(p.nom); });
+    svg.appendChild(g);
+  });
+
+  return {
+    node: svg,
+    halo: function (nom, classe) { if (halos[nom]) halos[nom].setAttribute('class', 'halo ' + classe); },
+    reveler: function () {
+      Array.prototype.forEach.call(svg.querySelectorAll('.nom-planete'), function (t) {
+        t.setAttribute('opacity', '1');
+      });
+    },
+    figer: function () {
+      Array.prototype.forEach.call(svg.querySelectorAll('.astre'), function (g) {
+        g.style.pointerEvents = 'none';
+      });
+    }
+  };
+}
+
+/* =========================================================================
+   7. ÉVALUATION D'UNE RÉPONSE
+   Retourne { fraction: 0..1, info: {...} }
+   ========================================================================= */
+function evaluer(q, valeur) {
+  var i, ok, bons, mauvais, attendu, km;
+  switch (q.type) {
+    case 'qcm':
+      return { fraction: valeur === q.reponse ? 1 : 0, info: {} };
+
+    case 'vrai_faux':
+      return { fraction: valeur === q.reponse ? 1 : 0, info: {} };
+
+    case 'clic_pays':
+      return { fraction: (valeur != null && code3(valeur) === code3(q.reponse)) ? 1 : 0, info: {} };
+
+    case 'multi_pays':
+      attendu = {}; q.reponse.forEach(function (c) { attendu[code3(c)] = 1; });
+      bons = 0; mauvais = 0;
+      (valeur || []).forEach(function (c) { if (attendu[code3(c)]) bons++; else mauvais++; });
+      return {
+        fraction: clamp((bons - 0.5 * mauvais) / q.reponse.length, 0, 1),
+        info: { bons: bons, mauvais: mauvais, total: q.reponse.length }
+      };
+
+    case 'distance':
+      if (!valeur) return { fraction: 0, info: { km: null } };
+      km = haversine(valeur[0], valeur[1], q.reponse[0], q.reponse[1]);
+      return { fraction: fractionDistance(km), info: { km: km } };
+
+    case 'chronologie':
+      if (!valeur) return { fraction: 0, info: { justes: 0 } };
+      ok = 0;
+      for (i = 0; i < q.reponse.length; i++) if (valeur[i] === q.reponse[i]) ok++;
+      return {
+        fraction: ok === q.reponse.length ? 1 : (ok / q.reponse.length) * 0.5,
+        info: { justes: ok, total: q.reponse.length }
+      };
+
+    case 'planete':
+      return { fraction: valeur === q.reponse ? 1 : 0, info: {} };
+  }
+  return { fraction: 0, info: {} };
+}
+
+/* texte de la bonne réponse, affiché après coup */
+function texteBonneReponse(q) {
+  switch (q.type) {
+    case 'qcm':       return 'Réponse : ' + q.choix[q.reponse];
+    case 'vrai_faux': return 'Réponse : ' + (q.reponse ? 'Vrai' : 'Faux');
+    case 'clic_pays': return 'Réponse : ' + nomPays(q.reponse);
+    case 'multi_pays':return 'Réponse : ' + liste(q.reponse.map(nomPays));
+    case 'distance':  return 'Le point exact est marqué en vert sur la carte.';
+    case 'chronologie': return 'Ordre exact : ' + q.reponse.map(function (i, r) {
+                          return (r + 1) + '. ' + q.choix[i];
+                        }).join('  •  ');
+    case 'planete':   return 'Réponse : ' + q.reponse;
+  }
+  return '';
+}
+
+/* =========================================================================
+   8. AFFICHAGE D'UNE QUESTION
+   Appelle repondre(valeur) quand le joueur valide.
+   Retourne un objet { reveler(valeurJoueur), figer() }
+   ========================================================================= */
+
+function afficherQuestion(q, repondre, opts) {
+  opts = opts || {};
+  var zone = vide($('#zone-reponse'));
+  var texte = q.question;
+
+  var tq = $('#texte-question');
+  tq.textContent = texte;
+  tq.classList.toggle('compacte', !!TYPES_CARTE[q.type]);
+  /* relance l'animation d'entrée : sans cela le texte change sans transition */
+  tq.style.animation = 'none';
+  void tq.offsetWidth;
+  tq.style.animation = '';
+
+  if (partie && partie.saisie && saisissable(q)) return rendreSaisie(zone, q, repondre);
+
+  switch (q.type) {
+    case 'qcm':       return rendreChoix(zone, q, repondre);
+    case 'vrai_faux': return rendreVraiFaux(zone, q, repondre);
+    case 'clic_pays': return rendreClicPays(zone, q, repondre, opts);
+    case 'multi_pays':return rendreMultiPays(zone, q, repondre, opts);
+    case 'distance':  return rendreDistance(zone, q, repondre, opts);
+    case 'chronologie': return rendreChronologie(zone, q, repondre);
+    case 'planete':   return rendrePlanete(zone, q, repondre);
+  }
+  return { reveler: function () {}, figer: function () {} };
+}
+
+/* --- réponse tapée ------------------------------------------------------- */
+/* On convertit la saisie en index de choix : tout l'aval du moteur (score,
+   série, révélation) fonctionne alors exactement comme pour un QCM. */
+function rendreSaisie(zone, q, repondre) {
+  var attendu = q.choix[q.reponse];
+  var f = el('form', 'saisie');
+  var champ = document.createElement('input');
+  champ.type = 'text';
+  champ.autocomplete = 'off';
+  champ.spellcheck = false;
+  champ.placeholder = /^[0-9]+$/.test(normaliser(attendu)) ? 'Un nombre…' : 'Votre réponse…';
+  champ.setAttribute('aria-label', 'Votre réponse');
+  var valider = el('button', 'btn btn-principal', 'Valider');
+  valider.type = 'submit';
+  f.appendChild(champ);
+  f.appendChild(valider);
+
+  var envoye = false;
+  f.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    if (envoye || !champ.value.trim()) return;
+    envoye = true;
+    repondre(reponseTapeeJuste(champ.value, attendu) ? q.reponse : -1);
+  });
+  zone.appendChild(f);
+  zone.appendChild(el('p', 'aide-carte',
+    'Accents, majuscules et petites fautes de frappe sont tolérés. ' +
+    'Réponse tapée : points majorés de ' + Math.round((BONUS_SAISIE - 1) * 100) + ' %.'));
+
+  if (!partie || partie.mode !== 'buzzer') setTimeout(function () { try { champ.focus(); } catch (e) {} }, 30);
+
+  return {
+    champ: champ,
+    figer: function () { champ.disabled = true; valider.disabled = true; },
+    reveler: function (v) {
+      var juste = (v === q.reponse);
+      f.classList.add(juste ? 'ok' : 'ko');
+      if (!juste && champ.value.trim()) {
+        zone.appendChild(el('p', 'saisie-rappel', 'Vous avez écrit : « ' + champ.value.trim() + ' »'));
+      }
+    }
+  };
+}
+
+/* --- QCM ---------------------------------------------------------------- */
+var RE_EMOJI_SEUL = /^[\u{1F1E6}-\u{1F1FF}]{2}$/u;
+
+/* Les banques sont écrites avec la bonne réponse en premier, pour rester
+   lisibles. C'est donc ICI qu'on brasse les propositions : sans cela, la
+   réponse serait toujours en haut à gauche et le jeu se devinerait sans
+   rien savoir. « ordre[position affichée] = index d'origine ». */
+function rendreChoix(zone, q, repondre) {
+  var grille = el('div', 'choix');
+  var emoji = q.choix.every(function (t) { return RE_EMOJI_SEUL.test(t); });
+  var ordre = melanger(q.choix.map(function (_, i) { return i; }));
+
+  var boutons = ordre.map(function (origine, pos) {
+    var b = el('button', 'choix-btn' + (emoji ? ' emoji' : ''));
+    b.type = 'button';
+    if (!emoji) b.appendChild(el('span', 'cle', String(pos + 1)));
+    b.appendChild(el('span', 'lib', q.choix[origine]));
+    b.addEventListener('click', function () { repondre(origine); });
+    grille.appendChild(b);
+    return b;
+  });
+  zone.appendChild(grille);
+
+  return {
+    raccourcis: boutons,                       // dans l'ordre affiché
+    /* combien de mauvaises propositions restent en lice (pour le 50/50) */
+    restantes: function () {
+      return boutons.filter(function (b) { return !b.disabled; }).length;
+    },
+    retirer: function (combien) {              // joker 50/50
+      var candidats = [];
+      boutons.forEach(function (b, pos) {
+        if (!b.disabled && ordre[pos] !== q.reponse) candidats.push(b);
+      });
+      melanger(candidats).slice(0, combien).forEach(function (b) {
+        b.disabled = true;
+        b.classList.add('retiree');
+      });
+    },
+    figer: function () { boutons.forEach(function (b) { b.disabled = true; }); },
+    eliminer: function (v) {                   // v est un index d'origine
+      var b = boutons[ordre.indexOf(v)];
+      if (b) { b.disabled = true; b.classList.add('elimine'); }
+    },
+    reveler: function (v) {
+      boutons.forEach(function (b, pos) {
+        var origine = ordre[pos];
+        var tente = b.classList.contains('elimine');
+        b.classList.remove('elimine');
+        b.classList.remove('retiree');
+        if (origine === q.reponse) b.classList.add('ok');
+        else if (origine === v || tente) b.classList.add('ko');
+        else b.classList.add('pale');
+      });
+    }
+  };
+}
+
+/* --- vrai / faux -------------------------------------------------------- */
+function rendreVraiFaux(zone, q, repondre) {
+  var grille = el('div', 'choix vf');
+  var opts = [['Vrai', true], ['Faux', false]];
+  var boutons = opts.map(function (o, i) {
+    var b = el('button', 'choix-btn');
+    b.type = 'button';
+    b.appendChild(el('span', 'cle', String(i + 1)));
+    b.appendChild(el('span', 'lib', o[0]));
+    b.addEventListener('click', function () { repondre(o[1]); });
+    grille.appendChild(b);
+    return b;
+  });
+  zone.appendChild(grille);
+  return {
+    raccourcis: boutons,
+    figer: function () { boutons.forEach(function (b) { b.disabled = true; }); },
+    eliminer: function (v) {
+      var b = boutons[v === true ? 0 : 1];
+      if (b) { b.disabled = true; b.classList.add('elimine'); }
+    },
+    reveler: function (v) {
+      boutons.forEach(function (b, i) {
+        var tente = b.classList.contains('elimine');
+        b.classList.remove('elimine');
+        if (opts[i][1] === q.reponse) b.classList.add('ok');
+        else if (opts[i][1] === v || tente) b.classList.add('ko');
+        else b.classList.add('pale');
+      });
+    }
+  };
+}
+
+/* --- entête commune aux questions de carte ------------------------------ */
+function chapeauCarte(zone, aide) {
+  var tete = el('div', 'chapeau-carte bloc-carte');
+  tete.appendChild(el('span', 'aide-carte', aide));
+  var outilsCarte = el('div', 'zoom-carte');
+  var moins = el('button', 'btn btn-mini rond-zoom', '−');
+  moins.type = 'button'; moins.title = 'Dézoomer';
+  moins.addEventListener('click', function () { if (Carte) Carte.zoomer(1 / 1.8); });
+  var plus = el('button', 'btn btn-mini rond-zoom', '+');
+  plus.type = 'button'; plus.title = 'Zoomer';
+  plus.addEventListener('click', function () { if (Carte) Carte.zoomer(1.8); });
+  var reset = el('button', 'btn btn-mini', 'Recentrer');
+  reset.type = 'button';
+  reset.addEventListener('click', function () { if (Carte) Carte.recentrer(); });
+  outilsCarte.appendChild(moins);
+  outilsCarte.appendChild(plus);
+  outilsCarte.appendChild(reset);
+  tete.appendChild(outilsCarte);
+  zone.appendChild(tete);
+  return tete;
+}
+
+/* --- clic sur un pays --------------------------------------------------- */
+function rendreClicPays(zone, q, repondre, opts) {
+  chapeauCarte(zone, 'Cliquez un pays, puis validez. Molette ou pincement pour zoomer, glisser pour déplacer.');
+  Carte.reinit();
+  zone.appendChild(Carte.node);
+  Carte.mode('pays');
+
+  /* un clic ne valide plus directement : il sélectionne, et reste rattrapable.
+     Un clic parti de travers coûtait la question. */
+  var outils = el('div', 'outils bloc-carte');
+  var valider = el('button', 'btn btn-principal', opts.libelleValider || 'Valider');
+  valider.type = 'button';
+  valider.disabled = true;
+  var compteur = el('span', 'compteur', 'Aucun pays sélectionné');
+  var choisi = null;
+
+  Carte.surPays = function (code) {
+    choisi = code;
+    Carte.selectionUnique(code);
+    valider.disabled = false;
+    compteur.textContent = 'Sélection : ' + nomPays(code);
+  };
+  valider.addEventListener('click', function () { if (choisi != null) repondre(choisi); });
+  outils.appendChild(valider);
+  outils.appendChild(compteur);
+  zone.appendChild(outils);
+
+  return {
+    eliminer: function (v) { if (v != null) Carte.marquer(v, 'ko'); },
+    figer: function () { Carte.mode('aucun'); Carte.surPays = null; valider.disabled = true; },
+    reveler: function (v) {
+      Carte.deselectionner();
+      Carte.marquer(q.reponse, 'ok');
+      if (v != null && code3(v) !== code3(q.reponse)) Carte.marquer(v, 'ko');
+    }
+  };
+}
+
+/* --- sélection multiple ------------------------------------------------- */
+function rendreMultiPays(zone, q, repondre, opts) {
+  chapeauCarte(zone, 'Sélectionnez plusieurs pays, puis validez. Un pays sélectionné par erreur coûte des points.');
+  Carte.reinit();
+  zone.appendChild(Carte.node);
+  Carte.mode('multi');
+
+  var outils = el('div', 'outils bloc-carte');
+  var compteur = el('span', 'compteur', '0 pays sélectionné');
+  var valider = el('button', 'btn btn-principal', opts.libelleValider || 'Valider');
+  valider.type = 'button';
+  var courant = [];
+  Carte.surSelection = function (codes) {
+    courant = codes;
+    compteur.textContent = codes.length + ' pays sélectionné' + (codes.length > 1 ? 's' : '');
+  };
+  valider.addEventListener('click', function () { repondre(courant.slice()); });
+  outils.appendChild(valider);
+  outils.appendChild(compteur);
+  zone.appendChild(outils);
+
+  return {
+    figer: function () { Carte.mode('aucun'); Carte.surSelection = null; valider.disabled = true; },
+    reveler: function (v) {
+      var attendu = {}; q.reponse.forEach(function (c) { attendu[code3(c)] = 1; });
+      Carte.deselectionner();
+      Carte.marquer(q.reponse, 'ok');
+      (v || []).forEach(function (c) { if (!attendu[code3(c)]) Carte.marquer(c, 'ko'); });
+    }
+  };
+}
+
+/* --- distance ----------------------------------------------------------- */
+function rendreDistance(zone, q, repondre, opts) {
+  chapeauCarte(zone, 'Cliquez un point sur la carte, puis validez. — Moins de 150 km suffit pour le plein de points.');
+  Carte.reinit();
+  zone.appendChild(Carte.node);
+  Carte.mode('point');
+
+  var outils = el('div', 'outils bloc-carte');
+  var valider = el('button', 'btn btn-principal', opts.libelleValider || 'Valider');
+  valider.type = 'button';
+  valider.disabled = true;
+  var compteur = el('span', 'compteur', 'Aucun point placé');
+  var point = null;
+
+  Carte.surPoint = function (latlon) {
+    point = latlon;
+    Carte.effacerCalque();
+    Carte.point(latlon, 'joueur');
+    valider.disabled = false;
+    compteur.textContent = 'Point placé : ' + latlon[0].toFixed(1) + '°, ' + latlon[1].toFixed(1) + '°';
+  };
+  valider.addEventListener('click', function () { repondre(point); });
+  outils.appendChild(valider);
+  outils.appendChild(compteur);
+  zone.appendChild(outils);
+
+  return {
+    figer: function () { Carte.mode('aucun'); Carte.surPoint = null; valider.disabled = true; },
+    reveler: function (v) {
+      Carte.point(q.reponse, 'vrai');
+      if (v) Carte.trait(v, q.reponse);
+    }
+  };
+}
+
+/* --- chronologie -------------------------------------------------------- */
+function rendreChronologie(zone, q, repondre) {
+  var ordre = melanger(q.choix.map(function (_, i) { return i; }));
+  /* on évite de tomber par hasard sur l'ordre exact */
+  if (ordre.every(function (v, i) { return v === q.reponse[i]; })) ordre.reverse();
+
+  var ul = el('ul', 'chrono-liste');
+  var lignes = [];
+
+  function redessiner() {
+    vide(ul);
+    ordre.forEach(function (idxOriginal, pos) {
+      var li = el('li', 'chrono-item');
+      li.draggable = true;
+      li.appendChild(el('span', 'rang', String(pos + 1)));
+      li.appendChild(el('span', 'lib', q.choix[idxOriginal]));
+
+      var fl = el('div', 'fleches');
+      var haut = el('button', null, '▲'); haut.type = 'button'; haut.disabled = pos === 0;
+      var bas = el('button', null, '▼'); bas.type = 'button'; bas.disabled = pos === ordre.length - 1;
+      haut.addEventListener('click', function () { bouger(pos, pos - 1); });
+      bas.addEventListener('click', function () { bouger(pos, pos + 1); });
+      fl.appendChild(haut); fl.appendChild(bas);
+      li.appendChild(fl);
+
+      li.addEventListener('dragstart', function (e) {
+        li.classList.add('drag');
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', String(pos)); } catch (err) {}
+      });
+      li.addEventListener('dragend', function () { li.classList.remove('drag'); });
+      li.addEventListener('dragover', function (e) { e.preventDefault(); });
+      li.addEventListener('drop', function (e) {
+        e.preventDefault();
+        var src = parseInt(e.dataTransfer.getData('text/plain'), 10);
+        if (!isNaN(src)) bouger(src, pos);
+      });
+
+      ul.appendChild(li);
+      lignes[pos] = li;
+    });
+  }
+  function bouger(de, vers) {
+    if (vers < 0 || vers >= ordre.length) return;
+    var x = ordre.splice(de, 1)[0];
+    ordre.splice(vers, 0, x);
+    redessiner();
+  }
+  redessiner();
+  zone.appendChild(ul);
+
+  var outils = el('div', 'outils');
+  var valider = el('button', 'btn btn-principal', 'Valider l’ordre');
+  valider.type = 'button';
+  valider.addEventListener('click', function () { repondre(ordre.slice()); });
+  outils.appendChild(valider);
+  outils.appendChild(el('span', 'compteur', 'Du plus ancien (en haut) au plus récent.'));
+  zone.appendChild(outils);
+
+  return {
+    figer: function () {
+      valider.disabled = true;
+      Array.prototype.forEach.call(ul.querySelectorAll('button'), function (b) { b.disabled = true; });
+      Array.prototype.forEach.call(ul.querySelectorAll('.chrono-item'), function (li) { li.draggable = false; });
+    },
+    reveler: function () {
+      Array.prototype.forEach.call(ul.querySelectorAll('.chrono-item'), function (li, pos) {
+        li.classList.add(ordre[pos] === q.reponse[pos] ? 'ok' : 'ko');
+      });
+    }
+  };
+}
+
+/* --- planète ------------------------------------------------------------ */
+function rendrePlanete(zone, q, repondre) {
+  var sys = construireSysteme(function (nom) { repondre(nom); });
+  zone.appendChild(sys.node);
+  zone.appendChild(el('p', 'aide-carte', 'Cliquez la planète correspondante. Les tailles sont stylisées, pas à l’échelle.'));
+  return {
+    eliminer: function (v) { if (v) sys.halo(v, 'ko'); },
+    figer: function () { sys.figer(); },
+    reveler: function (v) {
+      sys.reveler();
+      sys.halo(q.reponse, 'ok');
+      if (v && v !== q.reponse) sys.halo(v, 'ko');
+    }
+  };
+}
+
+/* =========================================================================
+   9. DÉROULEMENT D'UNE PARTIE
+   ========================================================================= */
+function creerJoueurs() {
+  var arr = [];
+  for (var i = 0; i < config.nb; i++) {
+    arr.push({
+      i: i,
+      nom: (config.noms[i] || '').trim() || ('Joueur ' + (i + 1)),
+      couleur: COULEURS[i], ombre: OMBRES[i],
+      score: 0, bonnes: 0, repondues: 0, serie: 0, meilleure: 0,
+      jokers: { moitie: true, temps: true, passer: true }
+    });
+  }
+  return arr;
+}
+
+function lancerPartie(spec) {
+  var joueurs = creerJoueurs();
+  var mode = (joueurs.length > 1) ? spec.mode : 'tour';
+  var file;
+
+  if (mode === 'buzzer') {
+    file = spec.questions.slice(0, NB_QUESTIONS).map(function (q) { return { q: q }; });
+  } else {
+    file = spec.questions.map(function (q, k) { return { q: q, joueur: k % joueurs.length }; });
+  }
+
+  partie = {
+    joueurs: joueurs,
+    mode: mode,
+    file: file,
+    idx: -1,
+    tour: null,
+    saisie: !!config.saisie,
+    mise: !!config.mise && mode !== 'buzzer',
+    survie: !!spec.survie,
+    vies: VIES_SURVIE,
+    utilisees: {},
+    recap: [],
+    elimination: joueurs.length > 1 && !!config.elimination,
+    depuis: 0,            // manches jouées depuis la dernière élimination
+    nbSorties: 0,
+    annonce: null,
+    cle: spec.cle,
+    defi: spec.defi || null,
+    libelle: spec.libelle,
+    ids: spec.questions.map(function (q) { return q.id; })
+  };
+
+  ecran('jeu');
+  majScores();
+  vide($('#pastilles'));
+  compteARebours(function () { tourSuivant(); });
+}
+
+/* En survie la partie n'a pas de longueur : on tire la question suivante au
+   moment où elle est nécessaire, en durcissant au fur et à mesure. */
+function questionSurvie() {
+  var n = partie.file.length;
+  var niveau = n < 5 ? 1 : n < 12 ? 2 : 3;
+  var libre = function (q) { return !partie.utilisees[q.id]; };
+  var base = pool('toutes', niveau).filter(libre);
+  if (!base.length) base = pool('toutes', 0).filter(libre);
+  if (!base.length) return null;
+  var q = melanger(base)[0];
+  partie.utilisees[q.id] = 1;
+  partie.ids.push(q.id);
+  return q;
+}
+
+function survivants() {
+  return partie.joueurs.filter(function (j) { return !j.elimine; });
+}
+
+function tourSuivant() {
+  partie.idx++;
+
+  if (partie.survie) {
+    if (partie.vies <= 0) { finPartie(); return; }
+    if (partie.idx >= partie.file.length) {
+      var suivante = questionSurvie();
+      if (!suivante) { finPartie(); return; }
+      partie.file.push({ q: suivante, joueur: 0 });
+    }
+    demarrerTour();
+    return;
+  }
+
+  /* en tour par tour, les questions destinées à un éliminé sont sautées */
+  while (partie.idx < partie.file.length) {
+    var e = partie.file[partie.idx];
+    if (e.joueur == null || !partie.joueurs[e.joueur].elimine) break;
+    partie.idx++;
+  }
+  if (partie.idx >= partie.file.length) { finPartie(); return; }
+  if (partie.elimination && survivants().length <= 1) { finPartie(); return; }
+  demarrerTour();
+}
+
+/* Toutes les PAS_ELIMINATION manches, le dernier au score quitte la partie. */
+function mancheJouee() {
+  partie.annonce = null;
+  if (!partie.elimination) return;
+  var vivants = survivants();
+  if (vivants.length <= 1) return;
+  partie.depuis++;
+  var seuil = (partie.mode === 'buzzer') ? PAS_ELIMINATION : PAS_ELIMINATION * vivants.length;
+  if (partie.depuis < seuil) return;
+  partie.depuis = 0;
+
+  var mini = Math.min.apply(null, vivants.map(function (j) { return j.score; }));
+  var derniers = vivants.filter(function (j) { return j.score === mini; });
+
+  /* Un seul joueur sort par manche : en buzzer, ceux qui n'ont pas encore buzzé
+     sont tous à égalité, et les éliminer d'un bloc viderait la partie en trois
+     questions. On départage donc les ex æquo au nombre de bonnes réponses, puis
+     au nombre de questions tentées, et enfin au sort. */
+  var departage = false;
+  if (derniers.length > 1) {
+    departage = true;
+    derniers.sort(function (a, b) {
+      if (a.bonnes !== b.bonnes) return a.bonnes - b.bonnes;
+      if (a.repondues !== b.repondues) return a.repondues - b.repondues;
+      return Math.random() - 0.5;
+    });
+  }
+
+  var sortant = derniers[0];
+  sortant.elimine = true;
+  sortant.rangSortie = ++partie.nbSorties;
+  var restants = survivants();
+  partie.annonce = 'Éliminé : ' + sortant.nom +
+    (departage ? ' (départagé au nombre de bonnes réponses)' : '') +
+    (restants.length > 1 ? '  ·  ' + restants.length + ' joueurs encore en lice'
+                         : '  ·  ' + restants[0].nom + ' l’emporte');
+}
+
+function demarrerTour() {
+  var entree = partie.file[partie.idx];
+  var q = entree.q;
+  var genre;
+  if (partie.mode === 'buzzer') genre = TYPES_SANS_BUZZ[q.type] ? 'sequentiel' : 'buzzer';
+  else genre = 'solo';
+
+  partie.tour = {
+    q: q,
+    genre: genre,
+    bonus: (partie.saisie && saisissable(q)) ? BONUS_SAISIE : 1,
+    facteur: 1,
+    joueur: (entree.joueur != null) ? entree.joueur : null,
+    ordre: partie.joueurs.map(function (j) { return j.i; }),
+    pos: 0,
+    resultats: [],
+    bloques: {},
+    buzzeur: null,
+    widget: null,
+    termine: false
+  };
+
+  tempsTour = tempsDe(q, partie.saisie && saisissable(q));
+  teinter(q.categorie);
+  partie.joueurs.forEach(function (j) { j.gain = 0; });
+
+  $('#zone-feedback').hidden = true;
+  $('#badge-cat').textContent = NOM_CAT[q.categorie] || q.categorie;
+  $('#badge-niveau').textContent = NOM_NIVEAU[q.niveau] || '';
+  $('#badge-niveau').className = 'badge n' + q.niveau;
+  $('#progression').textContent = partie.survie
+    ? 'Question ' + (partie.idx + 1) + '  ·  record ' + lire('cg.survie', 0)
+    : 'Question ' + (partie.idx + 1) + ' / ' + partie.file.length;
+  majPastilles();
+  majRaccourcis(q);
+  vide($('#zone-jokers'));
+
+  if (genre === 'solo') demarrerSolo();
+  else if (genre === 'buzzer') demarrerBuzzer();
+  else demarrerSequentiel();
+
+  majScores();
+  remonter();
+}
+
+/* --- un joueur désigné répond -------------------------------------------- */
+function demarrerSolo() {
+  var t = partie.tour;
+  var j = partie.joueurs[t.joueur];
+  vide($('#zone-buzzers'));
+  $('#tour-info').textContent = partie.joueurs.length > 1 ? ('Au tour de ' + j.nom) : '';
+  $('#tour-info').style.color = partie.joueurs.length > 1 ? j.couleur : '';
+
+  if (partie.mise) { demanderMise(j); return; }
+  lancerQuestionSolo(j);
+}
+
+/* On cache l'énoncé : parier en le connaissant n'aurait aucun intérêt. */
+function demanderMise(j) {
+  var t = partie.tour;
+  var q = t.q;
+  vide($('#zone-jokers'));
+  $('#texte-question').textContent = (NOM_CAT[q.categorie] || q.categorie) + ', niveau ' +
+    (NOM_NIVEAU[q.niveau] || '').toLowerCase() + '. Combien misez-vous ?';
+  $('#texte-question').classList.remove('compacte');
+  jauge(1);
+
+  var z = vide($('#zone-reponse'));
+  var g = el('div', 'mises');
+  MISES.forEach(function (m) {
+    var b = el('button', 'mise-btn');
+    b.type = 'button';
+    b.appendChild(el('span', 'm-f', '×' + m.f));
+    b.appendChild(el('span', 'm-nom', m.nom));
+    b.appendChild(el('span', 'm-detail', m.detail));
+    b.addEventListener('click', function () {
+      t.facteur = m.f;
+      lancerQuestionSolo(j);
+    });
+    g.appendChild(b);
+  });
+  z.appendChild(g);
+}
+
+function lancerQuestionSolo(j) {
+  var t = partie.tour;
+  t.widget = afficherQuestion(t.q, function (valeur) {
+    conclure([{ joueur: j.i, valeur: valeur, reste: chronoReste() }]);
+  }, {});
+  if (t.facteur > 1) {
+    $('#tour-info').textContent = (partie.joueurs.length > 1 ? j.nom + ' — ' : '') +
+      'mise ×' + t.facteur;
+    $('#tour-info').style.color = 'var(--ac)';
+  }
+  chronoDemarrer(function () { conclure([{ joueur: j.i, valeur: undefined, reste: 0 }]); });
+  dessinerJokers();
+}
+
+/* --- tout le monde voit la question, le premier qui buzze répond ---------- */
+function demarrerBuzzer() {
+  var t = partie.tour;
+  $('#tour-info').textContent = 'Buzzez — ' + (TEMPS_BUZZ / 1000) +
+    ' s pour répondre, sinon ' + MALUS_EXPIRE + ' pts';
+  $('#tour-info').style.color = 'var(--accent)';
+
+  t.widget = afficherQuestion(t.q, function (valeur) {
+    if (t.buzzeur == null) return;
+    reponseBuzzer(t.buzzeur, valeur);
+  }, {});
+  /* la zone reste montée mais inerte tant que personne n'a buzzé */
+  desactiverZone(true);
+  dessinerBuzzers();
+  chronoDemarrer(function () { conclure(t.resultats); });
+}
+
+function dessinerBuzzers() {
+  var t = partie.tour;
+  var z = vide($('#zone-buzzers'));
+  if (!t || t.genre !== 'buzzer' || t.termine) return;
+  var barre = el('div', 'buzzers');
+  partie.joueurs.forEach(function (j) {
+    var b = el('button', 'buzz-btn');
+    b.type = 'button';
+    b.style.setProperty('--c', j.couleur);
+    b.style.setProperty('--cb', j.ombre);
+    b.appendChild(document.createTextNode(j.nom));
+    b.appendChild(el('small', null, 'touche ' + TOUCHES_BUZZ[j.i].toUpperCase()));
+    b.disabled = t.bloques[j.i] || t.buzzeur != null;
+    b.addEventListener('click', function () { buzzer(j.i); });
+    barre.appendChild(b);
+  });
+  z.appendChild(barre);
+}
+
+function buzzer(idx) {
+  var t = partie.tour;
+  if (!t || t.genre !== 'buzzer' || t.termine) return;
+  if (t.buzzeur != null || t.bloques[idx]) return;
+  t.buzzeur = idx;
+  Son.buzz();
+  desactiverZone(false);
+  dessinerBuzzers();
+  majScores();
+  /* le compte à rebours part immédiatement : on buzze pour répondre, pas
+     pour se réserver le temps de réfléchir */
+  buzzDemarrer(function () { expirationBuzz(idx); });
+}
+
+function reponseBuzzer(idx, valeur) {
+  var t = partie.tour;
+  buzzArreter();
+  var res = evaluer(t.q, valeur);
+  t.resultats.push({ joueur: idx, valeur: valeur, reste: chronoReste(), fraction: res.fraction });
+
+  if (res.fraction >= 1) { conclure(t.resultats); return; }
+
+  /* mauvaise réponse : malus, joueur bloqué, les autres peuvent reprendre la main */
+  var j = partie.joueurs[idx];
+  j.score += MALUS_BUZZ;
+  j.gain = MALUS_BUZZ;
+  j.serie = 0;
+  j.repondues++;
+  Son.mauvais();
+  t.bloques[idx] = true;
+  t.buzzeur = null;
+  t.resultats[t.resultats.length - 1].malus = true;
+
+  /* la mauvaise proposition est retirée du jeu pour les suivants */
+  if (t.widget && t.widget.eliminer) t.widget.eliminer(valeur);
+
+  var restants = partie.joueurs.filter(function (p) { return !t.bloques[p.i]; });
+  if (!restants.length) { conclure(t.resultats); return; }
+
+  desactiverZone(true);
+  $('#tour-info').textContent = j.nom + ' se trompe (' + MALUS_BUZZ + ' pts) — les autres peuvent buzzer';
+  $('#tour-info').style.color = 'var(--ko)';
+  dessinerBuzzers();
+  majScores();
+}
+
+/* Le temps imparti s'écoule sans réponse : même sanction qu'une erreur.
+   Sans quoi buzzer au hasard resterait gratuit, et permettrait même de
+   bloquer la question aux autres. */
+function expirationBuzz(idx) {
+  var t = partie.tour;
+  if (!t || t.termine || t.buzzeur !== idx) return;
+  var j = partie.joueurs[idx];
+
+  t.resultats.push({ joueur: idx, valeur: undefined, reste: chronoReste(),
+                     fraction: 0, malus: true });
+  j.score += MALUS_EXPIRE;
+  j.gain = MALUS_EXPIRE;
+  j.serie = 0;
+  j.repondues++;
+  Son.mauvais();
+  t.bloques[idx] = true;
+  t.buzzeur = null;
+
+  var restants = partie.joueurs.filter(function (p) { return !t.bloques[p.i]; });
+  if (!restants.length) { conclure(t.resultats); return; }
+
+  desactiverZone(true);
+  $('#tour-info').textContent = j.nom + ' n’a pas répondu à temps (' +
+    MALUS_EXPIRE + ' pts) — les autres peuvent buzzer';
+  $('#tour-info').style.color = 'var(--ko)';
+  dessinerBuzzers();
+  majScores();
+}
+
+/* --- distance et sélection multiple en mode buzzer : chacun son tour ------ */
+function demarrerSequentiel() {
+  vide($('#zone-buzzers'));
+  etapeSequentielle();
+}
+
+function etapeSequentielle() {
+  var t = partie.tour;
+  if (t.pos >= t.ordre.length) { conclure(t.resultats); return; }
+  var j = partie.joueurs[t.ordre[t.pos]];
+
+  $('#tour-info').textContent = 'Chacun son tour — ' + j.nom + ' (' + (t.pos + 1) + '/' + t.ordre.length + '). Le plus précis marque.';
+  $('#tour-info').style.color = j.couleur;
+  majScores();
+
+  t.widget = afficherQuestion(t.q, function (valeur) {
+    enregistrerEtape(j.i, valeur, chronoReste());
+  }, { libelleValider: 'Valider (' + j.nom + ')' });
+
+  remonter();
+  chronoDemarrer(function () { enregistrerEtape(j.i, undefined, 0); });
+}
+
+function enregistrerEtape(idx, valeur, reste) {
+  var t = partie.tour;
+  chronoArreter();
+  var res = evaluer(t.q, valeur);
+  t.resultats.push({ joueur: idx, valeur: valeur, reste: reste, fraction: res.fraction });
+  t.pos++;
+  if (t.pos >= t.ordre.length) conclure(t.resultats);
+  else etapeSequentielle();
+}
+
+/* --- fin de tour : points, révélation, explication ------------------------ */
+function conclure(resultats) {
+  var t = partie.tour;
+  if (t.termine) return;
+  t.termine = true;
+  chronoArreter();
+  vide($('#zone-buzzers'));
+  if (t.widget) t.widget.figer();
+  desactiverZone(false);
+
+  vide($('#zone-jokers'));
+  var q = t.q;
+  var lignes = [];
+  var auMoinsUn = false;
+
+  /* question passée : ni points, ni malus, et la série n'est pas rompue */
+  if (t.passe) {
+    if (t.widget) t.widget.reveler(undefined);
+    partie.recap.push({ q: q, juste: false, passe: true });
+    majPastilles();
+    Son.partiel();
+    var vp = $('#verdict');
+    vp.className = 'verdict mi';
+    vp.textContent = 'Question passée';
+    vp.insertBefore(frimousse('mi'), vp.firstChild);
+    $('#zone-feedback').className = 'feedback est-mi';
+    $('#bonne-reponse').textContent = texteBonneReponse(q);
+    $('#explication').textContent = q.explication || '';
+    $('#annonce').hidden = true;
+    $('#zone-feedback').hidden = false;
+    $('#btn-suivant').textContent = (partie.idx + 1 >= partie.file.length) ? 'Voir le classement' : 'Suivant';
+    try { $('#btn-suivant').focus({ preventScroll: true }); } catch (e) { $('#btn-suivant').focus(); }
+    majScores();
+    return;
+  }
+
+  if (t.genre === 'sequentiel') {
+    var meilleur = 0;
+    resultats.forEach(function (r) { if (r.fraction > meilleur) meilleur = r.fraction; });
+    resultats.forEach(function (r) {
+      var j = partie.joueurs[r.joueur];
+      var gagne = (meilleur > 0 && r.fraction === meilleur);
+      var pts = gagne ? appliquer(j, q, r.fraction, r.reste) : appliquer(j, q, 0, 0);
+      if (gagne && r.fraction >= 1) auMoinsUn = true;
+      lignes.push({ joueur: j, pts: pts, fraction: r.fraction, gagne: gagne, valeur: r.valeur });
+    });
+    /* le meilleur essai sert de référence pour la révélation */
+    var champion = null;
+    resultats.forEach(function (r) {
+      if (champion == null && meilleur > 0 && r.fraction === meilleur && r.valeur) champion = r;
+    });
+    if (carteOK) Carte.effacerCalque();
+    if (q.type === 'distance') {
+      /* chaque essai est relié au point exact dans la couleur de son joueur ;
+         le point exact est tracé en dernier pour rester au-dessus */
+      if (carteOK) {
+        resultats.forEach(function (r) {
+          if (!r.valeur) return;
+          var coul = partie.joueurs[r.joueur].couleur;
+          Carte.trait(r.valeur, q.reponse, coul);
+          Carte.point(r.valeur, 'joueur', coul);
+        });
+      }
+      if (t.widget) t.widget.reveler(undefined);
+    } else if (t.widget) {
+      t.widget.reveler(champion ? champion.valeur : undefined);
+    }
+  } else {
+    resultats.forEach(function (r) {
+      var j = partie.joueurs[r.joueur];
+      if (r.malus) { lignes.push({ joueur: j, pts: MALUS_BUZZ, fraction: 0, valeur: r.valeur }); return; }
+      /* en solo la fraction n'a pas encore été calculée */
+      var f = (r.fraction != null) ? r.fraction : evaluer(q, r.valeur).fraction;
+      var pts = appliquer(j, q, f, r.reste);
+      if (f >= 1) auMoinsUn = true;
+      lignes.push({ joueur: j, pts: pts, fraction: f, valeur: r.valeur });
+    });
+    if (!resultats.length && t.genre === 'solo') {
+      var jj = partie.joueurs[t.joueur];
+      appliquer(jj, q, 0, 0);
+      lignes.push({ joueur: jj, pts: 0, fraction: 0, valeur: undefined });
+    }
+    var vu = resultats.length ? resultats[resultats.length - 1].valeur : undefined;
+    if (t.widget) t.widget.reveler(vu);
+  }
+
+  partie.recap.push({
+    q: q, juste: auMoinsUn,
+    partiel: !auMoinsUn && lignes.some(function (l) { return l.fraction > 0; })
+  });
+  majPastilles();
+  if (partie.survie && !auMoinsUn) partie.vies--;
+  majRates(q, auMoinsUn);
+  majVues(q, auMoinsUn);
+  oublierCacheVues();
+  if (auMoinsUn) {
+    Son.bon();
+    vibrer(30);
+    var cc = COULEUR_CAT[q.categorie] || COULEUR_CAT.toutes;
+    confettis([cc[0], '#FFC531', '#FFFFFF', cc[1]]);
+  } else if (lignes.some(function (l) { return l.fraction > 0; })) {
+    Son.partiel();
+  } else {
+    Son.mauvais();
+    vibrer([25, 60, 25]);
+    secouer($('#texte-question'));
+  }
+
+  afficherFeedback(q, lignes, auMoinsUn);
+  mancheJouee();
+  var an = $('#annonce');
+  if (partie.annonce) { an.textContent = partie.annonce; an.hidden = false; }
+  else { an.textContent = ''; an.hidden = true; }
+  majScores();
+}
+
+function appliquer(j, q, fraction, reste) {
+  var reussi = fraction >= 1;
+  var serie = reussi ? j.serie + 1 : 0;
+  var facteur = (partie.tour && partie.tour.facteur) || 1;
+  var pts;
+  if (fraction <= 0 && facteur > 1) {
+    /* pari perdu : on ne retire que sur un échec complet, pas sur du partiel */
+    pts = -Math.round((POINTS_BASE[q.niveau] || 100) * (facteur - 1) / 2);
+  } else {
+    pts = pointsQuestion(q, fraction, reste, serie, partie.tour ? partie.tour.bonus : 1) * facteur;
+  }
+  j.gain = pts;
+  j.score += pts;
+  j.serie = serie;
+  if (serie > j.meilleure) j.meilleure = serie;
+  if (reussi) j.bonnes++;
+  j.repondues++;
+  return pts;
+}
+
+/* =========================================================================
+   MAÎTRISE — une question comptée comme acquise dès qu'elle a été réussie une
+   fois. Donne une progression visible par catégorie, et montre du même coup
+   celles qu'on néglige.
+   ========================================================================= */
+function majVues(q, reussi) {
+  if (!reussi) return;
+  var v = lire('cg.vues', {});
+  v[q.id] = (v[q.id] || 0) + 1;
+  ecrire('cg.vues', v);
+}
+
+var _vuesCache = null;
+function vues() {
+  if (_vuesCache === null) _vuesCache = lire('cg.vues', {});
+  return _vuesCache;
+}
+function oublierCacheVues() { _vuesCache = null; }
+
+function maitrise(categorie) {
+  var v = vues();
+  /* on ne compte que les questions réellement jouables sur cette machine :
+     sans la carte, le 100 % resterait hors d'atteinte */
+  var base = pool(categorie, 0);
+  var acquises = 0;
+  base.forEach(function (q) { if (v[q.id]) acquises++; });
+  return { total: base.length, acquises: acquises,
+           taux: base.length ? acquises / base.length : 0 };
+}
+
+function majRates(q, reussi) {
+  var r = lire('cg.rates', []);
+  var i = r.indexOf(q.id);
+  if (reussi) { if (i >= 0) r.splice(i, 1); }
+  else if (i < 0) r.push(q.id);
+  ecrire('cg.rates', r);
+}
+
+function desactiverZone(off) {
+  var z = $('#zone-reponse');
+  z.style.opacity = off ? '.4' : '';
+  z.style.pointerEvents = off ? 'none' : '';
+}
+
+/* rappel des raccourcis clavier, adapté au type de question et au mode */
+function majRaccourcis(q) {
+  var z = vide($('#raccourcis'));
+  var premier = true;
+  function bloc(paires) {
+    if (!premier) z.appendChild(el('span', null, '  ·  '));
+    premier = false;
+    paires.forEach(function (p, i) {
+      if (i) z.appendChild(el('span', null, ' '));
+      z.appendChild(el('kbd', null, p[0]));
+      if (p[1]) z.appendChild(el('span', null, ' ' + p[1]));
+    });
+  }
+  if (partie.mode === 'buzzer' && !TYPES_SANS_BUZZ[q.type]) {
+    bloc(partie.joueurs.map(function (j) { return [TOUCHES_BUZZ[j.i].toUpperCase(), j.nom]; }));
+  }
+  if (q.type === 'qcm') bloc([['1 à ' + q.choix.length, 'répondre']]);
+  else if (q.type === 'vrai_faux') bloc([['1', 'vrai'], ['2', 'faux']]);
+  bloc([['Entrée', 'suivant']]);
+}
+
+/* --- feedback ------------------------------------------------------------ */
+function afficherFeedback(q, lignes, auMoinsUn) {
+  var v = $('#verdict');
+  var solo = partie.joueurs.length === 1;
+  var ligne0 = lignes[0];
+  var ton;
+
+  if (solo) {
+    var f = ligne0 ? ligne0.fraction : 0;
+    ton = f >= 1 ? 'ok' : f > 0 ? 'mi' : 'ko';
+    v.textContent = (f >= 1 ? 'Bonne réponse' : f > 0 ? 'Partiellement juste' : 'Raté')
+      + (ligne0 && ligne0.pts ? '  ·  ' + (ligne0.pts > 0 ? '+' : '') + ligne0.pts + ' pts' : '');
+  } else {
+    ton = auMoinsUn ? 'ok' : lignes.some(function (l) { return l.fraction > 0; }) ? 'mi' : 'ko';
+    v.textContent = lignes.length
+      ? lignes.map(function (l) {
+          return l.joueur.nom + ' ' + (l.pts > 0 ? '+' + l.pts : l.pts) + ' pts';
+        }).join('  ·  ')
+      : 'Personne n’a répondu';
+  }
+  v.className = 'verdict ' + ton;
+  v.insertBefore(frimousse(ton), v.firstChild);
+  $('#zone-feedback').className = 'feedback est-' + ton;
+
+  var br = texteBonneReponse(q);
+  if (q.type === 'distance') {
+    var d = lignes.filter(function (l) { return l.valeur; }).map(function (l) {
+      var km = haversine(l.valeur[0], l.valeur[1], q.reponse[0], q.reponse[1]);
+      return l.joueur.nom + ' : ' + Math.round(km).toLocaleString('fr-FR') + ' km';
+    });
+    if (d.length) br += '  ·  ' + d.join('  ·  ');
+  }
+  if (q.type === 'multi_pays') {
+    var m = lignes.filter(function (l) { return l.valeur; }).map(function (l) {
+      var att = {}; q.reponse.forEach(function (c) { att[code3(c)] = 1; });
+      var bons = 0, faux = 0;
+      l.valeur.forEach(function (c) { if (att[code3(c)]) bons++; else faux++; });
+      return l.joueur.nom + ' : ' + bons + '/' + q.reponse.length + ' (' + faux + ' erreur' + (faux > 1 ? 's' : '') + ')';
+    });
+    if (m.length) br += '  ·  ' + m.join('  ·  ');
+  }
+  $('#bonne-reponse').textContent = br;
+  $('#explication').textContent = q.explication || '';
+  $('#zone-feedback').hidden = false;
+  $('#btn-suivant').textContent = partie.survie
+    ? (partie.vies <= 0 ? 'Voir le résultat' : 'Continuer')
+    : ((partie.idx + 1 >= partie.file.length) ? 'Voir le classement' : 'Suivant');
+  try { $('#btn-suivant').focus({ preventScroll: true }); } catch (e) { $('#btn-suivant').focus(); }
+  try { $('#zone-feedback').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
+}
+
+/* =========================================================================
+   JOKERS — un usage de chaque par joueur et par partie.
+   Réservés aux tours où un joueur est clairement désigné : en mode buzzer,
+   « qui » utilise le joker serait ambigu, et un 50/50 profiterait à tout le
+   monde alors qu'un seul l'aurait dépensé.
+   ========================================================================= */
+function jokerDisponible(id) {
+  var t = partie.tour;
+  if (!t || t.termine || t.genre !== 'solo') return false;
+  var j = partie.joueurs[t.joueur];
+  if (!j.jokers[id]) return false;
+  if (id === 'moitie') {
+    return !!(t.widget && t.widget.retirer && t.widget.restantes && t.widget.restantes() > 2);
+  }
+  return true;
+}
+
+function dessinerJokers() {
+  var z = vide($('#zone-jokers'));
+  var t = partie.tour;
+  if (!t || t.genre !== 'solo' || t.termine) return;
+  var j = partie.joueurs[t.joueur];
+
+  JOKERS.forEach(function (jk) {
+    var b = el('button', 'joker');
+    b.type = 'button';
+    b.disabled = !jokerDisponible(jk.id);
+    if (!j.jokers[jk.id]) b.classList.add('use');
+    b.appendChild(el('span', 'j-nom', jk.nom));
+    b.appendChild(el('span', 'j-detail', j.jokers[jk.id] ? jk.detail : 'Déjà utilisé'));
+    b.addEventListener('click', function () { utiliserJoker(jk.id); });
+    z.appendChild(b);
+  });
+}
+
+function utiliserJoker(id) {
+  if (!jokerDisponible(id)) return;
+  var t = partie.tour;
+  var j = partie.joueurs[t.joueur];
+  j.jokers[id] = false;
+  Son.buzz();
+
+  if (id === 'moitie') {
+    t.widget.retirer(2);
+  } else if (id === 'temps') {
+    tempsTour += RALLONGE;
+    chrono.fin += RALLONGE;
+    chrono.fige += RALLONGE;
+    jauge(chronoReste() / tempsTour);
+  } else if (id === 'passer') {
+    t.passe = true;
+    conclure([{ joueur: j.i, valeur: undefined, reste: 0, fraction: 0 }]);
+    return;
+  }
+  dessinerJokers();
+}
+
+/* --- tableau des scores -------------------------------------------------- */
+function animerNombre(noeud, de, vers) {
+  if (sobre || de === vers) { noeud.textContent = String(vers); return; }
+  var t0 = performance.now(), duree = 520;
+  (function pas(t) {
+    var k = Math.min(1, (t - t0) / duree);
+    var e = 1 - Math.pow(1 - k, 3);
+    noeud.textContent = String(Math.round(de + (vers - de) * e));
+    if (k < 1) requestAnimationFrame(pas);
+  })(t0);
+}
+
+function majScores() {
+  var z = vide($('#tableau-scores'));
+  var t = partie.tour;
+  var actif = null;
+  if (t && !t.termine) {
+    if (t.genre === 'solo') actif = t.joueur;
+    else if (t.genre === 'buzzer') actif = t.buzzeur;
+    else actif = t.ordre[t.pos];
+  }
+  partie.joueurs.forEach(function (j) {
+    var c = el('div', 'carte-joueur');
+    c.style.setProperty('--c', j.couleur);
+    c.style.setProperty('--cb', j.ombre);
+    if (actif === j.i) c.classList.add('actif');
+    if (j.elimine) c.classList.add('sorti');
+    else if (t && !t.termine && t.bloques && t.bloques[j.i]) c.classList.add('bloque');
+    var tete = el('div', 'nom');
+    tete.appendChild(el('span', null, j.nom));
+    if (j.elimine) tete.appendChild(el('span', 'sortie', 'éliminé'));
+    else if (j.serie >= 3) {
+      var chaude = j.serie >= 5;
+      tete.appendChild(el('span', 'serie' + (chaude ? ' chaude' : ''),
+        (chaude ? '\u25B2\u25B2 ' : '\u25B2 ') + j.serie + ' · ×' + (chaude ? '2' : '1,5')));
+    }
+    c.appendChild(tete);
+    var chiffre = el('div', 'pts');
+    c.appendChild(chiffre);
+    animerNombre(chiffre, (j.affiche == null) ? j.score : j.affiche, j.score);
+    j.affiche = j.score;
+    if (j.gain) {
+      c.appendChild(el('span', 'gain ' + (j.gain > 0 ? 'plus' : 'moins'),
+        (j.gain > 0 ? '+' : '') + j.gain));
+    }
+    z.appendChild(c);
+  });
+}
+
+/* =========================================================================
+   10. FIN DE PARTIE
+   ========================================================================= */
+/* Le palmarès ne retient que les joueurs qui se sont nommés : sans cela,
+   tous les scores s'empileraient sous « Joueur 1 » et ne désigneraient
+   personne. Une victoire ne se compte qu'à partir de deux joueurs. */
+function majPalmares() {
+  var anonyme = /^Joueur \d$/;
+  var nommes = partie.joueurs.filter(function (j) { return j.nom && !anonyme.test(j.nom); });
+  if (!nommes.length) return;
+
+  var meilleur = Math.max.apply(null, partie.joueurs.map(function (j) { return j.score; }));
+  var pal = lire('cg.palmares', {});
+  nommes.forEach(function (j) {
+    var e = pal[j.nom] || { record: 0, victoires: 0, parties: 0, bonnes: 0, repondues: 0 };
+    e.parties += 1;
+    e.bonnes += j.bonnes;
+    e.repondues += j.repondues;
+    if (j.score > e.record) e.record = j.score;
+    if (partie.joueurs.length > 1 && j.score === meilleur) e.victoires += 1;
+    pal[j.nom] = e;
+  });
+  ecrire('cg.palmares', pal);
+}
+
+function montrerPalmares() {
+  var pal = lire('cg.palmares', {});
+  var lignes = Object.keys(pal).map(function (nom) {
+    var e = pal[nom];
+    return {
+      nom: nom, record: e.record || 0, victoires: e.victoires || 0,
+      parties: e.parties || 0, bonnes: e.bonnes || 0, repondues: e.repondues || 0
+    };
+  }).sort(function (a, b) { return b.record - a.record; });
+
+  if (!lignes.length) {
+    dialogue('Palmarès',
+      'Aucun résultat pour l\'instant. Donnez un nom aux joueurs avant de lancer une ' +
+      'partie : leurs records seront conservés ici d\'une soirée à l\'autre.', null, 'Fermer');
+    return;
+  }
+
+  dialogue('Palmarès', 'Meilleur score par joueur, sur cet appareil.', null, 'Fermer');
+  var z = el('div', 'palmares');
+  lignes.forEach(function (l, i) {
+    var d = el('div', 'palmares-ligne');
+    d.appendChild(el('span', 'pl-rang', String(i + 1)));
+    d.appendChild(el('span', 'pl-nom', l.nom));
+    d.appendChild(el('span', 'pl-score', String(l.record)));
+    var taux = l.repondues ? Math.round(l.bonnes / l.repondues * 100) + ' %' : '—';
+    d.appendChild(el('span', 'pl-detail',
+      l.parties + ' partie' + (l.parties > 1 ? 's' : '') +
+      '  ·  ' + l.victoires + ' victoire' + (l.victoires > 1 ? 's' : '') +
+      '  ·  ' + taux + ' de réussite'));
+    z.appendChild(d);
+  });
+  dialogueAjout(z);
+}
+
+function finPartie() {
+  chronoArreter();
+  Son.fin();
+
+  /* historique : on garde les 3 dernières parties */
+  var h = lire('cg.historique', []);
+  h.push(partie.ids);
+  ecrire('cg.historique', h.slice(-3));
+
+  /* défi du jour : on garde le score et la série de jours consécutifs */
+  if (partie.defi) {
+    var e = etatDefi();
+    if (e.jour !== partie.defi) {
+      e.serie = (e.jour === jourCourant(-1)) ? (e.serie || 0) + 1 : 1;
+      e.jour = partie.defi;
+      e.score = 0;
+    }
+    var meilleur = Math.max.apply(null, partie.joueurs.map(function (j) { return j.score; }));
+    if (meilleur > e.score) e.score = meilleur;
+    ecrire('cg.defi', e);
+  }
+
+  majPalmares();
+
+  /* statistiques par catégorie */
+  var st = lire('cg.stats', {});
+  var cle = partie.cle;
+  var e = st[cle] || { parties: 0, questions: 0, bonnes: 0, record: 0 };
+  e.parties += 1;
+  partie.joueurs.forEach(function (j) {
+    e.questions += j.repondues;
+    e.bonnes += j.bonnes;
+    if (j.score > e.record) e.record = j.score;
+  });
+  st[cle] = e;
+  ecrire('cg.stats', st);
+
+  /* avec l'élimination, un survivant passe devant un éliminé quel que soit le
+     score, et les éliminés sont classés du dernier sorti au premier */
+  var classe = partie.joueurs.slice().sort(function (a, b) {
+    if (partie.elimination && !!a.elimine !== !!b.elimine) return a.elimine ? 1 : -1;
+    if (partie.elimination && a.elimine && b.elimine) return b.rangSortie - a.rangSortie;
+    return b.score - a.score;
+  });
+  var z = vide($('#classement'));
+  classe.forEach(function (j, r) {
+    var exaequo = r > 0 && classe[r - 1].score === j.score &&
+                  !(partie.elimination && (j.elimine || classe[r - 1].elimine));
+    var pos = exaequo ? '=' : String(r + 1);
+    var d = el('div', 'rang-joueur' + (r === 0 ? ' premier' : ''));
+    d.style.setProperty('--c', j.couleur);
+    d.style.setProperty('--cb', j.ombre);
+    d.appendChild(el('div', 'pos', pos));
+    var mid = el('div');
+    mid.appendChild(el('div', 'nom-j', j.nom));
+    var detail = j.bonnes + ' bonne' + (j.bonnes > 1 ? 's' : '') + ' réponse' + (j.bonnes > 1 ? 's' : '') +
+      ' sur ' + j.repondues + '  ·  meilleure série : ' + j.meilleure;
+    if (j.elimine) detail += '  ·  éliminé ' + (j.rangSortie === 1 ? 'en premier' : j.rangSortie + 'e');
+    mid.appendChild(el('div', 'detail', detail));
+    d.appendChild(mid);
+    d.appendChild(el('div', 'total', String(j.score)));
+    z.appendChild(d);
+  });
+
+  var tag = [partie.libelle];
+  if (partie.saisie) tag.push('saisie libre');
+  if (partie.mise) tag.push('mise');
+  if (partie.elimination) tag.push('élimination');
+  if (partie.survie) {
+    var tenues = partie.recap.filter(function (r) { return r.juste; }).length;
+    var record = lire('cg.survie', 0);
+    var neuf = tenues > record;
+    if (neuf) { record = tenues; ecrire('cg.survie', record); }
+    tag = ['Survie',
+           partie.recap.length + ' questions tenues',
+           tenues + ' bonne' + (tenues > 1 ? 's' : '') + ' réponse' + (tenues > 1 ? 's' : ''),
+           neuf ? 'nouveau record !' : 'record : ' + record];
+  }
+  $('#resume-fin').textContent = tag.join('  ·  ');
+  construireRevue();
+  ecran('fin');
+  /* un vainqueur, ça se fête */
+  var gagnant = classe[0];
+  if (gagnant && gagnant.score > 0) {
+    setTimeout(function () { confettis(['#FFC531', '#FFE49B', '#FFFFFF', '#F5A623']); }, 260);
+  }
+  majStats();
+  majNote();          // le bouton Révision doit refléter les questions ratées
+}
+
+/* Récapitulatif : c'est un jeu de culture générale, on doit pouvoir relire ce
+   qu'on a manqué plutôt que de perdre l'explication en cliquant sur Suivant. */
+function construireRevue() {
+  var rates = partie.recap.filter(function (r) { return !r.juste; });   // les passées comptent aussi
+  var z = vide($('#revue'));
+  var panneau = $('#panneau-revue');
+  panneau.hidden = false;
+
+  if (!rates.length) {
+    $('#titre-revue').textContent = 'Sans faute';
+    z.appendChild(el('p', 'muted', 'Aucune question manquée sur cette partie.'));
+    return;
+  }
+  $('#titre-revue').textContent = 'À revoir — ' + rates.length + ' sur ' + partie.recap.length;
+
+  rates.forEach(function (r) {
+    var d = el('div', 'revue-item');
+    var q = r.q;
+    d.appendChild(el('p', 'revue-q', q.question));
+    d.appendChild(el('p', 'revue-r', texteBonneReponse(q)));
+    if (q.explication) d.appendChild(el('p', 'revue-e', q.explication));
+    z.appendChild(d);
+  });
+}
+
+/* =========================================================================
+   11. ÉCRAN D'ACCUEIL
+   ========================================================================= */
+function segments(hote, items, estActif, onChoix) {
+  var h = vide(hote);
+  items.forEach(function (it) {
+    var b = el('button', 'seg', it.nom);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', estActif(it) ? 'true' : 'false');
+    if (it.desactive) b.disabled = true;
+    b.addEventListener('click', function () { onChoix(it); });
+    h.appendChild(b);
+  });
+}
+
+function majAccueil() {
+  segments($('#choix-nb'),
+    [1, 2, 3, 4].map(function (n) { return { id: n, nom: n + (n > 1 ? ' joueurs' : ' joueur') }; }),
+    function (it) { return it.id === config.nb; },
+    function (it) {
+      config.nb = it.id;
+      if (config.nb === 1) config.mode = 'tour';
+      majAccueil();
+    });
+
+  var zn = vide($('#noms-joueurs'));
+  for (var i = 0; i < config.nb; i++) {
+    (function (k) {
+      var w = el('div', 'champ-nom');
+      w.style.setProperty('--c', COULEURS[k]);
+      w.style.setProperty('--cb', OMBRES[k]);
+      var pastille = el('i');
+      var inp = document.createElement('input');
+      inp.type = 'text'; inp.maxLength = 14;
+      inp.value = config.noms[k];
+      inp.placeholder = 'Joueur ' + (k + 1);
+      inp.setAttribute('aria-label', 'Nom du joueur ' + (k + 1));
+      inp.addEventListener('input', function () { config.noms[k] = inp.value; });
+      w.appendChild(pastille); w.appendChild(inp);
+      zn.appendChild(w);
+    })(i);
+  }
+
+  var hote = vide($('#choix-categorie'));
+  CATEGORIES.forEach(function (c) {
+    var b = el('button', 'tuile');
+    b.type = 'button';
+    b.setAttribute('aria-pressed', c.id === config.categorie ? 'true' : 'false');
+    var coul = COULEUR_CAT[c.id] || COULEUR_CAT.toutes;
+    b.style.setProperty('--c', coul[0]);
+    b.style.setProperty('--cb', coul[1]);
+    var NS = 'http://www.w3.org/2000/svg';
+    var rond = el('span', 'rond');
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    var d = document.createElementNS(NS, 'path');
+    d.setAttribute('d', ICONES[c.id]);
+    svg.appendChild(d);
+    rond.appendChild(svg);
+    b.appendChild(rond);
+    b.appendChild(el('span', null, c.nom));
+    var m = maitrise(c.id);
+    b.appendChild(el('span', 'cpt', m.acquises
+      ? m.acquises + ' / ' + m.total + ' acquises'
+      : m.total + ' questions'));
+    var piste = el('span', 'jauge-m');
+    var barre = el('i');
+    barre.style.width = Math.round(m.taux * 100) + '%';
+    piste.appendChild(barre);
+    b.appendChild(piste);
+    b.addEventListener('click', function () { config.categorie = c.id; majAccueil(); });
+    hote.appendChild(b);
+  });
+
+  segments($('#choix-rythme'), RYTHMES,
+    function (it) { return it.id === config.rythme; },
+    function (it) {
+      config.rythme = options.rythme = it.id;
+      ecrire('cg.options', options);
+      majAccueil();
+    });
+  var ry = RYTHMES.filter(function (x) { return x.id === config.rythme; })[0];
+  $('#indice-rythme').textContent = ry ? ry.indice : '';
+
+  segments($('#choix-niveau'), NIVEAUX,
+    function (it) { return it.id === config.niveau; },
+    function (it) { config.niveau = it.id; majAccueil(); });
+
+  segments($('#choix-mode'), [
+    { id: 'tour', nom: 'Tour par tour' },
+    { id: 'buzzer', nom: 'Buzzer', desactive: config.nb === 1 }
+  ], function (it) { return it.id === config.mode; },
+     function (it) { config.mode = it.id; majAccueil(); });
+
+  if (config.nb === 1) config.elimination = false;
+  $('#opt-saisie').checked = !!config.saisie;
+  $('#opt-mise').checked = !!config.mise;
+  $('#opt-mise').disabled = config.nb > 1 && config.mode === 'buzzer';
+  $('#lab-mise').classList.toggle('inactive', $('#opt-mise').disabled);
+  $('#opt-elim').checked = !!config.elimination;
+  $('#opt-elim').disabled = config.nb === 1;
+  $('#lab-elim').classList.toggle('inactive', config.nb === 1);
+
+  if (config.niveau) {
+    var b = TEMPS_NIVEAU[config.niveau] / 1000;
+    $('#indice-niveau').textContent = 'De ' + Math.round(b * 0.9) + ' à ' + Math.round(b * 2) +
+      ' secondes selon le type de question, ' + POINTS_BASE[config.niveau] + ' points de base.';
+  } else {
+    $('#indice-niveau').textContent = 'Chrono et points s’adaptent au niveau et au type de chaque question.';
+  }
+
+  teinter(config.categorie);
+  majNote();
+}
+
+function besoinQuestions() {
+  return (config.nb > 1 && config.mode === 'buzzer') ? NB_QUESTIONS : NB_QUESTIONS * config.nb;
+}
+
+function majNote() {
+  var dispo = pool(config.categorie, config.niveau).length;
+  var besoin = besoinQuestions();
+  var txt = dispo + ' question' + (dispo > 1 ? 's' : '') + ' disponible' + (dispo > 1 ? 's' : '') +
+            ' pour ce réglage, ' + besoin + ' nécessaires.';
+  if (dispo < besoin) txt += ' Le tirage élargira automatiquement le niveau, puis la catégorie.';
+  if (config.saisie) {
+    var tapables = pool(config.categorie, config.niveau).filter(saisissable).length;
+    txt += ' En saisie libre, ' + tapables + ' d’entre elles se tapent au clavier, ' +
+           'les autres restent en QCM (réponse trop longue pour être écrite).';
+  }
+  var rates = lire('cg.rates', []).length;
+  txt += '  ·  ' + rates + ' question' + (rates > 1 ? 's' : '') + ' en attente de révision.';
+  var d = etatDefi();
+  if (d.jour === jourCourant()) {
+    $('#btn-defi').textContent = 'Défi du jour — ' + d.score + ' pts';
+    txt += ' Défi du jour déjà joué : ' + d.score + ' points' +
+           (d.serie > 1 ? ', ' + d.serie + ' jours d’affilée.' : '.') +
+           ' Le rejouer ne changera pas le score enregistré.';
+  } else {
+    $('#btn-defi').textContent = 'Défi du jour';
+    if (d.serie > 0 && d.jour === jourCourant(-1)) {
+      txt += ' Défi du jour : ' + d.serie + ' jours d’affilée, ne cassez pas la série.';
+    }
+  }
+  var rec = lire('cg.survie', 0);
+  txt += ' Survie : ' + (rec ? 'record de ' + rec + ' bonnes réponses avant les trois vies perdues.'
+                             : 'trois vies, la difficulté monte, aucun record encore.');
+  $('#note-pool').textContent = txt;
+  $('#btn-revision').disabled = rates === 0;
+  $('#btn-survie').disabled = config.nb > 1;
+  $('#btn-survie').title = config.nb > 1 ? 'La survie se joue en solo' : '';
+}
+
+function majStats() {
+  var st = lire('cg.stats', {});
+  var cles = Object.keys(st);
+  var z = vide($('#stats'));
+
+  var glob = maitrise('toutes');
+  var res = el('p', 'resume-maitrise');
+  res.appendChild(el('b', null, Math.round(glob.taux * 100) + ' %'));
+  res.appendChild(el('span', null, ' de la banque maîtrisée — ' + glob.acquises +
+    ' question' + (glob.acquises > 1 ? 's' : '') + ' réussie' + (glob.acquises > 1 ? 's' : '') +
+    ' au moins une fois sur ' + glob.total + '.'));
+  z.appendChild(res);
+
+  if (!cles.length) {
+    z.appendChild(el('p', 'muted', 'Aucune partie enregistrée pour l’instant.'));
+    return;
+  }
+  var libelle = { revision: 'Révision', defi: 'Défi du jour' };
+  var tab = el('table', 'tab-stats');
+  var thead = el('thead'), tr = el('tr');
+  ['Catégorie', 'Parties', 'Réussite', 'Record'].forEach(function (h) { tr.appendChild(el('th', null, h)); });
+  thead.appendChild(tr); tab.appendChild(thead);
+  var tb = el('tbody');
+  cles.sort().forEach(function (k) {
+    var e = st[k];
+    var l = el('tr');
+    l.appendChild(el('td', null, NOM_CAT[k] || libelle[k] || k));
+    l.appendChild(el('td', null, String(e.parties)));
+    l.appendChild(el('td', null, e.questions ? Math.round(100 * e.bonnes / e.questions) + ' %' : '—'));
+    l.appendChild(el('td', null, String(e.record)));
+    tb.appendChild(l);
+  });
+  tab.appendChild(tb);
+  z.appendChild(tab);
+}
+
+/* --- lancements ---------------------------------------------------------- */
+function choisirEtJouer(base, besoin, rnd, spec) {
+  var qs = tirer(base, besoin, rnd);
+  if (!qs.length) {
+    dialogue('Aucune question disponible', 'Ce réglage ne donne aucune question jouable. Essayez une autre catégorie ou le niveau « Mixte ».');
+    return;
+  }
+  /* en tour par tour, on garde un nombre de questions divisible par le nombre
+     de joueurs pour que personne n'en ait une de moins */
+  var nbJ = config.nb;
+  if (spec.mode !== 'buzzer' && nbJ > 1 && qs.length % nbJ !== 0) {
+    qs = qs.slice(0, qs.length - (qs.length % nbJ));
+  }
+  if (!qs.length) {
+    dialogue('Pas assez de questions', 'Il n’y a pas assez de questions pour ' + nbJ + ' joueurs avec ce réglage.');
+    return;
+  }
+  spec.questions = qs;
+  lancerPartie(spec);
+}
+
+function jouerNormal() {
+  chargerTopo().then(function () {
+    ignorerHistorique = false;
+    var besoin = besoinQuestions();
+    var base = pool(config.categorie, config.niveau);
+    if (base.length < besoin) base = pool(config.categorie, 0);
+    if (base.length < besoin) base = pool('toutes', 0);
+    choisirEtJouer(base, besoin, null, {
+      mode: config.mode,
+      cle: config.categorie,
+      libelle: NOM_CAT[config.categorie] + ' · ' +
+               (config.niveau ? NOM_NIVEAU[config.niveau] : 'Niveaux mixtes')
+    });
+  });
+}
+
+/* clé de jour locale, stable quel que soit le fuseau */
+function jourCourant(decalage) {
+  var d = new Date();
+  if (decalage) d.setDate(d.getDate() + decalage);
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+
+function etatDefi() {
+  var e = lire('cg.defi', { jour: null, score: 0, serie: 0 });
+  return e;
+}
+
+function jouerDefi() {
+  chargerTopo().then(function () {
+    var d = new Date();
+    var jour = jourCourant();
+    var rnd = mulberry32(graine('defi-' + jour));
+    ignorerHistorique = true;
+    var base = pool('toutes', 0).slice().sort(function (a, b) {
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;       // ordre stable avant tirage à graine
+    });
+    var mode = config.nb > 1 ? 'buzzer' : 'tour';          // 10 questions communes à tous
+    choisirEtJouer(base, NB_QUESTIONS, rnd, {
+      mode: mode, cle: 'defi', defi: jour,
+      libelle: 'Défi du ' + d.toLocaleDateString('fr-FR')
+    });
+    ignorerHistorique = false;
+  });
+}
+
+function jouerSurvie() {
+  chargerTopo().then(function () {
+    ignorerHistorique = true;
+    lancerPartie({
+      questions: [], survie: true, mode: 'tour',
+      cle: 'survie', libelle: 'Survie'
+    });
+    ignorerHistorique = false;
+  });
+}
+
+function jouerRevision() {
+  chargerTopo().then(function () {
+    var rates = lire('cg.rates', []);
+    var set = {}; rates.forEach(function (id) { set[id] = 1; });
+    var base = TOUTES.filter(function (q) {
+      return set[q.id] && (carteOK || !TYPES_CARTE[q.type]);
+    });
+    if (!base.length) {
+      dialogue('Rien à réviser', 'Aucune question ratée en attente. Jouez une partie : celles que vous manquez viendront alimenter la révision.');
+      return;
+    }
+    ignorerHistorique = true;
+    var besoin = Math.min(besoinQuestions(), base.length);
+    choisirEtJouer(base, besoin, null, {
+      mode: config.mode, cle: 'revision', libelle: 'Révision des questions ratées'
+    });
+    ignorerHistorique = false;
+  });
+}
+
+/* =========================================================================
+   ÉDITEUR DE QUESTIONS
+   Les sélecteurs de réponse réutilisent la carte et le système solaire du jeu :
+   pour désigner un pays, on le clique, comme en partie.
+   ========================================================================= */
+var TYPES_EDITABLES = [
+  { id: 'qcm',         nom: 'Choix multiple' },
+  { id: 'vrai_faux',   nom: 'Vrai ou faux' },
+  { id: 'chronologie', nom: 'Remettre dans l\'ordre' },
+  { id: 'clic_pays',   nom: 'Cliquer un pays' },
+  { id: 'multi_pays',  nom: 'Cliquer plusieurs pays' },
+  { id: 'distance',    nom: 'Cliquer un lieu' },
+  { id: 'planete',     nom: 'Cliquer une planète' }
+];
+
+var edBrouillon = null;        // réponse en cours de composition
+
+function ouvrirEditeur() {
+  chargerTopo().then(function () {
+    remplirListes();
+    edViderFormulaire();
+    majListePerso();
+    ecran('editeur');
+  });
+}
+
+function remplirListes() {
+  var c = vide($('#ed-categorie'));
+  CATEGORIES.filter(function (x) { return x.id !== 'toutes'; }).forEach(function (x) {
+    var o = document.createElement('option');
+    o.value = x.id; o.textContent = x.nom;
+    c.appendChild(o);
+  });
+  var t = vide($('#ed-type'));
+  TYPES_EDITABLES.forEach(function (x) {
+    if (TYPES_CARTE[x.id] && !carteOK) return;      // sans carte, pas de question de carte
+    var o = document.createElement('option');
+    o.value = x.id; o.textContent = x.nom;
+    t.appendChild(o);
+  });
+}
+
+function edViderFormulaire() {
+  $('#ed-question').value = '';
+  $('#ed-explication').value = '';
+  $('#ed-erreur').hidden = true;
+  edBrouillon = null;
+  edRendreReponse();
+}
+
+/* ------------------- zone de saisie de la réponse, par type --------------- */
+function edRendreReponse() {
+  var type = $('#ed-type').value;
+  var z = vide($('#ed-reponse'));
+
+  if (type === 'qcm') {
+    edBrouillon = edBrouillon && edBrouillon.type === 'qcm' ? edBrouillon : { type: 'qcm', choix: ['', '', '', ''], reponse: 0 };
+    var g = el('div', 'ed-choix');
+    for (var i = 0; i < 4; i++) {
+      (function (k) {
+        var ligne = el('label', 'ed-prop');
+        var radio = document.createElement('input');
+        radio.type = 'radio'; radio.name = 'ed-bonne';
+        radio.checked = edBrouillon.reponse === k;
+        radio.addEventListener('change', function () { edBrouillon.reponse = k; });
+        var txt = document.createElement('input');
+        txt.type = 'text'; txt.value = edBrouillon.choix[k];
+        txt.placeholder = 'Proposition ' + (k + 1);
+        txt.addEventListener('input', function () { edBrouillon.choix[k] = txt.value; });
+        ligne.appendChild(radio);
+        ligne.appendChild(txt);
+        g.appendChild(ligne);
+      })(i);
+    }
+    z.appendChild(el('p', 'ed-aide', 'Cochez la bonne réponse. Elle sera mélangée aux autres en jeu.'));
+    z.appendChild(g);
+
+  } else if (type === 'vrai_faux') {
+    edBrouillon = edBrouillon && edBrouillon.type === 'vrai_faux' ? edBrouillon : { type: 'vrai_faux', reponse: true };
+    var seg = el('div', 'segment');
+    [['Vrai', true], ['Faux', false]].forEach(function (o) {
+      var b = el('button', 'seg', o[0]);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', edBrouillon.reponse === o[1] ? 'true' : 'false');
+      b.addEventListener('click', function () { edBrouillon.reponse = o[1]; edRendreReponse(); });
+      seg.appendChild(b);
+    });
+    z.appendChild(el('p', 'ed-aide', 'L\'énoncé ci-dessus est-il vrai ou faux ?'));
+    z.appendChild(seg);
+
+  } else if (type === 'chronologie') {
+    edBrouillon = edBrouillon && edBrouillon.type === 'chronologie' ? edBrouillon : { type: 'chronologie', choix: ['', '', '', ''] };
+    var l = el('div', 'ed-choix');
+    for (var j = 0; j < 4; j++) {
+      (function (k) {
+        var ligne = el('label', 'ed-prop');
+        ligne.appendChild(el('span', 'ed-rang', String(k + 1)));
+        var txt = document.createElement('input');
+        txt.type = 'text'; txt.value = edBrouillon.choix[k];
+        txt.placeholder = 'Événement ' + (k + 1);
+        txt.addEventListener('input', function () { edBrouillon.choix[k] = txt.value; });
+        ligne.appendChild(txt);
+        l.appendChild(ligne);
+      })(j);
+    }
+    z.appendChild(el('p', 'ed-aide', 'Saisissez les quatre événements DU PLUS ANCIEN AU PLUS RÉCENT. Le jeu les mélangera.'));
+    z.appendChild(l);
+
+  } else if (type === 'planete') {
+    edBrouillon = edBrouillon && edBrouillon.type === 'planete' ? edBrouillon : { type: 'planete', reponse: null };
+    var info = el('p', 'ed-aide', edBrouillon.reponse ? 'Réponse : ' + edBrouillon.reponse : 'Cliquez la bonne planète.');
+    z.appendChild(info);
+    var sys = construireSysteme(function (nom) {
+      edBrouillon.reponse = nom;
+      info.textContent = 'Réponse : ' + nom;
+      sys.reveler();
+      sys.halo(nom, 'ok');
+    });
+    z.appendChild(sys.node);
+
+  } else if (TYPES_CARTE[type]) {
+    edBrouillon = edBrouillon && edBrouillon.type === type ? edBrouillon
+                : { type: type, reponse: type === 'multi_pays' ? [] : null };
+    var aide = el('p', 'ed-aide', '');
+    z.appendChild(aide);
+    Carte.reinit();
+    z.appendChild(Carte.node);
+    if (type === 'clic_pays') {
+      aide.textContent = 'Cliquez le pays attendu.';
+      Carte.mode('pays');
+      Carte.surPays = function (code) {
+        edBrouillon.reponse = code;
+        Carte.selectionUnique(code);
+        aide.textContent = 'Réponse : ' + nomPays(code);
+      };
+    } else if (type === 'multi_pays') {
+      aide.textContent = 'Cliquez tous les pays attendus.';
+      Carte.mode('multi');
+      Carte.surSelection = function (codes) {
+        edBrouillon.reponse = codes.slice();
+        aide.textContent = codes.length ? 'Réponse : ' + liste(codes.map(nomPays)) : 'Cliquez tous les pays attendus.';
+      };
+    } else {
+      aide.textContent = 'Cliquez le lieu exact. Zoomez pour être précis.';
+      Carte.mode('point');
+      Carte.surPoint = function (latlon) {
+        edBrouillon.reponse = latlon;
+        Carte.effacerCalque();
+        Carte.point(latlon, 'vrai');
+        aide.textContent = 'Réponse : ' + latlon[0].toFixed(3) + '°, ' + latlon[1].toFixed(3) + '°';
+      };
+    }
+  }
+}
+
+/* ------------------------------ validation ------------------------------- */
+function edValider() {
+  var q = {
+    id: 'perso-' + Date.now().toString(36),
+    categorie: $('#ed-categorie').value,
+    niveau: parseInt($('#ed-niveau').value, 10),
+    type: $('#ed-type').value,
+    question: $('#ed-question').value.trim(),
+    explication: $('#ed-explication').value.trim()
+  };
+  if (!q.question) return 'L\'énoncé est vide.';
+  if (!q.explication) return 'L\'explication est vide : le jeu l\'affiche après chaque réponse.';
+  if (!edBrouillon || edBrouillon.type !== q.type) return 'La réponse n\'a pas été renseignée.';
+
+  if (q.type === 'qcm') {
+    var vides = edBrouillon.choix.filter(function (c) { return !c.trim(); }).length;
+    if (vides) return 'Les quatre propositions doivent être remplies.';
+    q.choix = edBrouillon.choix.map(function (c) { return c.trim(); });
+    q.reponse = edBrouillon.reponse;
+  } else if (q.type === 'vrai_faux') {
+    q.reponse = edBrouillon.reponse;
+  } else if (q.type === 'chronologie') {
+    if (edBrouillon.choix.filter(function (c) { return !c.trim(); }).length) {
+      return 'Les quatre événements doivent être remplis.';
+    }
+    q.choix = edBrouillon.choix.map(function (c) { return c.trim(); });
+    q.reponse = [0, 1, 2, 3];
+  } else if (q.type === 'planete') {
+    if (!edBrouillon.reponse) return 'Cliquez la planète attendue.';
+    q.reponse = edBrouillon.reponse;
+  } else if (q.type === 'multi_pays') {
+    if (!edBrouillon.reponse || edBrouillon.reponse.length < 2) return 'Sélectionnez au moins deux pays.';
+    q.reponse = edBrouillon.reponse.slice();
+  } else if (q.type === 'clic_pays') {
+    if (!edBrouillon.reponse) return 'Cliquez le pays attendu.';
+    q.reponse = edBrouillon.reponse;
+  } else if (q.type === 'distance') {
+    if (!edBrouillon.reponse) return 'Cliquez le lieu attendu.';
+    q.reponse = edBrouillon.reponse;
+  }
+
+  var liste2 = questionsPerso();
+  liste2.push(q);
+  if (!enregistrerPerso(liste2)) return 'Impossible d\'enregistrer : espace de stockage indisponible.';
+  return null;
+}
+
+/* ------------------------------- la liste -------------------------------- */
+function majListePerso() {
+  var l = questionsPerso();
+  var z = vide($('#ed-liste'));
+  $('#compte-perso').textContent = l.length
+    ? l.length + (l.length > 1 ? ' questions ajoutées' : ' question ajoutée')
+    : 'Aucune question pour le moment';
+  if (!l.length) {
+    z.appendChild(el('p', 'muted', 'Vos questions apparaîtront ici, et seront tirées comme les autres.'));
+    return;
+  }
+  var nomType = {};
+  TYPES_EDITABLES.forEach(function (t) { nomType[t.id] = t.nom; });
+
+  l.slice().reverse().forEach(function (q) {
+    var d = el('div', 'ed-item');
+    var g = el('div');
+    g.appendChild(el('p', 'ed-item-q', q.question));
+    g.appendChild(el('p', 'ed-item-meta',
+      (NOM_CAT[q.categorie] || q.categorie) + '  ·  ' + (NOM_NIVEAU[q.niveau] || '') +
+      '  ·  ' + (nomType[q.type] || q.type)));
+    d.appendChild(g);
+    var sup = el('button', 'btn btn-mini', 'Supprimer');
+    sup.type = 'button';
+    sup.addEventListener('click', function () {
+      dialogue('Supprimer cette question ?', q.question, function () {
+        enregistrerPerso(questionsPerso().filter(function (x) { return x.id !== q.id; }));
+        majListePerso();
+      }, 'Supprimer');
+    });
+    d.appendChild(sup);
+    z.appendChild(d);
+  });
+}
+
+/* =========================================================================
+   12. BRANCHEMENTS
+   ========================================================================= */
+$('#btn-jouer').addEventListener('click', jouerNormal);
+$('#btn-palmares').addEventListener('click', montrerPalmares);
+$('#btn-defi').addEventListener('click', jouerDefi);
+$('#btn-survie').addEventListener('click', jouerSurvie);
+$('#btn-editeur').addEventListener('click', ouvrirEditeur);
+$('#ed-type').addEventListener('change', function () { edBrouillon = null; edRendreReponse(); });
+$('#ed-enregistrer').addEventListener('click', function () {
+  var souci = edValider();
+  if (souci) { $('#ed-erreur').textContent = souci; $('#ed-erreur').hidden = false; return; }
+  $('#ed-erreur').hidden = true;
+  edViderFormulaire();
+  majListePerso();
+});
+$('#ed-vider').addEventListener('click', edViderFormulaire);
+$('#ed-retour').addEventListener('click', function () {
+  if (Carte) Carte.reinit();
+  ecran('accueil'); majAccueil();
+});
+$('#ed-exporter').addEventListener('click', function () {
+  var txt = JSON.stringify(questionsPerso(), null, 2);
+  dialogue('Exporter vos questions',
+    'Copiez ce texte pour le sauvegarder ou le transmettre. ' + questionsPerso().length + ' question(s).');
+  var p = $('#dlg-texte');
+  var zone = document.createElement('textarea');
+  zone.className = 'ed-json'; zone.rows = 8; zone.value = txt; zone.readOnly = true;
+  p.textContent = 'Copiez ce texte pour le sauvegarder ou le transmettre.';
+  p.parentNode.insertBefore(zone, p.nextSibling);
+  zone.select();
+});
+$('#ed-importer').addEventListener('click', function () {
+  dialogue('Importer des questions', 'Collez ici un export précédent. Les questions seront ajoutées aux vôtres.',
+    function () {
+      var zone = $('#voile').querySelector('.ed-json');
+      if (!zone) return;
+      try {
+        var arrivee = JSON.parse(zone.value);
+        if (!Array.isArray(arrivee)) throw new Error('format');
+        var actuelles = questionsPerso();
+        var connus = {};
+        actuelles.forEach(function (q) { connus[q.id] = 1; });
+        arrivee.forEach(function (q) {
+          if (q && q.id && q.question && !connus[q.id]) actuelles.push(q);
+        });
+        enregistrerPerso(actuelles);
+        majListePerso();
+      } catch (e) {
+        dialogue('Import impossible', 'Le texte collé n\'est pas un export valide.');
+      }
+    }, 'Importer');
+  var p2 = $('#dlg-texte');
+  var z2 = document.createElement('textarea');
+  z2.className = 'ed-json'; z2.rows = 8; z2.placeholder = '[ … ]';
+  p2.parentNode.insertBefore(z2, p2.nextSibling);
+  z2.focus();
+});
+$('#btn-revision').addEventListener('click', jouerRevision);
+$('#btn-suivant').addEventListener('click', function () { tourSuivant(); });
+$('#btn-rejouer').addEventListener('click', function () { ecran('accueil'); majAccueil(); });
+$('#btn-accueil').addEventListener('click', function () { ecran('accueil'); majAccueil(); });
+$('#btn-quitter').addEventListener('click', function () {
+  dialogue('Quitter la partie ?', 'Les points de cette partie seront perdus et rien ne sera enregistré.',
+    function () { chronoArreter(); partie = null; ecran('accueil'); majAccueil(); }, 'Quitter');
+});
+$('#btn-pause').addEventListener('click', function () {
+  if (!partie || !$('#zone-feedback').hidden) return;   // rien à geler pendant l'explication
+  chronoGeler();
+  $('#ecran-jeu').classList.add('en-pause');
+  $('#voile-pause').hidden = false;
+  $('#btn-reprendre').focus();
+});
+$('#btn-reprendre').addEventListener('click', function () {
+  $('#voile-pause').hidden = true;
+  $('#ecran-jeu').classList.remove('en-pause');
+  chronoRelancer();
+});
+$('#dlg-ok').addEventListener('click', function () { fermerDialogue(true); });
+$('#dlg-annuler').addEventListener('click', function () { fermerDialogue(false); });
+$('#voile').addEventListener('click', function (ev) { if (ev.target === this) fermerDialogue(false); });
+$('#opt-saisie').addEventListener('change', function () {
+  config.saisie = this.checked; majNote();
+});
+$('#opt-mise').addEventListener('change', function () {
+  config.mise = this.checked;
+});
+$('#opt-elim').addEventListener('change', function () {
+  config.elimination = this.checked;
+});
+$('#opt-nuit').addEventListener('change', function () {
+  options.theme = this.checked ? 'nuit' : 'clair';
+  ecrire('cg.options', options);
+  appliquerTheme();
+});
+$('#opt-son').addEventListener('change', function () {
+  options.son = this.checked;
+  ecrire('cg.options', options);
+  if (options.son) Son.buzz();
+});
+$('#btn-effacer').addEventListener('click', function () {
+  dialogue('Effacer les données locales ?',
+    'Statistiques, records, historique des parties et questions à réviser seront supprimés de ce navigateur.',
+    function () { effacerTout(); oublierCacheVues(); majStats(); majAccueil(); }, 'Effacer');
+});
+
+/* Onglet quitté : on gèle le chrono. Sans cela, requestAnimationFrame cesse de
+   tourner alors que l'échéance reste calée sur l'horloge, et la question
+   expirait d'un bloc au retour du joueur. */
+var geleParOnglet = false;
+document.addEventListener('visibilitychange', function () {
+  if (!partie || $('#ecran-jeu').hidden) return;
+  if (document.visibilityState === 'hidden') {
+    if (chrono.actif) { chronoGeler(); geleParOnglet = true; }
+  } else if (geleParOnglet) {
+    geleParOnglet = false;
+    if ($('#voile-pause').hidden) chronoRelancer();
+  }
+});
+
+document.addEventListener('keydown', function (ev) {
+  if (!$('#voile-pause').hidden) {
+    if (ev.key === 'Escape' || ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault(); $('#btn-reprendre').click();
+    }
+    return;
+  }
+  /* la boîte de dialogue capte tout tant qu'elle est ouverte */
+  if (!$('#voile').hidden) {
+    if (ev.key === 'Escape') { ev.preventDefault(); fermerDialogue(false); }
+    else if (ev.key === 'Enter') { ev.preventDefault(); fermerDialogue(true); }
+    return;
+  }
+  if (!partie || $('#ecran-jeu').hidden) return;
+  var cible = ev.target;
+  if (cible && (cible.tagName === 'INPUT' || cible.tagName === 'TEXTAREA')) return;
+
+  if (!$('#zone-feedback').hidden) {
+    /* si le bouton a déjà le focus, on laisse le clic natif faire le travail */
+    if (cible === $('#btn-suivant')) return;
+    if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); tourSuivant(); }
+    return;
+  }
+
+  var t = partie.tour;
+  if (!t || t.termine) return;
+
+  /* buzz */
+  if (t.genre === 'buzzer' && t.buzzeur == null) {
+    var i = TOUCHES_BUZZ.indexOf(ev.key.toLowerCase());
+    if (i >= 0 && i < partie.joueurs.length) { ev.preventDefault(); buzzer(i); return; }
+  }
+
+  /* réponse au clavier : 1 à 4 */
+  if (t.genre === 'buzzer' && t.buzzeur == null) return;
+  var n = parseInt(ev.key, 10);
+  if (!(n >= 1 && n <= 9)) return;
+  var btns = t.widget && t.widget.raccourcis;
+  var b = btns && btns[n - 1];
+  if (b && !b.disabled) { ev.preventDefault(); b.click(); }
+});
+
+/* =========================================================================
+   13. DÉMARRAGE
+   ========================================================================= */
+rechargerBanque();
+if (options.rythme) config.rythme = options.rythme;
+$('#opt-son').checked = !!options.son;
+$('#opt-nuit').checked = options.theme === 'nuit';
+appliquerTheme();
+majAccueil();
+majStats();
+
+var avertissements = [];
+function majAvertissements() {
+  var a = $('#alerte-carte');
+  if (!avertissements.length) { a.hidden = true; return; }
+  var boite = el('div', 'alerte-txt');
+  avertissements.forEach(function (m) { boite.appendChild(el('p', null, m)); });
+  vide(a).appendChild(boite);
+  a.hidden = false;
+}
+
+if (!TOUTES.length) {
+  avertissements.push('Aucune question chargée : vérifiez que le dossier « data » se trouve bien à côté de index.html.');
+}
+majAvertissements();
+
+chargerTopo().then(function () {
+  if (!carteOK) {
+    avertissements.push('Carte du monde indisponible (pas de réseau ?). Les questions « clic pays », ' +
+      '« sélection multiple » et « distance » sont écartées. Voir le commentaire en tête de index.html ' +
+      'pour installer la carte en local.');
+    majAvertissements();
+  }
+  /* les compteurs des tuiles dépendent de la disponibilité de la carte :
+     il faut redessiner l'accueil, pas seulement la note */
+  majAccueil();
+});
+
+})();
+</script>
+</body>
+</html>
