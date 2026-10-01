@@ -666,3 +666,31 @@ window.QUESTIONS.push(...[
 }
 
 ]);
+
+/* ================== GÉOGRAPHIE et ASTRONOMIE — ordres de grandeur ========== */
+window.QUESTIONS.push(...[
+{
+  id: "geo-150", categorie: "geographie", niveau: 1, type: "grandeur",
+  question: "Quelle est l'altitude de l'Everest ?",
+  reponse: 8849, unite: "m", min: 500, max: 100000,
+  explication: "8 848,86 m depuis le relevé conjoint sino-népalais de 2020. La montagne gagne quelques millimètres par an."
+},
+{
+  id: "geo-151", categorie: "geographie", niveau: 2, type: "grandeur",
+  question: "Quelle est la longueur du Nil ?",
+  reponse: 6650, unite: "km", min: 200, max: 100000,
+  explication: "Sa source exacte reste discutée, ce qui explique que le titre de plus long fleuve du monde lui soit parfois contesté par l'Amazone."
+},
+{
+  id: "geo-152", categorie: "geographie", niveau: 2, type: "grandeur",
+  question: "Quelle est la superficie de la France métropolitaine ?",
+  reponse: 551500, unite: "km²", min: 10000, max: 20000000,
+  explication: "Avec l'outre-mer, le pays dépasse 643 000 km². Sa zone maritime, elle, est la deuxième du monde."
+},
+{
+  id: "geo-153", categorie: "geographie", niveau: 3, type: "grandeur",
+  question: "Quelle profondeur atteint la fosse des Mariannes ?",
+  reponse: 10984, unite: "m", min: 500, max: 200000,
+  explication: "L'Everest y tiendrait tout entier avec plus de deux kilomètres d'eau au-dessus de son sommet."
+}
+]);

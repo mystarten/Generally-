@@ -815,3 +815,25 @@ window.QUESTIONS.push(...[
 }
 
 ]);
+
+/* ================== GÉOGRAPHIE et ASTRONOMIE — ordres de grandeur ========== */
+window.QUESTIONS.push(...[
+{
+  id: "ast-150", categorie: "astronomie", niveau: 2, type: "grandeur",
+  question: "Quel est le diamètre du Soleil ?",
+  reponse: 1392000, unite: "km", min: 10000, max: 500000000,
+  explication: "Cent neuf fois celui de la Terre. Il perd environ quatre millions de tonnes de masse par seconde, converties en lumière."
+},
+{
+  id: "ast-151", categorie: "astronomie", niveau: 3, type: "grandeur",
+  question: "Combien d'étoiles compte approximativement la Voie lactée ?",
+  reponse: 200000000000, unite: "étoiles", min: 100000000, max: 100000000000000,
+  explication: "Les estimations vont de cent à quatre cents milliards : on ne les compte pas, on pèse la galaxie et on en déduit le nombre."
+},
+{
+  id: "ast-152", categorie: "astronomie", niveau: 2, type: "grandeur",
+  question: "Quelle température règne à la surface de Vénus ?",
+  reponse: 460, unite: "°C", min: 10, max: 50000,
+  explication: "De quoi fondre le plomb. Les sondes soviétiques posées là-bas n'ont jamais tenu plus de deux heures."
+}
+]);

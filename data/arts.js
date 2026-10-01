@@ -767,3 +767,49 @@ window.QUESTIONS.push(...[
 }
 
 ]);
+
+/* ============================= ARTS — frises et ordres de grandeur ========= */
+window.QUESTIONS.push(...[
+{
+  id: "art-150", categorie: "arts", niveau: 2, type: "frise",
+  question: "En quelle année la Cinquième Symphonie de Beethoven a-t-elle été créée ?",
+  reponse: 1808, min: 1700, max: 1900,
+  explication: "Lors d'un concert de plus de quatre heures, dans une salle glaciale et avec un orchestre à peine répété. L'accueil fut mitigé."
+},
+{
+  id: "art-151", categorie: "arts", niveau: 2, type: "frise",
+  question: "En quelle année Niépce a-t-il réalisé la première photographie conservée ?",
+  reponse: 1826, min: 1700, max: 1920,
+  explication: "Une vue depuis sa fenêtre, en Bourgogne, avec plusieurs heures de pose : les ombres y vont dans deux directions, le soleil ayant tourné."
+},
+{
+  id: "art-152", categorie: "arts", niveau: 2, type: "frise",
+  question: "En quelle année les frères Lumière ont-ils donné leur première projection publique payante ?",
+  reponse: 1895, min: 1800, max: 1950,
+  explication: "Trente-trois spectateurs au Grand Café, à Paris. Louis Lumière jugeait son invention sans avenir commercial."
+},
+{
+  id: "art-153", categorie: "arts", niveau: 3, type: "frise",
+  question: "En quelle année Victor Hugo a-t-il publié Les Misérables ?",
+  reponse: 1862, min: 1750, max: 1950,
+  explication: "Le télégramme le plus court de l'histoire lui serait dû : il aurait écrit « ? » à son éditeur, qui aurait répondu « ! »."
+},
+{
+  id: "art-154", categorie: "arts", niveau: 3, type: "frise",
+  question: "En quelle année Picasso a-t-il peint Guernica ?",
+  reponse: 1937, min: 1850, max: 1990,
+  explication: "Pour le pavillon espagnol de l'Exposition universelle de Paris. La toile a ensuite voyagé pendant quarante ans sans pouvoir rentrer en Espagne."
+},
+{
+  id: "art-155", categorie: "arts", niveau: 2, type: "grandeur",
+  question: "Combien d'œuvres sont exposées au musée du Louvre ?",
+  reponse: 35000, unite: "œuvres", min: 500, max: 2000000,
+  explication: "Ses collections en comptent plus de cinq cent mille : l'immense majorité dort en réserve, faute de murs."
+},
+{
+  id: "art-156", categorie: "arts", niveau: 3, type: "grandeur",
+  question: "Combien de temps dure la Neuvième Symphonie de Beethoven ?",
+  reponse: 70, unite: "minutes", min: 5, max: 600,
+  explication: "Une légende tenace veut que la durée du disque compact ait été fixée pour la contenir d'un seul tenant."
+}
+]);

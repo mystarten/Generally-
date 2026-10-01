@@ -1115,3 +1115,25 @@ window.QUESTIONS.push(...[
 }
 
 ]);
+
+/* =================== POLITIQUE, SPORT, GÉO, ASTRO — frises et grandeurs ==== */
+window.QUESTIONS.push(...[
+{
+  id: "pol-150", categorie: "politique", niveau: 2, type: "frise",
+  question: "En quelle année la peine de mort a-t-elle été abolie en France ?",
+  reponse: 1981, min: 1900, max: 2020,
+  explication: "Portée par Robert Badinter, garde des Sceaux. L'abolition n'est inscrite dans la Constitution qu'en 2007."
+},
+{
+  id: "pol-151", categorie: "politique", niveau: 2, type: "frise",
+  question: "En quelle année les Françaises ont-elles obtenu le droit de vote ?",
+  reponse: 1944, min: 1850, max: 2000,
+  explication: "Par ordonnance du gouvernement provisoire, à Alger. Elles ont voté pour la première fois aux municipales d'avril 1945."
+},
+{
+  id: "pol-152", categorie: "politique", niveau: 3, type: "grandeur",
+  question: "Combien de communes compte la France ?",
+  reponse: 34900, unite: "communes", min: 500, max: 1000000,
+  explication: "Plus que l'Allemagne, l'Italie et l'Espagne réunies. Le chiffre baisse lentement sous l'effet des fusions."
+}
+]);

@@ -753,3 +753,49 @@ window.QUESTIONS.push(...[
 }
 
 ]);
+
+/* ============================ SPORT — frises et ordres de grandeur ========= */
+window.QUESTIONS.push(...[
+{
+  id: "spo-150", categorie: "sport", niveau: 1, type: "frise",
+  question: "En quelle année se sont tenus les premiers Jeux olympiques modernes ?",
+  reponse: 1896, min: 1800, max: 1960,
+  explication: "À Athènes, dans un stade de marbre reconstruit pour l'occasion sur les fondations d'une enceinte antique."
+},
+{
+  id: "spo-151", categorie: "sport", niveau: 2, type: "frise",
+  question: "En quelle année s'est tenue la première Coupe du monde de rugby ?",
+  reponse: 1987, min: 1920, max: 2020,
+  explication: "Les équipes ont été invitées, sans qualifications. La Nouvelle-Zélande a remporté cette édition inaugurale."
+},
+{
+  id: "spo-152", categorie: "sport", niveau: 2, type: "frise",
+  question: "En quelle année l'Olympique de Marseille a-t-il remporté la Ligue des champions ?",
+  reponse: 1993, min: 1950, max: 2025,
+  explication: "Seul sacre européen d'un club français dans cette compétition à ce jour."
+},
+{
+  id: "spo-153", categorie: "sport", niveau: 3, type: "frise",
+  question: "En quelle année Usain Bolt a-t-il établi son record du monde du 100 m ?",
+  reponse: 2009, min: 1950, max: 2025,
+  explication: "9 s 58 à Berlin. Sa vitesse de pointe a dépassé 44 km/h sur une portion de la course."
+},
+{
+  id: "spo-154", categorie: "sport", niveau: 2, type: "grandeur",
+  question: "Quelle est la longueur réglementaire d'un terrain de football international ?",
+  reponse: 105, unite: "m", min: 20, max: 1000,
+  explication: "105 sur 68 mètres. Les Laws of the Game tolèrent une fourchette, mais les compétitions internationales imposent ces dimensions exactes."
+},
+{
+  id: "spo-155", categorie: "sport", niveau: 3, type: "grandeur",
+  question: "À quelle vitesse a été mesuré le service de tennis le plus rapide homologué ?",
+  reponse: 263, unite: "km/h", min: 50, max: 1000,
+  explication: "Frappé par l'Australien Samuel Groth en 2012, lors d'un tournoi secondaire : le record n'a jamais été battu en Grand Chelem."
+},
+{
+  id: "spo-156", categorie: "sport", niveau: 2, type: "grandeur",
+  question: "Quelle distance totale parcourt-on sur un Tour de France ?",
+  reponse: 3500, unite: "km", min: 200, max: 50000,
+  explication: "Le règlement plafonne aujourd'hui l'épreuve à 3 500 km. Les premières éditions dépassaient les 5 000."
+}
+]);

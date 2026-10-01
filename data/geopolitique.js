@@ -727,3 +727,37 @@ window.QUESTIONS.push(...[
 }
 
 ]);
+
+/* ====================== GÉOPOLITIQUE — frises et ordres de grandeur ======== */
+window.QUESTIONS.push(...[
+{
+  id: "gpo-150", categorie: "geopolitique", niveau: 1, type: "frise",
+  question: "En quelle année l'Organisation des Nations unies a-t-elle été fondée ?",
+  reponse: 1945, min: 1850, max: 2000,
+  explication: "Sa charte est signée à San Francisco par cinquante États, quelques semaines avant la fin de la guerre dans le Pacifique."
+},
+{
+  id: "gpo-151", categorie: "geopolitique", niveau: 2, type: "frise",
+  question: "En quelle année la Déclaration universelle des droits de l'homme a-t-elle été adoptée ?",
+  reponse: 1948, min: 1850, max: 2000,
+  explication: "Aucun État n'a voté contre, mais huit se sont abstenus. C'est le texte le plus traduit au monde."
+},
+{
+  id: "gpo-152", categorie: "geopolitique", niveau: 2, type: "frise",
+  question: "En quelle année les pièces et billets en euros sont-ils entrés en circulation ?",
+  reponse: 2002, min: 1950, max: 2025,
+  explication: "La monnaie existait déjà depuis 1999, mais seulement sous forme scripturale : trois ans sans le moindre billet."
+},
+{
+  id: "gpo-153", categorie: "geopolitique", niveau: 3, type: "frise",
+  question: "En quelle année Nelson Mandela a-t-il été élu président d'Afrique du Sud ?",
+  reponse: 1994, min: 1940, max: 2020,
+  explication: "Premier scrutin ouvert à tous les citoyens du pays. Les files d'attente s'étiraient parfois sur plusieurs kilomètres."
+},
+{
+  id: "gpo-154", categorie: "geopolitique", niveau: 3, type: "grandeur",
+  question: "Combien de langues officielles l'Union européenne reconnaît-elle ?",
+  reponse: 24, unite: "langues", min: 2, max: 300,
+  explication: "Tout texte juridique doit exister dans chacune, et chaque version fait également foi : aucune n'est une simple traduction."
+}
+]);

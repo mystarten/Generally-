@@ -777,3 +777,61 @@ window.QUESTIONS.push(...[
 }
 
 ]);
+
+/* ============================ SCIENCES — frises et ordres de grandeur ====== */
+window.QUESTIONS.push(...[
+{
+  id: "sci-150", categorie: "sciences", niveau: 2, type: "frise",
+  question: "En quelle année Darwin a-t-il publié L'Origine des espèces ?",
+  reponse: 1859, min: 1750, max: 1950,
+  explication: "Le tirage initial, mille deux cent cinquante exemplaires, a été épuisé le jour même de la mise en vente."
+},
+{
+  id: "sci-151", categorie: "sciences", niveau: 2, type: "frise",
+  question: "En quelle année Einstein a-t-il publié la relativité restreinte ?",
+  reponse: 1905, min: 1850, max: 1960,
+  explication: "Son « année miraculeuse » : quatre articles décisifs publiés en quelques mois, alors qu'il était employé au bureau des brevets de Berne."
+},
+{
+  id: "sci-152", categorie: "sciences", niveau: 3, type: "frise",
+  question: "En quelle année Henri Becquerel a-t-il découvert la radioactivité ?",
+  reponse: 1896, min: 1800, max: 1950,
+  explication: "Par accident : des sels d'uranium rangés dans un tiroir avaient voilé une plaque photographique sans la moindre exposition au soleil."
+},
+{
+  id: "sci-153", categorie: "sciences", niveau: 3, type: "frise",
+  question: "En quelle année a eu lieu la première greffe de cœur humain ?",
+  reponse: 1967, min: 1900, max: 2000,
+  explication: "Réalisée au Cap par Christiaan Barnard. Le patient a survécu dix-huit jours, emporté non par un rejet mais par une pneumonie."
+},
+{
+  id: "sci-154", categorie: "sciences", niveau: 3, type: "frise",
+  question: "En quelle année le séquençage du génome humain a-t-il été déclaré achevé ?",
+  reponse: 2003, min: 1960, max: 2025,
+  explication: "Treize ans de travail et trois milliards de paires de bases. Aujourd'hui, un génome complet se séquence en moins d'une journée."
+},
+{
+  id: "sci-155", categorie: "sciences", niveau: 2, type: "grandeur",
+  question: "Quelle est la température de surface du Soleil ?",
+  reponse: 5500, unite: "°C", min: 100, max: 1000000,
+  explication: "C'est pourtant la partie la plus froide : le cœur atteint quinze millions de degrés, et la couronne, bien plus haut, dépasse le million."
+},
+{
+  id: "sci-156", categorie: "sciences", niveau: 2, type: "grandeur",
+  question: "Combien de fois le cœur humain bat-il en une journée ?",
+  reponse: 100000, unite: "battements", min: 1000, max: 10000000,
+  explication: "Environ trois milliards sur une vie entière. Les mammifères, de la souris à la baleine, en comptent tous à peu près autant : les petits battent vite et vivent peu."
+},
+{
+  id: "sci-157", categorie: "sciences", niveau: 2, type: "grandeur",
+  question: "Quelle distance sépare la Terre de la Lune ?",
+  reponse: 384400, unite: "km", min: 10000, max: 50000000,
+  explication: "Toutes les planètes du système solaire tiendraient dans cet intervalle. La Lune s'en éloigne d'environ quatre centimètres par an."
+},
+{
+  id: "sci-158", categorie: "sciences", niveau: 3, type: "grandeur",
+  question: "Quel est l'âge de la Terre ?",
+  reponse: 4540000000, unite: "ans", min: 10000000, max: 100000000000,
+  explication: "Déduit de la datation de météorites, plus anciennes que la moindre roche terrestre : la tectonique a recyclé la croûte d'origine."
+}
+]);

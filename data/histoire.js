@@ -773,3 +773,78 @@ window.QUESTIONS.push(...[
 }
 
 ]);
+
+/* =============================================================================
+   HISTOIRE — frises et ordres de grandeur
+   - frise    : reponse = annee (negative avant J.-C.), min/max bornent le curseur
+   - grandeur : reponse = nombre, unite = libelle affiche, min/max bornent
+                l'echelle logarithmique
+   ============================================================================= */
+window.QUESTIONS.push(...[
+{
+  id: "his-150", categorie: "histoire", niveau: 1, type: "frise",
+  question: "En quelle année Guillaume le Conquérant a-t-il remporté la bataille d'Hastings ?",
+  reponse: 1066, min: 900, max: 1300,
+  explication: "La tapisserie de Bayeux raconte cette journée sur près de 70 mètres de broderie, réalisée quelques années seulement après les faits."
+},
+{
+  id: "his-151", categorie: "histoire", niveau: 1, type: "frise",
+  question: "En quelle année Charlemagne a-t-il été couronné empereur à Rome ?",
+  reponse: 800, min: 600, max: 1100,
+  explication: "Le jour de Noël, par surprise selon son biographe : il aurait déclaré qu'il ne serait pas entré dans l'église s'il avait connu les intentions du pape."
+},
+{
+  id: "his-152", categorie: "histoire", niveau: 2, type: "frise",
+  question: "En quelle année la Grande Charte, la Magna Carta, a-t-elle été scellée en Angleterre ?",
+  reponse: 1215, min: 1000, max: 1500,
+  explication: "Arrachée au roi Jean par ses barons révoltés. Trois de ses clauses sont encore en vigueur dans le droit britannique."
+},
+{
+  id: "his-153", categorie: "histoire", niveau: 2, type: "frise",
+  question: "En quelle année Louis XIV est-il mort ?",
+  reponse: 1715, min: 1600, max: 1800,
+  explication: "Soixante-douze ans de règne, le plus long de l'histoire de France. Son arrière-petit-fils, qui lui succède, a cinq ans."
+},
+{
+  id: "his-154", categorie: "histoire", niveau: 2, type: "frise",
+  question: "En quelle année l'esclavage a-t-il été définitivement aboli en France ?",
+  reponse: 1848, min: 1750, max: 1900,
+  explication: "Une première abolition, en 1794, avait été annulée par Bonaparte huit ans plus tard. Celle de 1848 est l'œuvre de Victor Schœlcher."
+},
+{
+  id: "his-155", categorie: "histoire", niveau: 2, type: "frise",
+  question: "En quelle année les frères Wright ont-ils réalisé le premier vol motorisé ?",
+  reponse: 1903, min: 1850, max: 1950,
+  explication: "Douze secondes et trente-sept mètres pour le premier essai. Le quatrième de la journée a duré presque une minute."
+},
+{
+  id: "his-156", categorie: "histoire", niveau: 1, type: "frise",
+  question: "En quelle année a eu lieu le débarquement de Normandie ?",
+  reponse: 1944, min: 1900, max: 1980,
+  explication: "Près de 7 000 navires engagés en une seule journée, la plus grande opération amphibie jamais montée."
+},
+{
+  id: "his-157", categorie: "histoire", niveau: 3, type: "frise",
+  question: "Vers quelle année Gutenberg a-t-il mis au point son imprimerie à caractères mobiles ?",
+  reponse: 1450, min: 1300, max: 1600,
+  explication: "Sa Bible, imprimée vers 1455, a demandé environ trois ans de travail pour cent quatre-vingts exemplaires."
+},
+{
+  id: "his-158", categorie: "histoire", niveau: 2, type: "grandeur",
+  question: "Quelle est la hauteur actuelle de la pyramide de Khéops ?",
+  reponse: 139, unite: "m", min: 20, max: 600,
+  explication: "146 m à l'origine : elle a perdu son revêtement de calcaire poli, réemployé au Caire. Elle est restée la plus haute construction humaine pendant près de quatre mille ans."
+},
+{
+  id: "his-159", categorie: "histoire", niveau: 3, type: "grandeur",
+  question: "Quelle longueur totale atteint la Grande Muraille de Chine, branches comprises ?",
+  reponse: 21196, unite: "km", min: 500, max: 200000,
+  explication: "Chiffre d'un relevé officiel de 2012, bien supérieur aux estimations antérieures : il additionne tous les tronçons de toutes les époques."
+},
+{
+  id: "his-160", categorie: "histoire", niveau: 3, type: "grandeur",
+  question: "Quel âge ont approximativement les peintures de la grotte de Lascaux ?",
+  reponse: 17000, unite: "ans", min: 1000, max: 500000,
+  explication: "La grotte a été refermée au public dès 1963 : le gaz carbonique des visiteurs attaquait les pigments plus vite que les millénaires."
+}
+]);

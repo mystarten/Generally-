@@ -3,7 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Culture Générale</title>
+<title>Generally — Quiz de culture générale</title>
+<meta name="description" content="Generally, le jeu de culture générale : 888 questions en français, carte du monde interactive, frises à dater et duels entre amis. De 1 à 4 joueurs.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Generally — Quiz de culture générale">
+<meta property="og:description" content="888 questions de culture générale, une carte du monde interactive et des duels entre amis.">
+<meta property="og:image" content="icones/icone-512.png">
+<meta name="twitter:card" content="summary_large_image">
 
 <!--
   ============================================================================
@@ -28,6 +34,12 @@
   ============================================================================
 -->
 
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#F5A623">
+<link rel="icon" href="icones/icone-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icones/icone-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Generally">
 <link rel="stylesheet" href="polices/polices.css">
 <style>
 /* =============================================================================
@@ -459,6 +471,81 @@ button,input{font:inherit;color:inherit;font-family:var(--police-texte)}
 .succes-case .medaille{font-size:1.3rem;line-height:1.1}
 .succes-case b{display:block;font-size:.86rem;font-family:var(--police-titre)}
 .succes-case em{font-style:normal;font-size:.75rem;opacity:.7}
+/* ---------------------------------------------------------------- duels */
+.elo-grand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.elo-grand b{font-family:var(--police-titre);font-size:2.6rem;font-weight:700;color:var(--ac)}
+.elo-grand span{font-size:1rem;font-weight:600;opacity:.7}
+.elo-bilan{font-size:.86rem;opacity:.65}
+.duel-liste{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.duel-ligne{display:grid;grid-template-columns:auto 1fr auto;gap:4px 11px;align-items:baseline;
+  padding:10px 13px;border-radius:13px;background:var(--fond)}
+.duel-ligne .issue{font-family:var(--police-titre);font-weight:700;min-width:2.2em}
+.duel-ligne .issue.g{color:var(--ok)} .duel-ligne .issue.p{color:var(--ko)}
+.duel-ligne .qui{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.duel-ligne .pts{font-variant-numeric:tabular-nums;font-size:.9rem;opacity:.75}
+.duel-ligne .det{grid-column:2/4;font-size:.76rem;opacity:.55}
+.banniere-duel{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:15px 18px;border-radius:18px;margin-bottom:18px;
+  background:var(--ac);color:#fff;
+  box-shadow:0 6px 18px rgba(0,0,0,.14)}
+.banniere-duel .txt{flex:1 1 220px}
+.banniere-duel b{display:block;font-family:var(--police-titre);font-size:1.05rem}
+.banniere-duel em{font-style:normal;font-size:.85rem;opacity:.9}
+.banniere-duel .btn{background:#fff;color:var(--ac);border-color:transparent}
+.carte-partage{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.95rem;
+  line-height:1.5;white-space:pre-wrap;padding:13px 15px;border-radius:13px;
+  background:var(--fond);margin:4px 0 14px;word-break:break-word}
+.bloc-fin{padding:15px 17px;border-radius:17px;background:var(--carte);
+  box-shadow:0 2px 0 var(--bord);margin-bottom:16px}
+.bloc-fin h4{font-family:var(--police-titre);font-size:1rem;margin:0 0 8px}
+.rangee-btn{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}
+.bandeau-mode{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;
+  border-radius:99px;font-weight:700;font-size:.85rem;font-family:var(--police-titre);
+  background:var(--ac);color:#fff;margin-bottom:10px}
+.bandeau-mode.subite{background:var(--ko)}
+/* ------------------------------------------------- questions a curseur */
+.curseur-bloc{margin:6px 0 4px}
+.curseur-val{font-family:var(--police-titre);font-size:clamp(2rem,6vw,3rem);font-weight:700;
+  color:var(--ac);text-align:center;margin-bottom:4px;font-variant-numeric:tabular-nums}
+.curseur-unite{font-size:.9rem;opacity:.6;font-weight:600;margin-left:6px}
+.curseur-bloc input[type="range"]{width:100%;margin:10px 0 4px;accent-color:var(--ac);height:26px}
+.curseur-bornes{display:flex;justify-content:space-between;font-size:.78rem;opacity:.55}
+.curseur-verdict{margin-top:12px;font-size:.92rem;font-weight:600}
+.curseur-verdict .exact{color:var(--ok)}
+.curseur-verdict .ecart{opacity:.7;font-weight:500}
+/* ------------------------------------------------------- salon en ligne */
+.code-salon{font-family:var(--police-titre);font-size:clamp(2.6rem,9vw,4.2rem);font-weight:700;
+  letter-spacing:.14em;color:var(--ac);text-align:center;margin:2px 0 6px;
+  font-variant-numeric:tabular-nums}
+.code-aide{text-align:center;font-size:.9rem;opacity:.65;margin-bottom:14px}
+.salon-joueurs{display:flex;flex-direction:column;gap:7px}
+.salon-joueur{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:center;
+  padding:10px 14px;border-radius:14px;background:var(--fond)}
+.salon-joueur .pastille{width:11px;height:11px;border-radius:50%;background:var(--ok)}
+.salon-joueur .nom{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.salon-joueur .etiq{font-size:.76rem;opacity:.6;font-weight:600}
+.salon-joueur.moi{box-shadow:inset 0 0 0 2px var(--ac)}
+.salon-rejoindre{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.salon-rejoindre input{font-family:var(--police-titre);font-size:1.3rem;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;width:9ch;text-align:center}
+.salon-etat{font-size:.9rem;opacity:.7;margin-top:10px;min-height:1.2em}
+.salon-etat.souci{color:var(--ko);opacity:1;font-weight:600}
+
+/* classement en direct, pendant la partie */
+.direct{position:fixed;right:18px;top:92px;z-index:40;width:216px;max-width:38vw;
+  padding:12px 14px;border-radius:16px;background:var(--carte);
+  box-shadow:0 8px 26px rgba(0,0,0,.13)}
+.direct h4{font-family:var(--police-titre);font-size:.82rem;margin:0 0 8px;opacity:.6;
+  text-transform:uppercase;letter-spacing:.06em}
+.direct ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.direct li{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;
+  font-size:.86rem}
+.direct li .r{opacity:.45;font-weight:700;font-family:var(--police-titre);min-width:1.1em}
+.direct li .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.direct li .s{font-variant-numeric:tabular-nums;font-weight:700}
+.direct li.moi .n{color:var(--ac);font-weight:700}
+.direct li.fini .n::after{content:" \u2713";opacity:.6}
+@media(max-width:1100px){.direct{display:none}}
 .tour-info .decompte{display:inline-block;font-variant-numeric:tabular-nums;
   animation:battement .45s cubic-bezier(.2,1.3,.4,1) both}
 @keyframes battement{0%{transform:scale(1.5)}100%{transform:scale(1)}}
@@ -817,13 +904,14 @@ kbd{
           <circle cx="70" cy="60" r="3.6" fill="#F27BA9" opacity=".55"/>
         </g>
       </svg>
-      <p class="sur-titre">Huit catégories · Huit types de questions</p>
-      <h1 class="titre">Culture <span class="accent">Générale</span></h1>
-      <p class="sous-titre">Une carte du monde interactive, un système solaire cliquable et des frises à remettre dans l'ordre. De 1 à 4 joueurs sur le même écran.</p>
+      <p class="sur-titre">Huit catégories · Neuf types de questions</p>
+      <h1 class="titre">General<span class="accent">ly</span></h1>
+      <p class="sous-titre">Le jeu de culture générale : testez vos connaissances, découvrez de nouvelles choses et progressez question après question. De 1 à 4 joueurs sur le même écran, ou en duel avec un ami.</p>
     </div>
 
     <div id="alerte-carte" class="alerte" hidden></div>
 
+    <div class="banniere-duel" id="banniere-duel" hidden></div>
     <div class="profil" id="bandeau-profil"></div>
 
     <div class="panneau">
@@ -891,6 +979,7 @@ kbd{
       <button id="btn-jouer" class="btn btn-principal" type="button">Lancer la partie</button>
       <button id="btn-defi" class="btn btn-fantome" type="button">Défi du jour</button>
       <button id="btn-survie" class="btn btn-fantome" type="button">Survie</button>
+      <button id="btn-blitz" class="btn btn-fantome" type="button">Blitz 90 s</button>
       <button id="btn-editeur" class="btn btn-fantome" type="button">Mes questions</button>
       <button id="btn-revision" class="btn btn-fantome" type="button">Révision</button>
     </div>
@@ -905,6 +994,9 @@ kbd{
         <label class="switch"><input type="checkbox" id="opt-son"><span>Sons</span></label>
         <label class="switch"><input type="checkbox" id="opt-nuit"><span>Thème nuit</span></label>
         <button id="btn-succes" class="btn btn-mini" type="button">Succès</button>
+        <button id="btn-duels" class="btn btn-mini" type="button">Duels</button>
+        <button id="btn-salon" class="btn btn-mini" type="button">Jouer en ligne</button>
+        <button id="btn-installer" class="btn btn-mini" type="button" hidden>Installer l’application</button>
         <button id="btn-palmares" class="btn btn-mini" type="button">Palmarès</button>
         <button id="btn-effacer" class="btn btn-mini" type="button">Effacer les données locales</button>
       </div>
@@ -933,6 +1025,7 @@ kbd{
       <span class="progression" id="progression"></span>
     </div>
 
+    <p class="bandeau-mode" id="bandeau-mode" hidden></p>
     <p class="tour-info" id="tour-info"></p>
     <h2 class="question" id="texte-question"></h2>
     <div id="zone-reponse"></div>
@@ -955,6 +1048,91 @@ kbd{
   </section>
 
   <!-- ============================== ÉDITEUR ============================== -->
+  <section id="ecran-salon" class="ecran" hidden>
+    <div class="hero">
+      <h1 class="titre">Jouer en <span class="accent">ligne</span></h1>
+      <p class="sous-titre">Créez un salon, partagez le code à vos amis : vous répondrez
+        tous aux mêmes questions, chacun depuis son ordinateur, avec le classement
+        qui se met à jour en direct.</p>
+    </div>
+
+    <!-- avant d'entrer dans un salon -->
+    <div class="panneau" id="salon-accueil">
+      <div class="section">
+        <span class="etiquette">Votre pseudo</span>
+        <div class="noms"><input id="salon-pseudo" type="text" maxlength="24"
+             placeholder="Votre pseudo" autocomplete="nickname"></div>
+      </div>
+      <div class="section">
+        <span class="etiquette">Rejoindre un salon</span>
+        <div class="salon-rejoindre">
+          <input id="salon-code" type="text" maxlength="6" placeholder="CODE"
+                 autocomplete="off" spellcheck="false">
+          <button id="btn-salon-rejoindre" class="btn btn-mini" type="button">Rejoindre</button>
+        </div>
+      </div>
+      <div class="section">
+        <span class="etiquette">Ou en créer un</span>
+        <p class="indice">Le salon reprend la catégorie et le niveau choisis sur l’accueil.
+          Jusqu’à douze joueurs.</p>
+      </div>
+      <p class="salon-etat" id="salon-etat"></p>
+    </div>
+
+    <!-- salle d'attente -->
+    <div class="panneau" id="salon-attente" hidden>
+      <div class="section">
+        <span class="etiquette">Code d’invitation</span>
+        <div class="code-salon" id="salon-code-affiche"></div>
+        <p class="code-aide" id="salon-reglages"></p>
+        <div class="rangee-btn" style="justify-content:center">
+          <button id="btn-salon-copier-code" class="btn btn-mini" type="button">Copier le code</button>
+          <button id="btn-salon-copier-lien" class="btn btn-mini" type="button">Copier le lien</button>
+        </div>
+      </div>
+      <div class="section">
+        <span class="etiquette" id="salon-titre-joueurs">Joueurs</span>
+        <div class="salon-joueurs" id="salon-liste"></div>
+      </div>
+      <p class="salon-etat" id="salon-etat-2"></p>
+    </div>
+
+    <div class="actions">
+      <button id="btn-salon-creer" class="btn btn-principal" type="button">Créer un salon</button>
+      <button id="btn-salon-lancer" class="btn btn-principal" type="button" hidden>Lancer la partie</button>
+      <button id="btn-salon-quitter" class="btn btn-fantome" type="button" hidden>Quitter le salon</button>
+      <button id="btn-salon-retour" class="btn btn-fantome" type="button">Accueil</button>
+    </div>
+  </section>
+
+  <section id="ecran-duels" class="ecran" hidden>
+    <div class="hero">
+      <h1 class="titre">Duels</h1>
+      <p class="sous-titre">Défiez vos amis sur exactement les mêmes questions. Tout passe
+        par un lien : ni compte, ni inscription.</p>
+    </div>
+
+    <div class="panneau">
+      <div class="section">
+        <span class="etiquette">Votre classement</span>
+        <div id="elo-resume"></div>
+      </div>
+      <div class="section">
+        <span class="etiquette">Adversaires</span>
+        <div id="duel-adversaires"></div>
+      </div>
+      <div class="section">
+        <span class="etiquette">Derniers duels</span>
+        <div id="duel-historique"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="btn-creer-duel" class="btn btn-principal" type="button">Créer un défi</button>
+      <button id="btn-duels-retour" class="btn btn-fantome" type="button">Accueil</button>
+    </div>
+  </section>
+
   <section id="ecran-editeur" class="ecran" hidden>
     <div class="hero">
       <p class="sur-titre" id="compte-perso"></p>
@@ -1035,6 +1213,9 @@ kbd{
       </div>
     </div>
 
+    <div class="bloc-fin" id="bloc-duel" hidden></div>
+    <div class="bloc-fin" id="bloc-partage" hidden></div>
+
     <div class="actions">
       <button id="btn-rejouer" class="btn btn-principal" type="button">Rejouer</button>
       <button id="btn-accueil" class="btn btn-fantome" type="button">Accueil</button>
@@ -1043,6 +1224,7 @@ kbd{
 
 </div>
 
+<div class="direct" id="classement-direct" hidden></div>
 <canvas id="confettis" hidden></canvas>
 <div id="depart" class="depart" hidden><span></span></div>
 
@@ -1096,7 +1278,7 @@ kbd{
    matériellement injouable. */
 var TEMPS_NIVEAU   = { 1: 25000, 2: 20000, 3: 15000 };
 var FACTEUR_TYPE   = {
-  vrai_faux: 0.9, qcm: 1, planete: 1.15,
+  vrai_faux: 0.9, qcm: 1, planete: 1.15, frise: 1.35, grandeur: 1.35,
   clic_pays: 1.5, chronologie: 1.6, distance: 1.7, multi_pays: 2
 };
 var FACTEUR_SAISIE = 1.35;                   // taper une réponse prend du temps
@@ -1302,7 +1484,7 @@ function ecrire(cle, val) {
 function effacerTout() {
   try {
     ['cg.options', 'cg.stats', 'cg.historique', 'cg.rates', 'cg.palmares',
-     'cg.profil', 'cg.succes',
+     'cg.profil', 'cg.succes', 'cg.elo', 'cg.duels',
      'cg.vues', 'cg.defi', 'cg.survie'].forEach(function (k) { localStorage.removeItem(k); });
   } catch (e) {}
 }
@@ -1561,7 +1743,7 @@ var partie = null;
    1. ÉCRANS ET BOÎTE DE DIALOGUE
    ========================================================================= */
 function ecran(nom) {
-  ['accueil', 'jeu', 'fin', 'editeur'].forEach(function (n) {
+  ['accueil', 'jeu', 'fin', 'editeur', 'duels', 'salon'].forEach(function (n) {
     var s = $('#ecran-' + n);
     var visible = (n === nom);
     if (visible && s.hidden) {                 // rejoue l'animation d'entrée
@@ -1699,6 +1881,27 @@ function pointsQuestion(q, fraction, resteMs, serieApres, bonus) {
    monde, 150 km tiennent dans la pointe du curseur. On accorde donc le plein
    de points dès qu'on a désigné la bonne région, puis la note décroît
    doucement jusqu'à 500 km avant de chuter pour de bon. */
+/* Sur une frise, l'intéressant est de situer l'époque, pas de retrouver
+   l'année au millimètre : on accorde le plein de points à trois ans près. */
+function fractionAnnee(ecart) {
+  ecart = Math.abs(ecart);
+  if (ecart <= 3) return 1;
+  if (ecart >= 120) return 0;
+  if (ecart <= 15) return 1 - 0.25 * (ecart - 3) / 12;   // 100 % -> 75 %
+  return 0.75 * (120 - ecart) / 105;                     //  75 % ->  0 %
+}
+
+/* Pour un ordre de grandeur, c'est le rapport qui compte et non l'écart :
+   se tromper de 10 sur 20 n'a rien à voir avec se tromper de 10 sur 10 000. */
+function fractionGrandeur(donne, vrai) {
+  if (!(donne > 0) || !(vrai > 0)) return 0;
+  var r = Math.max(donne / vrai, vrai / donne);
+  if (r <= 1.1) return 1;
+  if (r >= 10) return 0;
+  var bas = Math.log(1.1) / Math.LN10;
+  return clamp(1 - ((Math.log(r) / Math.LN10) - bas) / (1 - bas), 0, 1);
+}
+
 function fractionDistance(km) {
   if (km <= 150) return 1;
   if (km >= 2000) return 0;
@@ -2117,6 +2320,16 @@ function evaluer(q, valeur) {
 
     case 'planete':
       return { fraction: valeur === q.reponse ? 1 : 0, info: {} };
+
+    case 'frise':
+      if (valeur == null) return { fraction: 0, info: { ecart: null } };
+      return { fraction: fractionAnnee(valeur - q.reponse),
+               info: { ecart: valeur - q.reponse } };
+
+    case 'grandeur':
+      if (valeur == null) return { fraction: 0, info: { rapport: null } };
+      return { fraction: fractionGrandeur(valeur, q.reponse),
+               info: { rapport: valeur / q.reponse } };
   }
   return { fraction: 0, info: {} };
 }
@@ -2133,6 +2346,9 @@ function texteBonneReponse(q) {
                           return (r + 1) + '. ' + q.choix[i];
                         }).join('  •  ');
     case 'planete':   return 'Réponse : ' + q.reponse;
+    case 'frise':     return 'Réponse : ' + anneeTexte(q.reponse);
+    case 'grandeur':  return 'Réponse : ' + nombreTexte(q.reponse) +
+                             (q.unite ? ' ' + q.unite : '');
   }
   return '';
 }
@@ -2166,6 +2382,8 @@ function afficherQuestion(q, repondre, opts) {
     case 'distance':  return rendreDistance(zone, q, repondre, opts);
     case 'chronologie': return rendreChronologie(zone, q, repondre);
     case 'planete':   return rendrePlanete(zone, q, repondre);
+    case 'frise':     return rendreFrise(zone, q, repondre);
+    case 'grandeur':  return rendreGrandeur(zone, q, repondre);
   }
   return { reveler: function () {}, figer: function () {} };
 }
@@ -2303,6 +2521,109 @@ function rendreVraiFaux(zone, q, repondre) {
       });
     }
   };
+}
+
+/* --- questions à curseur ------------------------------------------------
+   Même ossature pour les deux : une grosse valeur lisible, un curseur, les
+   bornes, puis un bouton Valider. La différence tient à l'échelle, linéaire
+   pour les années, logarithmique pour les ordres de grandeur. */
+function chapeauSimple(zone, aide) {
+  var tete = el('div', 'chapeau-carte');
+  tete.appendChild(el('span', 'aide-carte', aide));
+  zone.appendChild(tete);
+}
+
+function anneeTexte(a) {
+  return a < 0 ? Math.abs(a) + ' av. J.-C.' : String(a);
+}
+function nombreTexte(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(n >= 1e10 ? 0 : 1).replace('.', ',') + ' milliards';
+  if (n >= 1e6) return (n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace('.', ',') + ' millions';
+  if (n >= 1000) return Math.round(n).toLocaleString('fr-FR');
+  if (n >= 10) return String(Math.round(n));
+  return String(Math.round(n * 10) / 10).replace('.', ',');
+}
+
+function curseurCommun(zone, q, repondre, opts) {
+  var bloc = el('div', 'curseur-bloc');
+  var val = el('div', 'curseur-val');
+  bloc.appendChild(val);
+
+  var ch = document.createElement('input');
+  ch.type = 'range';
+  ch.min = '0'; ch.max = '1000'; ch.step = '1';
+  ch.value = '500';
+  ch.setAttribute('aria-label', opts.aria);
+  bloc.appendChild(ch);
+
+  var bornes = el('div', 'curseur-bornes');
+  bornes.appendChild(el('span', null, opts.libelleMin));
+  bornes.appendChild(el('span', null, opts.libelleMax));
+  bloc.appendChild(bornes);
+
+  var verdict = el('div', 'curseur-verdict');
+  bloc.appendChild(verdict);
+  zone.appendChild(bloc);
+
+  function courant() { return opts.versValeur(+ch.value / 1000); }
+  function peindre() { val.textContent = opts.afficher(courant()); }
+  ch.addEventListener('input', peindre);
+  peindre();
+
+  var valider = el('button', 'btn btn-principal', 'Valider');
+  valider.type = 'button';
+  var rangee = el('div', 'rangee-btn');
+  rangee.appendChild(valider);
+  zone.appendChild(rangee);
+  valider.addEventListener('click', function () { repondre(courant()); });
+
+  return {
+    figer: function () { ch.disabled = true; valider.disabled = true; },
+    reveler: function (v) {
+      ch.disabled = true; valider.disabled = true;
+      verdict.appendChild(el('span', 'exact', opts.texteExact()));
+      if (v != null) verdict.appendChild(el('span', 'ecart', '   —   ' + opts.texteEcart(v)));
+    }
+  };
+}
+
+function rendreFrise(zone, q, repondre) {
+  var min = (q.min != null) ? q.min : q.reponse - 200;
+  var max = (q.max != null) ? q.max : q.reponse + 200;
+  chapeauSimple(zone, 'Faites glisser le curseur jusqu\u2019à l\u2019année que vous pensez juste. ' +
+    'À trois ans près, la réponse est comptée exacte.');
+  return curseurCommun(zone, q, repondre, {
+    aria: 'Année',
+    libelleMin: anneeTexte(min), libelleMax: anneeTexte(max),
+    versValeur: function (t) { return Math.round(min + t * (max - min)); },
+    afficher: anneeTexte,
+    texteExact: function () { return anneeTexte(q.reponse); },
+    texteEcart: function (v) {
+      var e = Math.abs(v - q.reponse);
+      return e === 0 ? 'pile' : e + ' an' + (e > 1 ? 's' : '') + ' d\u2019écart';
+    }
+  });
+}
+
+function rendreGrandeur(zone, q, repondre) {
+  var min = (q.min != null) ? q.min : q.reponse / 100;
+  var max = (q.max != null) ? q.max : q.reponse * 100;
+  var lmin = Math.log(min) / Math.LN10, lmax = Math.log(max) / Math.LN10;
+  var u = q.unite ? ' ' + q.unite : '';
+  chapeauSimple(zone, 'L\u2019échelle est logarithmique : ce qui compte est l\u2019ordre de grandeur, ' +
+    'pas le chiffre exact.');
+  return curseurCommun(zone, q, repondre, {
+    aria: 'Valeur estimée',
+    libelleMin: nombreTexte(min) + u, libelleMax: nombreTexte(max) + u,
+    versValeur: function (t) { return Math.pow(10, lmin + t * (lmax - lmin)); },
+    afficher: function (v) { return nombreTexte(v) + (q.unite ? ' ' : '') + (q.unite || ''); },
+    texteExact: function () { return nombreTexte(q.reponse) + u; },
+    texteEcart: function (v) {
+      var r = Math.max(v / q.reponse, q.reponse / v);
+      return r < 1.1 ? 'ordre de grandeur juste'
+                     : 'facteur ' + (Math.round(r * 10) / 10).toString().replace('.', ',');
+    }
+  });
 }
 
 /* --- entête commune aux questions de carte ------------------------------ */
@@ -2567,6 +2888,10 @@ function lancerPartie(spec) {
     annonce: null,
     cle: spec.cle,
     defi: spec.defi || null,
+    duel: spec.duel || null,
+    salon: spec.salon || null,
+    blitz: spec.blitz ? { fin: 0, repondues: 0 } : null,
+    mortSubite: null,
     libelle: spec.libelle,
     ids: spec.questions.map(function (q) { return q.id; })
   };
@@ -2574,7 +2899,85 @@ function lancerPartie(spec) {
   ecran('jeu');
   majScores();
   vide($('#pastilles'));
-  compteARebours(function () { tourSuivant(); });
+  compteARebours(function () {
+    /* le chrono global du blitz ne part qu'après le décompte d'entrée */
+    if (partie.blitz) partie.blitz.fin = performance.now() + DUREE_BLITZ;
+    tourSuivant();
+  });
+}
+
+/* =========================================================================
+   BLITZ — 90 secondes, enchaînement continu
+   -------------------------------------------------------------------------
+   Le chrono n'est plus par question mais global : chaque question reçoit ce
+   qu'il reste, et le retour s'efface de lui-même pour ne pas voler de temps.
+   ========================================================================= */
+var DUREE_BLITZ = 90000;
+
+function resteBlitz() {
+  if (!partie || !partie.blitz || !partie.blitz.fin) return DUREE_BLITZ;
+  return Math.max(0, partie.blitz.fin - performance.now());
+}
+
+/* une question neuve, tous niveaux, jamais revue dans la même partie */
+function questionBlitz() {
+  var libre = function (q) { return !partie.utilisees[q.id]; };
+  var base = pool('toutes', 0).filter(libre);
+  if (!base.length) return null;
+  var q = melanger(base)[0];
+  partie.utilisees[q.id] = 1;
+  return q;
+}
+
+/* En blitz, s'arrêter pour lire le retour coûterait le temps que le mode est
+   censé mettre sous pression : on enchaîne seul, sauf si le joueur a déjà
+   cliqué Suivant entre-temps. */
+function enchainerBlitz() {
+  if (!partie || !partie.blitz) return;
+  var attendu = partie.idx;
+  setTimeout(function () {
+    if (partie && partie.blitz && partie.idx === attendu && !$('#zone-feedback').hidden) {
+      tourSuivant();
+    }
+  }, 1200);
+}
+
+function jouerBlitz() {
+  chargerTopo().then(function () {
+    ignorerHistorique = true;
+    lancerPartie({
+      questions: [], blitz: true, mode: 'tour',
+      cle: 'blitz', libelle: 'Blitz 90 s'
+    });
+    ignorerHistorique = false;
+  });
+}
+
+/* =========================================================================
+   MORT SUBITE — départage des ex æquo
+   -------------------------------------------------------------------------
+   Une égalité en tête est la pire fin possible pour une partie entre amis.
+   On ajoute une question au buzzer, ouverte aux seuls joueurs à égalité :
+   le premier qui répond juste l'emporte.
+   ========================================================================= */
+function exAequoEnTete() {
+  var vivants = partie.joueurs.filter(function (j) { return !j.elimine; });
+  if (vivants.length < 2) return null;
+  var max = Math.max.apply(null, vivants.map(function (j) { return j.score; }));
+  var tete = vivants.filter(function (j) { return j.score === max; });
+  return tete.length >= 2 ? tete : null;
+}
+
+function lancerMortSubite(tete) {
+  var q = questionBlitz();            /* même tirage : une question non vue */
+  if (!q) return false;
+  partie.mortSubite = tete.map(function (j) { return j.i; });
+  partie.modeAvant = partie.mode;
+  partie.mode = 'buzzer';             /* quel que soit le mode d'origine */
+  partie.file.push({ q: q });
+  partie.idx = partie.file.length - 2;   /* tourSuivant incrémentera */
+  tourSuivant();
+  return true;
 }
 
 /* En survie la partie n'a pas de longueur : on tire la question suivante au
@@ -2598,6 +3001,17 @@ function survivants() {
 
 function tourSuivant() {
   partie.idx++;
+
+  if (partie.blitz) {
+    if (resteBlitz() <= 0) { finPartie(); return; }
+    if (partie.idx >= partie.file.length) {
+      var qb = questionBlitz();
+      if (!qb) { finPartie(); return; }
+      partie.file.push({ q: qb, joueur: 0 });
+    }
+    demarrerTour();
+    return;
+  }
 
   if (partie.survie) {
     if (partie.vies <= 0) { finPartie(); return; }
@@ -2682,6 +3096,18 @@ function demarrerTour() {
   };
 
   tempsTour = tempsDe(q, partie.saisie && saisissable(q));
+  /* en blitz, la question hérite de ce qu'il reste au chrono global */
+  if (partie.blitz) tempsTour = Math.max(1000, resteBlitz());
+
+  var bm = $('#bandeau-mode');
+  if (partie.mortSubite) {
+    bm.hidden = false; bm.className = 'bandeau-mode subite';
+    bm.textContent = '\u{1F525} Mort subite — ' +
+      partie.mortSubite.map(function (i) { return partie.joueurs[i].nom; }).join(' contre ');
+  } else if (partie.blitz) {
+    bm.hidden = false; bm.className = 'bandeau-mode';
+    bm.textContent = '\u{26A1} Blitz — ' + partie.blitz.repondues + ' répondues';
+  } else { bm.hidden = true; bm.textContent = ''; }
   teinter(q.categorie);
   partie.joueurs.forEach(function (j) { j.gain = 0; });
 
@@ -2689,9 +3115,11 @@ function demarrerTour() {
   $('#badge-cat').textContent = NOM_CAT[q.categorie] || q.categorie;
   $('#badge-niveau').textContent = NOM_NIVEAU[q.niveau] || '';
   $('#badge-niveau').className = 'badge n' + q.niveau;
-  $('#progression').textContent = partie.survie
-    ? 'Question ' + (partie.idx + 1) + '  ·  record ' + lire('cg.survie', 0)
-    : 'Question ' + (partie.idx + 1) + ' / ' + partie.file.length;
+  $('#progression').textContent = partie.blitz
+    ? 'Question ' + (partie.idx + 1)
+    : partie.survie
+      ? 'Question ' + (partie.idx + 1) + '  ·  record ' + lire('cg.survie', 0)
+      : 'Question ' + (partie.idx + 1) + ' / ' + partie.file.length;
   majPastilles();
   majRaccourcis(q);
   vide($('#zone-jokers'));
@@ -2768,6 +3196,12 @@ function demarrerBuzzer() {
     if (t.buzzeur == null) return;
     reponseBuzzer(t.buzzeur, valeur);
   }, {});
+  /* mort subite : les joueurs qui ne sont pas à égalité restent spectateurs */
+  if (partie.mortSubite) {
+    partie.joueurs.forEach(function (j) {
+      if (partie.mortSubite.indexOf(j.i) < 0) t.bloques[j.i] = true;
+    });
+  }
   /* la zone reste montée mais inerte tant que personne n'a buzzé */
   desactiverZone(true);
   dessinerBuzzers();
@@ -2934,6 +3368,7 @@ function conclure(resultats) {
     $('#btn-suivant').textContent = (partie.idx + 1 >= partie.file.length) ? 'Voir le classement' : 'Suivant';
     try { $('#btn-suivant').focus({ preventScroll: true }); } catch (e) { $('#btn-suivant').focus(); }
     majScores();
+    enchainerBlitz();
     return;
   }
 
@@ -3015,6 +3450,8 @@ function conclure(resultats) {
   });
 
   afficherFeedback(q, lignes, auMoinsUn);
+  if (partie.blitz) { partie.blitz.repondues++; enchainerBlitz(); }
+  if (partie.salon) pousserScoreSalon(partie.recap.length >= partie.file.length);
   mancheJouee();
   var an = $('#annonce');
   if (partie.annonce) { an.textContent = partie.annonce; an.hidden = false; }
@@ -3366,9 +3803,9 @@ var SUCCES = [
     t: function (c) { return c.prof.parties >= 50; } },
   { id: 'parfait',   m: '\u{2B50}',  nom: 'Sans faute',          d: 'Une partie sans la moindre erreur',
     t: function (c) { return c.sansFaute; } },
-  { id: 'serie5',    m: '\u{1F525}', nom: 'En feu',              d: '5 bonnes réponses d'affilée',
+  { id: 'serie5',    m: '\u{1F525}', nom: 'En feu',              d: '5 bonnes réponses d’affilée',
     t: function (c) { return c.prof.meilleureSerie >= 5; } },
-  { id: 'serie10',   m: '\u{1F4A5}', nom: 'Incandescent',        d: '10 bonnes réponses d'affilée',
+  { id: 'serie10',   m: '\u{1F4A5}', nom: 'Incandescent',        d: '10 bonnes réponses d’affilée',
     t: function (c) { return c.prof.meilleureSerie >= 10; } },
   { id: 'jour3',     m: '\u{1F305}', nom: 'Trois jours',         d: '3 jours de suite au défi',
     t: function (c) { return c.serieJours >= 3; } },
@@ -3390,7 +3827,7 @@ var SUCCES = [
     t: function (c) { return c.categoriesJouees >= 8; } },
   { id: 'survivant', m: '\u{1F6E1}', nom: 'Survivant',           d: '15 questions en mode Survie',
     t: function (c) { return c.survie >= 15; } },
-  { id: 'eclair',    m: '\u{26A1}',  nom: 'Éclair',              d: 'Répondre juste en moins d'un cinquième du temps',
+  { id: 'eclair',    m: '\u{26A1}',  nom: 'Éclair',              d: 'Répondre juste en moins d’un cinquième du temps',
     t: function (c) { return c.eclair; } }
 ];
 
@@ -3509,13 +3946,631 @@ function majBandeauProfil() {
 function montrerCombo(serie, couleur) {
   if (sobre) return;
   var mult = serie >= 5 ? '×2' : '×1,5';
-  var d = el('div', 'combo', mult + ' — ' + serie + ' d'affilée');
+  var d = el('div', 'combo', mult + ' — ' + serie + ' d’affilée');
   d.style.color = couleur || 'var(--ac)';
   document.body.appendChild(d);
   setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 950);
 }
 
+/* =========================================================================
+   DUELS ENTRE AMIS — par lien, sans serveur
+   -------------------------------------------------------------------------
+   Le lien transporte les identifiants des questions, donc les deux joueurs
+   affrontent exactement la même série, même si leurs versions du jeu n’ont
+   pas tout à fait la même banque. Un aller (défi) puis un retour (riposte)
+   suffisent à clore le duel et à mettre les deux Elo à jour.
+   ========================================================================= */
+var NB_DUEL = 10;
+
+/* base64 compatible URL ; btoa ne digere que de l’octet, d’ou le passage par
+   encodeURIComponent pour les accents */
+function encoder64(obj) {
+  try {
+    var t = btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+    return t.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  } catch (e) { return ''; }
+}
+function decoder64(txt) {
+  try {
+    var t = txt.replace(/-/g, '+').replace(/_/g, '/');
+    while (t.length % 4) t += '=';
+    return JSON.parse(decodeURIComponent(escape(atob(t))));
+  } catch (e) { return null; }
+}
+
+/* --- Elo ---------------------------------------------------------------- */
+var ELO_DEPART = 1000, ELO_K = 32;
+var RANGS_ELO = [
+  { min: 0,    nom: 'Débutant' },  { min: 1000, nom: 'Amateur' },
+  { min: 1200, nom: 'Confirmé' },  { min: 1400, nom: 'Expert' },
+  { min: 1600, nom: 'Maître' },    { min: 1800, nom: 'Grand maître' }
+];
+function rangElo(n) {
+  var r = RANGS_ELO[0].nom;
+  RANGS_ELO.forEach(function (x) { if (n >= x.min) r = x.nom; });
+  return r;
+}
+function etatElo() {
+  var e = lire('cg.elo', null) || { score: ELO_DEPART, gagnes: 0, perdus: 0, nuls: 0 };
+  e.score = e.score || ELO_DEPART;
+  e.gagnes = e.gagnes || 0; e.perdus = e.perdus || 0; e.nuls = e.nuls || 0;
+  return e;
+}
+/* issue : 1 victoire, 0.5 nul, 0 defaite */
+function appliquerElo(issue, eloAdverse) {
+  var e = etatElo();
+  var attendu = 1 / (1 + Math.pow(10, ((eloAdverse || ELO_DEPART) - e.score) / 400));
+  var avant = e.score;
+  e.score = Math.round(e.score + ELO_K * (issue - attendu));
+  if (issue === 1) e.gagnes++; else if (issue === 0) e.perdus++; else e.nuls++;
+  ecrire('cg.elo', e);
+  return { avant: avant, apres: e.score, delta: e.score - avant };
+}
+
+function historiqueDuels() { return lire('cg.duels', []); }
+function noterDuel(d) {
+  var h = historiqueDuels();
+  h.push(d);
+  ecrire('cg.duels', h.slice(-50));
+}
+
+/* --- construction d’une série de duel -------------------------------- */
+function questionsDepuisIds(ids) {
+  var parId = {};
+  TOUTES.forEach(function (q) { parId[q.id] = q; });
+  var out = [];
+  ids.forEach(function (i) { if (parId[i]) out.push(parId[i]); });
+  return out;
+}
+function tirerQuestionsDuel() {
+  var jeton = Math.random().toString(36).slice(2, 10);
+  var rnd = mulberry32(graine('duel-' + jeton));
+  var base = pool('toutes', 0).slice().sort(function (a, b) {
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  });
+  ignorerHistorique = true;
+  var qs = tirer(base, NB_DUEL, rnd);
+  ignorerHistorique = false;
+  return qs;
+}
+
+function nomJoueurLocal() {
+  var n = (config.noms[0] || '').trim();
+  return n || 'Un ami';
+}
+
+function lancerDuel(ids, adversaire) {
+  chargerTopo().then(function () {
+    var qs = ids ? questionsDepuisIds(ids) : tirerQuestionsDuel();
+    if (qs.length < 3) {
+      dialogue('Défi illisible',
+        'Les questions de ce défi sont introuvables dans votre version du jeu.', null, 'Fermer');
+      return;
+    }
+    lancerPartie({
+      questions: qs, mode: 'tour', cle: 'duel',
+      libelle: adversaire ? ('Duel contre ' + adversaire.nom) : 'Duel — à envoyer',
+      duel: adversaire
+        ? { role: 'defie', nom: adversaire.nom, score: adversaire.score,
+            elo: adversaire.elo, ids: qs.map(function (q) { return q.id; }) }
+        : { role: 'createur', ids: qs.map(function (q) { return q.id; }) }
+    });
+  });
+}
+
+function lienAvec(cle, charge) {
+  var base = location.origin + location.pathname;
+  return base + '#' + cle + '=' + encoder64(charge);
+}
+
+/* --- carte de résultat partageable ------------------------------------- */
+function carteResultat() {
+  var pastilles = partie.recap.map(function (r) {
+    return r.passe ? '\u{2B1C}' : r.juste ? '\u{1F7E9}' : r.partiel ? '\u{1F7E8}' : '\u{1F7E5}';
+  }).join('');
+  var bonnes = partie.recap.filter(function (r) { return r.juste; }).length;
+  var titre = partie.libelle || 'Partie libre';
+  return 'Generally — ' + titre + '\n' + pastilles + '\n' +
+         bonnes + '/' + partie.recap.length + ' · ' + partie.joueurs[0].score + ' pts\n' +
+         location.origin + location.pathname;
+}
+
+/* --- blocs affichés en fin de partie ----------------------------------- */
+function zoneCopiable(texte, libelleBouton) {
+  var bloc = el('div');
+  bloc.appendChild(el('div', 'carte-partage', texte));
+  var rangee = el('div', 'rangee-btn');
+  var b = el('button', 'btn btn-mini', libelleBouton || 'Copier');
+  b.type = 'button';
+  b.addEventListener('click', function () {
+    var fini = function () { b.textContent = 'Copié ✓'; setTimeout(function () { b.textContent = libelleBouton || 'Copier'; }, 1800); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texte).then(fini, function () { fini(); });
+    } else {
+      var t = document.createElement('textarea');
+      t.value = texte; document.body.appendChild(t); t.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(t); fini();
+    }
+  });
+  rangee.appendChild(b);
+  bloc.appendChild(rangee);
+  return bloc;
+}
+
+function construireBlocsFin() {
+  var zp = $('#bloc-partage'), zd = $('#bloc-duel');
+  vide(zp).hidden = true; vide(zd).hidden = true;
+  if (!partie || !partie.recap.length) return;
+
+  /* --- partage du résultat (toujours disponible en solo) --- */
+  if (partie.joueurs.length === 1) {
+    zp.hidden = false;
+    zp.appendChild(el('h4', null, 'Partager votre résultat'));
+    zp.appendChild(zoneCopiable(carteResultat(), 'Copier le résultat'));
+  }
+
+  var d = partie.duel;
+  if (!d) return;
+  var moi = partie.joueurs[0].score;
+
+  if (d.role === 'createur') {
+    zd.hidden = false;
+    zd.appendChild(el('h4', null, 'Votre défi est prêt'));
+    zd.appendChild(el('p', 'muted',
+      'Envoyez ce lien à un ami : il répondra exactement aux mêmes questions, ' +
+      'puis vous renverra son résultat.'));
+    zd.appendChild(zoneCopiable(lienAvec('d', {
+      v: 1, j: nomJoueurLocal(), s: moi, e: etatElo().score, q: d.ids
+    }), 'Copier le lien du défi'));
+    return;
+  }
+
+  if (d.role === 'defie') {
+    if (d.applique) return;      /* un duel ne compte qu'une fois */
+    d.applique = true;
+    var issue = moi > d.score ? 1 : moi < d.score ? 0 : 0.5;
+    var mouvement = appliquerElo(issue, d.elo);
+    noterDuel({ nom: d.nom, moi: moi, lui: d.score, issue: issue,
+                delta: mouvement.delta, date: Date.now() });
+    zd.hidden = false;
+    zd.appendChild(el('h4', null,
+      issue === 1 ? 'Vous gagnez le duel' : issue === 0 ? 'Vous perdez le duel' : 'Égalité'));
+    zd.appendChild(el('p', 'muted',
+      'Vous ' + moi + ' · ' + d.nom + ' ' + d.score +
+      '  —  Elo ' + mouvement.apres + ' (' + (mouvement.delta >= 0 ? '+' : '') + mouvement.delta + ')'));
+    zd.appendChild(zoneCopiable(lienAvec('r', {
+      v: 1, j: nomJoueurLocal(), s: moi, a: d.score, e: etatElo().score
+    }), 'Copier la réponse à renvoyer'));
+  }
+}
+
+/* --- lecture d’un lien reçu ---------------------------------------- */
+var duelEnAttente = null;
+
+var salonEnAttente = null;
+
+function lireLienSalon() {
+  var m = /^#salon=([A-Z0-9]{6})$/i.exec(location.hash || '');
+  if (!m) return;
+  salonEnAttente = m[1].toUpperCase();
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+}
+
+function lireLienDuel() {
+  var h = location.hash || '';
+  var m = /^#(d|r)=(.+)$/.exec(h);
+  if (!m) return;
+  var charge = decoder64(m[2]);
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  if (!charge) return;
+
+  if (m[1] === 'd' && charge.q && charge.q.length) {
+    duelEnAttente = { nom: charge.j || 'Un ami', score: charge.s || 0,
+                      elo: charge.e || ELO_DEPART, ids: charge.q };
+    return;
+  }
+  if (m[1] === 'r') {
+    /* riposte : l’ami a joué notre défi, on clôt le duel de notre côté */
+    var moi = charge.a || 0, lui = charge.s || 0;
+    var issue = moi > lui ? 1 : moi < lui ? 0 : 0.5;
+    var mv = appliquerElo(issue, charge.e);
+    noterDuel({ nom: charge.j || 'Un ami', moi: moi, lui: lui, issue: issue,
+                delta: mv.delta, date: Date.now() });
+    setTimeout(function () {
+      dialogue(issue === 1 ? 'Duel remporté' : issue === 0 ? 'Duel perdu' : 'Duel nul',
+        (charge.j || 'Votre adversaire') + ' a relevé votre défi : ' + lui +
+        ' points contre ' + moi + '. Votre Elo passe à ' + mv.apres +
+        ' (' + (mv.delta >= 0 ? '+' : '') + mv.delta + ').', null, 'Fermer');
+    }, 400);
+  }
+}
+
+function majBanniereDuel() {
+  var b = $('#banniere-duel');
+  if (!duelEnAttente) { b.hidden = true; vide(b); return; }
+  vide(b).hidden = false;
+  var t = el('div', 'txt');
+  t.appendChild(el('b', null, duelEnAttente.nom + ' vous défie'));
+  t.appendChild(el('em', null, 'Son score : ' + duelEnAttente.score + ' points sur ' +
+    duelEnAttente.ids.length + ' questions. Vous aurez exactement les mêmes.'));
+  b.appendChild(t);
+  var go = el('button', 'btn', 'Relever le défi');
+  go.type = 'button';
+  go.addEventListener('click', function () {
+    var adv = duelEnAttente;
+    duelEnAttente = null;
+    lancerDuel(adv.ids, adv);
+  });
+  b.appendChild(go);
+}
+
+/* --- écran Duels ------------------------------------------------------- */
+function montrerEcranDuels() {
+  var e = etatElo(), h = historiqueDuels();
+
+  var r = vide($('#elo-resume'));
+  var g = el('div', 'elo-grand');
+  g.appendChild(el('b', null, String(e.score)));
+  g.appendChild(el('span', null, rangElo(e.score)));
+  r.appendChild(g);
+  r.appendChild(el('div', 'elo-bilan',
+    e.gagnes + ' victoire' + (e.gagnes > 1 ? 's' : '') + ' · ' +
+    e.perdus + ' défaite' + (e.perdus > 1 ? 's' : '') + ' · ' +
+    e.nuls + ' nul' + (e.nuls > 1 ? 's' : '')));
+
+  var parAdv = {};
+  h.forEach(function (d) {
+    var a = parAdv[d.nom] || (parAdv[d.nom] = { g: 0, p: 0, n: 0 });
+    if (d.issue === 1) a.g++; else if (d.issue === 0) a.p++; else a.n++;
+  });
+  var za = vide($('#duel-adversaires'));
+  var noms = Object.keys(parAdv);
+  if (!noms.length) {
+    za.appendChild(el('p', 'muted',
+      'Personne pour l’instant. Créez un défi et envoyez le lien à un ami : ' +
+      'il apparaîtra ici dès qu’il aura joué.'));
+  } else {
+    var zl = el('div', 'duel-liste');
+    noms.sort(function (x, y) { return (parAdv[y].g + parAdv[y].p) - (parAdv[x].g + parAdv[x].p); });
+    noms.forEach(function (n) {
+      var a = parAdv[n];
+      var d = el('div', 'duel-ligne');
+      d.appendChild(el('span', 'issue ' + (a.g > a.p ? 'g' : a.g < a.p ? 'p' : ''), a.g + '–' + a.p));
+      d.appendChild(el('span', 'qui', n));
+      d.appendChild(el('span', 'pts', (a.g + a.p + a.n) + ' duel' + (a.g + a.p + a.n > 1 ? 's' : '')));
+      zl.appendChild(d);
+    });
+    za.appendChild(zl);
+  }
+
+  var zh = vide($('#duel-historique'));
+  if (!h.length) {
+    zh.appendChild(el('p', 'muted', 'Aucun duel terminé.'));
+  } else {
+    var zz = el('div', 'duel-liste');
+    h.slice().reverse().slice(0, 12).forEach(function (d) {
+      var li = el('div', 'duel-ligne');
+      li.appendChild(el('span', 'issue ' + (d.issue === 1 ? 'g' : d.issue === 0 ? 'p' : ''),
+        d.issue === 1 ? 'V' : d.issue === 0 ? 'D' : 'N'));
+      li.appendChild(el('span', 'qui', d.nom));
+      li.appendChild(el('span', 'pts', d.moi + ' – ' + d.lui));
+      li.appendChild(el('span', 'det',
+        new Date(d.date).toLocaleDateString('fr-FR') + '  ·  Elo ' +
+        (d.delta >= 0 ? '+' : '') + d.delta));
+      zz.appendChild(li);
+    });
+    zh.appendChild(zz);
+  }
+  ecran('duels');
+}
+
+/* =========================================================================
+   MULTIJOUEUR EN LIGNE — salons à code d’invitation
+   -------------------------------------------------------------------------
+   GitHub Pages ne sert que des fichiers : pour que deux ordinateurs se
+   voient, il faut un intermédiaire. Supabase joue ce rôle (base Postgres et
+   diffusion temps réel), appelé directement depuis le navigateur.
+
+   La bibliothèque n’est téléchargée qu’à l’ouverture de cet écran : tout le
+   reste du jeu continue de fonctionner sans réseau.
+
+   La clé ci-dessous est publique par conception. Aucune écriture directe
+   n’est permise : le client ne peut qu’appeler des fonctions qui vérifient
+   son jeton.
+   ========================================================================= */
+var SB_URL = 'https://fgaknciktmvywycrxtyz.supabase.co';
+var SB_CLE = 'sb_publishable_vB3-kOqMWGbyyrgS2yLZFQ_xu5IWQJq';
+var NB_SALON = 12;            /* questions d’une partie en ligne */
+
+var sb = null;                /* client Supabase, chargé à la demande */
+
+/* copie dans le presse-papier, avec repli pour les navigateurs qui refusent
+   l’API moderne hors contexte sécurisé */
+function copierTexte(texte, bouton, libelle) {
+  var fini = function () {
+    if (!bouton) return;
+    bouton.textContent = 'Copié ✓';
+    setTimeout(function () { bouton.textContent = libelle; }, 1800);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(texte).then(fini, fini);
+    return;
+  }
+  var t = document.createElement('textarea');
+  t.value = texte; document.body.appendChild(t); t.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(t);
+  fini();
+}
+var salon = null;             /* salon courant */
+
+function jetonLocal() {
+  var j = lire('cg.jeton', null);
+  if (!j) {
+    j = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+          var r = Math.random() * 16 | 0;
+          return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+    ecrire('cg.jeton', j);
+  }
+  return j;
+}
+
+function chargerSupabase() {
+  if (sb) return Promise.resolve(sb);
+  return import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm')
+    .then(function (mod) {
+      sb = mod.createClient(SB_URL, SB_CLE, {
+        auth: { persistSession: false },
+        realtime: { params: { eventsPerSecond: 5 } }
+      });
+      return sb;
+    });
+}
+
+function direSalon(texte, souci) {
+  [$('#salon-etat'), $('#salon-etat-2')].forEach(function (z) {
+    if (!z) return;
+    z.textContent = texte || '';
+    z.className = 'salon-etat' + (souci ? ' souci' : '');
+  });
+}
+
+function messageErreur(e) {
+  var m = (e && (e.message || e.error_description)) || '';
+  if (/introuvable/i.test(m)) return 'Aucun salon ne porte ce code.';
+  if (/deja commence/i.test(m)) return 'La partie a déjà commencé dans ce salon.';
+  if (/complet/i.test(m)) return 'Ce salon est complet (douze joueurs).';
+  if (/hote/i.test(m)) return 'Seul l’hôte peut lancer la partie.';
+  if (/nom manquant/i.test(m)) return 'Choisissez un pseudo avant de continuer.';
+  if (/Failed to fetch|NetworkError|load failed/i.test(m)) {
+    return 'Connexion impossible. Vérifiez votre accès à Internet.';
+  }
+  return m || 'Une erreur est survenue.';
+}
+
+/* --- affichage de la salle d’attente ----------------------------------- */
+function peindreSalon() {
+  var dansSalon = !!salon;
+  $('#salon-accueil').hidden = dansSalon;
+  $('#salon-attente').hidden = !dansSalon;
+  $('#btn-salon-creer').hidden = dansSalon;
+  $('#btn-salon-quitter').hidden = !dansSalon;
+  $('#btn-salon-lancer').hidden = !(dansSalon && salon.hote);
+  if (!dansSalon) return;
+
+  $('#salon-code-affiche').textContent = salon.code;
+  $('#salon-reglages').textContent =
+    (NOM_CAT[salon.categorie] || salon.categorie) + '  ·  ' +
+    (salon.niveau ? (NOM_NIVEAU[salon.niveau] || '') : 'Niveaux mixtes') +
+    '  ·  ' + (salon.questions ? salon.questions.length : NB_SALON) + ' questions';
+
+  var liste = vide($('#salon-liste'));
+  var moi = jetonLocal();
+  (salon.joueurs || []).forEach(function (j) {
+    var d = el('div', 'salon-joueur' + (j.jeton === moi ? ' moi' : ''));
+    d.appendChild(el('span', 'pastille'));
+    d.appendChild(el('span', 'nom', j.nom));
+    d.appendChild(el('span', 'etiq', j.jeton === salon.hoteJeton ? 'hôte' : ''));
+    liste.appendChild(d);
+  });
+  $('#salon-titre-joueurs').textContent =
+    'Joueurs — ' + (salon.joueurs || []).length + ' sur ' + NB_SALON;
+
+  var assez = (salon.joueurs || []).length >= 2;
+  $('#btn-salon-lancer').disabled = !assez;
+  if (salon.hote) {
+    direSalon(assez ? 'Vous pouvez lancer la partie.'
+                    : 'En attente d’au moins un autre joueur…');
+  } else {
+    direSalon('En attente que l’hôte lance la partie…');
+  }
+}
+
+/* --- écoute temps réel, avec repli par interrogation régulière ------- */
+function ecouterSalon() {
+  if (!salon) return;
+  var code = salon.code;
+
+  if (salon.canal) { try { sb.removeChannel(salon.canal); } catch (e) {} }
+  salon.canal = sb.channel('salon-' + code)
+    .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'generally_joueurs', filter: 'salon=eq.' + code },
+        function () { rafraichirSalon(); })
+    .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'generally_salons', filter: 'code=eq.' + code },
+        function (charge) {
+          var n = charge && charge.new;
+          if (n && n.etat === 'en_cours') demarrerPartieSalon();
+        })
+    .subscribe();
+
+  /* le temps réel peut être bloqué par un pare-feu : on interroge aussi
+     toutes les trois secondes, ce qui garantit que rien ne reste figé */
+  clearInterval(salon.minuterie);
+  salon.minuterie = setInterval(rafraichirSalon, 3000);
+}
+
+function rafraichirSalon() {
+  if (!salon || !sb) return;
+  var code = salon.code;
+  sb.from('generally_joueurs').select('jeton,nom,score,avancement,bonnes,fini')
+    .eq('salon', code).order('rejoint_le')
+    .then(function (r) {
+      if (!salon || salon.code !== code || r.error) return;
+      salon.joueurs = r.data || [];
+      if ($('#ecran-salon') && !$('#ecran-salon').hidden) peindreSalon();
+      peindreClassementDirect();
+    });
+  sb.from('generally_salons').select('etat,questions').eq('code', code).maybeSingle()
+    .then(function (r) {
+      if (!salon || salon.code !== code || r.error || !r.data) return;
+      if (r.data.questions && !salon.questions) salon.questions = r.data.questions;
+      if (r.data.etat === 'en_cours' && !salon.lance) demarrerPartieSalon();
+    });
+}
+
+/* --- actions ------------------------------------------------------------- */
+function pseudoSalon() {
+  var v = ($('#salon-pseudo').value || '').trim();
+  if (!v) v = (config.noms[0] || '').trim();
+  return v;
+}
+
+function creerSalon() {
+  var nom = pseudoSalon();
+  if (!nom) { direSalon('Choisissez un pseudo avant de créer un salon.', true); return; }
+  direSalon('Création du salon…');
+  chargerTopo().then(chargerSupabase).then(function () {
+    var base = pool(config.categorie, config.niveau);
+    if (base.length < NB_SALON) base = pool(config.categorie, 0);
+    if (base.length < NB_SALON) base = pool('toutes', 0);
+    ignorerHistorique = true;
+    var qs = tirer(base, NB_SALON);
+    ignorerHistorique = false;
+    var ids = qs.map(function (q) { return q.id; });
+    return sb.rpc('generally_creer_salon', {
+      p_jeton: jetonLocal(), p_nom: nom,
+      p_categorie: config.categorie, p_niveau: config.niveau, p_questions: ids
+    }).then(function (r) {
+      if (r.error) throw r.error;
+      salon = { code: r.data, hote: true, hoteJeton: jetonLocal(),
+                categorie: config.categorie, niveau: config.niveau,
+                questions: ids, joueurs: [], lance: false };
+      ecrire('cg.pseudo', nom);
+      peindreSalon();
+      ecouterSalon();
+      rafraichirSalon();
+    });
+  }).catch(function (e) { direSalon(messageErreur(e), true); });
+}
+
+function rejoindreSalon(codeDonne) {
+  var nom = pseudoSalon();
+  var code = (codeDonne || $('#salon-code').value || '').trim().toUpperCase();
+  if (!nom) { direSalon('Choisissez un pseudo avant de rejoindre.', true); return; }
+  if (code.length !== 6) { direSalon('Un code comporte six caractères.', true); return; }
+  direSalon('Connexion au salon…');
+  chargerTopo().then(chargerSupabase).then(function () {
+    return sb.rpc('generally_rejoindre', { p_code: code, p_jeton: jetonLocal(), p_nom: nom });
+  }).then(function (r) {
+    if (r.error) throw r.error;
+    var d = r.data;
+    salon = { code: d.code, hote: !!d.hote, hoteJeton: null,
+              categorie: d.categorie, niveau: d.niveau,
+              questions: d.questions || [], joueurs: [], lance: false };
+    ecrire('cg.pseudo', nom);
+    peindreSalon();
+    ecouterSalon();
+    rafraichirSalon();
+    if (d.etat === 'en_cours') demarrerPartieSalon();
+  }).catch(function (e) { direSalon(messageErreur(e), true); });
+}
+
+function lancerSalon() {
+  if (!salon || !salon.hote) return;
+  direSalon('Lancement…');
+  sb.rpc('generally_demarrer', { p_code: salon.code, p_jeton: jetonLocal() })
+    .then(function (r) { if (r.error) throw r.error; })
+    .catch(function (e) { direSalon(messageErreur(e), true); });
+}
+
+function quitterSalon(silencieux) {
+  if (!salon) return;
+  var code = salon.code;
+  clearInterval(salon.minuterie);
+  if (salon.canal && sb) { try { sb.removeChannel(salon.canal); } catch (e) {} }
+  salon = null;
+  $('#classement-direct').hidden = true;
+  if (sb) sb.rpc('generally_quitter', { p_code: code, p_jeton: jetonLocal() })
+            .then(function () {}, function () {});
+  if (!silencieux) { peindreSalon(); direSalon(''); }
+}
+
+/* --- la partie ----------------------------------------------------------- */
+function demarrerPartieSalon() {
+  if (!salon || salon.lance) return;
+  salon.lance = true;
+  clearInterval(salon.minuterie);
+  var qs = questionsDepuisIds(salon.questions || []);
+  if (qs.length < 3) { direSalon('Questions introuvables dans votre version du jeu.', true); return; }
+  var code = salon.code;
+  lancerPartie({
+    questions: qs, mode: 'tour', cle: 'salon',
+    libelle: 'Salon ' + code, salon: code
+  });
+  $('#classement-direct').hidden = false;
+  peindreClassementDirect();
+  salon.minuterie = setInterval(rafraichirSalon, 3000);
+}
+
+/* la progression est poussée après chaque question, jamais plus vite */
+function pousserScoreSalon(fini) {
+  if (!salon || !sb || !partie) return;
+  var j = partie.joueurs[0];
+  sb.rpc('generally_maj_score', {
+    p_code: salon.code, p_jeton: jetonLocal(),
+    p_score: Math.round(j.score), p_avancement: partie.recap.length,
+    p_bonnes: j.bonnes, p_fini: !!fini
+  }).then(function () {}, function () {});
+}
+
+function peindreClassementDirect() {
+  var z = $('#classement-direct');
+  if (!salon || !salon.lance) { z.hidden = true; return; }
+  var moi = jetonLocal();
+  var lot = (salon.joueurs || []).slice().sort(function (a, b) { return b.score - a.score; });
+  vide(z).hidden = false;
+  z.appendChild(el('h4', null, 'Classement en direct'));
+  var ol = el('ol');
+  lot.forEach(function (j, i) {
+    var li = el('li', (j.jeton === moi ? 'moi ' : '') + (j.fini ? 'fini' : ''));
+    li.appendChild(el('span', 'r', String(i + 1)));
+    li.appendChild(el('span', 'n', j.nom));
+    li.appendChild(el('span', 's', String(j.score)));
+    ol.appendChild(li);
+  });
+  z.appendChild(ol);
+}
+
+/* --- écran -------------------------------------------------------------- */
+function montrerEcranSalon() {
+  var p = lire('cg.pseudo', '') || (config.noms[0] || '');
+  if (!$('#salon-pseudo').value) $('#salon-pseudo').value = p;
+  peindreSalon();
+  ecran('salon');
+}
+
 function finPartie() {
+  /* une égalité en tête se départage avant d'afficher le classement */
+  if (!partie.mortSubite && !partie.blitz && !partie.survie && partie.joueurs.length > 1) {
+    var tete = exAequoEnTete();
+    if (tete && lancerMortSubite(tete)) return;
+  }
+  if (partie.mortSubite && partie.modeAvant) partie.mode = partie.modeAvant;
+
   chronoArreter();
   Son.fin();
 
@@ -3627,6 +4682,8 @@ function finPartie() {
   if (gagnant && gagnant.score > 0) {
     setTimeout(function () { confettis(['#FFC531', '#FFE49B', '#FFFFFF', '#F5A623']); }, 260);
   }
+  if (partie.salon) { pousserScoreSalon(true); rafraichirSalon(); }
+  construireBlocsFin();
   majStats();
   majNote();          // le bouton Révision doit refléter les questions ratées
 }
@@ -3673,6 +4730,7 @@ function segments(hote, items, estActif, onChoix) {
 
 function majAccueil() {
   majBandeauProfil();
+  majBanniereDuel();
   segments($('#choix-nb'),
     [1, 2, 3, 4].map(function (n) { return { id: n, nom: n + (n > 1 ? ' joueurs' : ' joueur') }; }),
     function (it) { return it.id === config.nb; },
@@ -3809,6 +4867,8 @@ function majNote() {
   $('#btn-revision').disabled = rates === 0;
   $('#btn-survie').disabled = config.nb > 1;
   $('#btn-survie').title = config.nb > 1 ? 'La survie se joue en solo' : '';
+  $('#btn-blitz').disabled = config.nb > 1;
+  $('#btn-blitz').title = config.nb > 1 ? 'Le blitz se joue en solo' : '';
 }
 
 function majStats() {
@@ -4187,9 +5247,39 @@ function majListePerso() {
    ========================================================================= */
 $('#btn-jouer').addEventListener('click', jouerNormal);
 $('#btn-succes').addEventListener('click', montrerSucces);
+$('#btn-duels').addEventListener('click', montrerEcranDuels);
+$('#btn-salon').addEventListener('click', montrerEcranSalon);
+$('#btn-salon-retour').addEventListener('click', function () { ecran('accueil'); majAccueil(); });
+$('#btn-salon-creer').addEventListener('click', creerSalon);
+$('#btn-salon-rejoindre').addEventListener('click', function () { rejoindreSalon(); });
+$('#btn-salon-lancer').addEventListener('click', lancerSalon);
+$('#btn-salon-quitter').addEventListener('click', function () { quitterSalon(false); });
+$('#salon-code').addEventListener('keydown', function (ev) {
+  if (ev.key === 'Enter') { ev.preventDefault(); rejoindreSalon(); }
+});
+$('#btn-salon-copier-code').addEventListener('click', function () {
+  if (salon) copierTexte(salon.code, this, 'Copier le code');
+});
+$('#btn-salon-copier-lien').addEventListener('click', function () {
+  if (salon) copierTexte(location.origin + location.pathname + '#salon=' + salon.code,
+                         this, 'Copier le lien');
+});
+/* on prévient les autres quand on ferme l’onglet, sans bloquer la fermeture */
+window.addEventListener('pagehide', function () {
+  if (salon && sb) {
+    try {
+      navigator.sendBeacon(SB_URL + '/rest/v1/rpc/generally_quitter?apikey=' + SB_CLE,
+        new Blob([JSON.stringify({ p_code: salon.code, p_jeton: jetonLocal() })],
+                 { type: 'application/json' }));
+    } catch (e) {}
+  }
+});
+$('#btn-duels-retour').addEventListener('click', function () { ecran('accueil'); majAccueil(); });
+$('#btn-creer-duel').addEventListener('click', function () { lancerDuel(null, null); });
 $('#btn-palmares').addEventListener('click', montrerPalmares);
 $('#btn-defi').addEventListener('click', jouerDefi);
 $('#btn-survie').addEventListener('click', jouerSurvie);
+$('#btn-blitz').addEventListener('click', jouerBlitz);
 $('#btn-editeur').addEventListener('click', ouvrirEditeur);
 $('#ed-type').addEventListener('change', function () { edBrouillon = null; edRendreReponse(); });
 $('#ed-enregistrer').addEventListener('click', function () {
@@ -4349,6 +5439,46 @@ document.addEventListener('keydown', function (ev) {
    13. DÉMARRAGE
    ========================================================================= */
 rechargerBanque();
+/* --- installation sur l'écran d'accueil ---------------------------------
+   Le service worker ne s'enregistre qu'en http(s) : en file:// le navigateur
+   le refuse, et ce n'est pas un problème, tout étant déjà local. */
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+
+/* Chrome n'autorise l'invite d'installation qu'à partir d'un geste de
+   l'utilisateur : on retient l'événement et on l'utilise au clic. */
+var inviteInstall = null;
+window.addEventListener('beforeinstallprompt', function (ev) {
+  ev.preventDefault();
+  inviteInstall = ev;
+  $('#btn-installer').hidden = false;
+});
+window.addEventListener('appinstalled', function () {
+  inviteInstall = null;
+  $('#btn-installer').hidden = true;
+});
+$('#btn-installer').addEventListener('click', function () {
+  if (!inviteInstall) return;
+  inviteInstall.prompt();
+  inviteInstall.userChoice.then(function () {
+    inviteInstall = null;
+    $('#btn-installer').hidden = true;
+  });
+});
+
+/* raccourcis du manifeste : ?lancer=defi ou ?lancer=blitz */
+(function () {
+  var m = /[?&]lancer=(defi|blitz)/.exec(location.search);
+  if (!m) return;
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  setTimeout(function () { if (m[1] === 'defi') jouerDefi(); else jouerBlitz(); }, 300);
+})();
+
+lireLienSalon();
+lireLienDuel();
 if (options.rythme) config.rythme = options.rythme;
 $('#opt-son').checked = !!options.son;
 $('#opt-nuit').checked = options.theme === 'nuit';
