@@ -104,12 +104,6 @@ window.QUESTIONS.push(...[
 
 /* ------------------------------- NIVEAU 2 --------------------------------- */
 {
-  id: "gpo-015", categorie: "geopolitique", niveau: 2, type: "clic_pays",
-  question: "Cliquez sur le pays où siège la Cour pénale internationale.",
-  reponse: "528",
-  explication: "La CPI est installée à La Haye, ville qui concentre aussi la Cour internationale de justice et Europol."
-},
-{
   id: "gpo-016", categorie: "geopolitique", niveau: 2, type: "qcm",
   question: "Quel organe de l'ONU réunit l'ensemble des États membres, chacun avec une voix ?",
   choix: ["L'Assemblée générale", "Le Conseil de sécurité", "Le Secrétariat", "Le Conseil économique et social"],

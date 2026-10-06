@@ -10,7 +10,7 @@
    À chaque publication, incrémenter VERSION : les anciens caches sont alors
    supprimés à l'activation.
    ============================================================================= */
-const VERSION = 'generally-v2';
+const VERSION = 'generally-v3';
 
 const COQUILLE = [
   './',
@@ -68,15 +68,16 @@ self.addEventListener('fetch', (e) => {
   if (estPage) {
     /* Réseau d'abord : une nouvelle version se voit immédiatement.
 
-       On ne remet en cache QUE la page d'accueil. Mettre en cache n'importe
-       quelle navigation sous la clé index.html reviendrait à remplacer le jeu
-       par la dernière page de contenu visitée. */
-    const estAccueil = url.pathname === self.registration.scope.replace(self.location.origin, '')
-                    || /\/(index\.html)?$/.test(url.pathname) && !/\/(quiz|guides|questions)\//.test(url.pathname);
+       Seule la page du jeu est remise en cache sous la clé index.html. Toute
+       autre page — contenu éditorial, zone d'entraînement, module SOG — y
+       prendrait sa place, et le mode hors ligne servirait autre chose que le
+       jeu. */
+    const base = new URL(self.registration.scope).pathname;
+    const estLeJeu = url.pathname === base || url.pathname === base + 'index.html';
     e.respondWith(
       fetch(req)
         .then((rep) => {
-          if (estAccueil && rep && rep.ok) {
+          if (estLeJeu && rep && rep.ok) {
             const copie = rep.clone();
             caches.open(VERSION).then((c) => c.put('./index.html', copie));
           }

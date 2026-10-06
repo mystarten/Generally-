@@ -608,6 +608,9 @@ button,input{font:inherit;color:inherit;font-family:var(--police-texte)}
 .pied-liens a{color:var(--txt-2);font-weight:600;text-decoration:none}
 .pied-liens a:hover{color:var(--ac);text-decoration:underline}
 .pied-liens p{margin:0;max-width:62ch;line-height:1.55}
+/* le lien vers la zone d’entraînement se comporte comme un bouton */
+#lien-entrainement{display:inline-flex;align-items:center;justify-content:center;
+  text-decoration:none}
 .tour-info .decompte{display:inline-block;font-variant-numeric:tabular-nums;
   animation:battement .45s cubic-bezier(.2,1.3,.4,1) both}
 @keyframes battement{0%{transform:scale(1.5)}100%{transform:scale(1)}}
@@ -1065,6 +1068,7 @@ kbd{
       <button id="btn-blitz" class="btn btn-fantome" type="button">Blitz 90 s</button>
       <button id="btn-editeur" class="btn btn-fantome" type="button">Mes questions</button>
       <button id="btn-revision" class="btn btn-fantome" type="button">Révision</button>
+      <a id="lien-entrainement" class="btn btn-fantome" href="training.html">Zone d’entraînement</a>
     </div>
     <p class="note" id="note-pool"></p>
 

@@ -1,0 +1,367 @@
+/* =============================================================================
+   Zone d'entraînement — feuille de style dédiée.
+
+   Toutes les classes sont préfixées « tz- ». Aucune n'existe dans le jeu, et
+   réciproquement : les deux feuilles peuvent cohabiter sans se marcher dessus.
+
+   Les jetons de couleur et de typographie sont repris du jeu pour que la zone
+   paraisse appartenir au même produit, mais ils sont redéclarés ici sous des
+   noms propres (--tz-*) afin que la suppression du dossier n'ait aucun effet
+   sur le reste.
+   ============================================================================= */
+:root{
+  --tz-fond:#FFF6EC;
+  --tz-carte:#FFFFFF;
+  --tz-terre:#FFFFFF;      /* terres emergees sur la carte */
+  --tz-creux:#F7F0E6;
+  --tz-bord:#ECE0D2;
+
+  --tz-txt:#2E2A3B;
+  --tz-txt-2:#857D95;
+  --tz-txt-3:#ABA3B8;
+
+  --tz-ac:#F5A623;
+  --tz-ac-b:#CE8110;
+  --tz-ac-pale:#FFF1D9;
+
+  --tz-ok:#34C77B;
+  --tz-ok-pale:#E4F8ED;
+  --tz-ko:#FF6B6B;
+  --tz-ko-pale:#FFEAEA;
+
+  --tz-memoire:#8B7BE8;
+  --tz-attention:#4EA3F5;
+  --tz-stress:#E8875A;
+  --tz-gendarmerie:#4C6FBF;
+
+  --tz-r-s:14px; --tz-r:22px; --tz-r-l:30px;
+  --tz-titre:"Fredoka","Nunito",system-ui,sans-serif;
+  --tz-texte:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --tz-fond:#191530; --tz-carte:#241E42; --tz-creux:#1F1A3A; --tz-bord:#332B58;
+    --tz-terre:#3B3266;
+    --tz-txt:#F2EEFF; --tz-txt-2:#A79FC4; --tz-txt-3:#7E7799;
+    --tz-ac-pale:#33284A; --tz-ok-pale:#1C3A2C; --tz-ko-pale:#3E2130;
+  }
+}
+
+*{box-sizing:border-box}
+body.tz-corps{
+  margin:0;background:var(--tz-fond);color:var(--tz-txt);
+  font-family:var(--tz-texte);font-size:1.02rem;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.tz-enveloppe{max-width:1040px;margin:0 auto;padding:0 20px 70px}
+
+/* ------------------------------------------------------------------ entête */
+.tz-tete{display:flex;align-items:center;gap:14px;padding:22px 0 6px;flex-wrap:wrap}
+.tz-tete h1{
+  font-family:var(--tz-titre);font-size:clamp(1.5rem,3.4vw,2rem);font-weight:700;
+  margin:0;letter-spacing:-.01em;
+}
+.tz-tete h1 span{color:var(--tz-ac)}
+.tz-retour{
+  margin-left:auto;text-decoration:none;color:var(--tz-txt-2);font-weight:600;
+  font-size:.92rem;padding:8px 15px;border-radius:99px;background:var(--tz-carte);
+  box-shadow:0 2px 0 var(--tz-bord);
+}
+.tz-retour:hover{color:var(--tz-ac)}
+.tz-sous{color:var(--tz-txt-2);margin:2px 0 22px;max-width:62ch}
+
+/* ----------------------------------------------------------------- écrans */
+.tz-ecran[hidden]{display:none !important}
+.tz-ecran{animation:tz-arrivee .3s cubic-bezier(.2,1.1,.3,1) both}
+@keyframes tz-arrivee{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* --------------------------------------------------------------- panneaux */
+.tz-panneau{
+  background:var(--tz-carte);border-radius:var(--tz-r);
+  box-shadow:0 2px 0 var(--tz-bord);padding:20px 24px;margin-bottom:18px;
+}
+.tz-etiquette{
+  display:block;font-size:.72rem;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--tz-txt-3);margin-bottom:12px;
+}
+
+/* ------------------------------------------------------------ fiches épreuve */
+.tz-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:13px}
+.tz-fiche{
+  text-align:left;background:var(--tz-carte);border:none;border-radius:var(--tz-r);
+  box-shadow:0 2px 0 var(--tz-bord);padding:17px 19px;cursor:pointer;
+  font:inherit;color:inherit;transition:transform .16s cubic-bezier(.34,1.3,.64,1);
+  display:flex;flex-direction:column;gap:6px;
+}
+.tz-fiche:hover{transform:translateY(-2px)}
+.tz-fiche:focus-visible{outline:3px solid var(--tz-ac);outline-offset:2px}
+.tz-fiche .tz-pastille{
+  width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
+  background:var(--tz-c,var(--tz-ac));color:#fff;font-family:var(--tz-titre);
+  font-weight:700;font-size:.95rem;margin-bottom:3px;
+}
+.tz-fiche b{font-family:var(--tz-titre);font-size:1.04rem;font-weight:600}
+.tz-fiche .tz-but{color:var(--tz-txt-2);font-size:.88rem;line-height:1.45}
+.tz-fiche .tz-record{
+  margin-top:auto;padding-top:8px;font-size:.82rem;font-weight:700;color:var(--tz-ac-b);
+}
+.tz-fiche .tz-record.tz-vide{color:var(--tz-txt-3);font-weight:600}
+
+/* ---------------------------------------------------------------- boutons */
+.tz-btn{
+  font-family:var(--tz-titre);font-weight:600;font-size:1rem;cursor:pointer;
+  padding:12px 26px;border-radius:99px;border:none;
+  background:var(--tz-ac);color:#fff;box-shadow:0 3px 0 var(--tz-ac-b);
+  transition:transform .16s cubic-bezier(.34,1.3,.64,1);
+}
+.tz-btn:hover:not(:disabled){transform:translateY(-2px)}
+.tz-btn:active:not(:disabled){transform:translateY(1px);box-shadow:0 1px 0 var(--tz-ac-b)}
+.tz-btn:disabled{opacity:.45;cursor:not-allowed}
+.tz-btn.tz-fantome{background:var(--tz-carte);color:var(--tz-txt);box-shadow:0 2px 0 var(--tz-bord)}
+.tz-btn.tz-mini{font-size:.88rem;padding:8px 17px}
+.tz-btn.tz-danger{background:var(--tz-ko);box-shadow:0 3px 0 #D94A4A}
+.tz-rangee{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+
+/* --------------------------------------------------------------- segments */
+.tz-segment{display:inline-flex;gap:5px;background:var(--tz-creux);padding:5px;border-radius:99px}
+.tz-segment button{
+  border:none;background:transparent;font:inherit;font-weight:600;font-size:.9rem;
+  padding:7px 16px;border-radius:99px;cursor:pointer;color:var(--tz-txt-2);
+}
+.tz-segment button[aria-pressed="true"]{background:var(--tz-carte);color:var(--tz-txt);
+  box-shadow:0 1px 0 var(--tz-bord)}
+
+/* --------------------------------------------------------------- épreuve */
+.tz-scene{
+  background:var(--tz-carte);border-radius:var(--tz-r-l);
+  box-shadow:0 2px 0 var(--tz-bord);padding:22px;min-height:390px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+/* la largeur de la carte est fixée au dessin, dans carte.js :
+   la scène étant une colonne centrée, aucune règle CSS simple n'y suffit */
+.tz-scene.tz-secousse{animation:tz-secousse .4s cubic-bezier(.36,.07,.19,.97)}
+@keyframes tz-secousse{
+  10%,90%{transform:translateX(-1px)} 20%,80%{transform:translateX(2px)}
+  30%,50%,70%{transform:translateX(-4px)} 40%,60%{transform:translateX(4px)}}
+.tz-scene.tz-flash::after{
+  content:"";position:absolute;inset:0;background:#fff;opacity:.5;
+  animation:tz-flash .18s ease-out forwards;pointer-events:none;
+}
+@keyframes tz-flash{to{opacity:0}}
+
+.tz-consigne{
+  font-family:var(--tz-titre);font-size:1.25rem;font-weight:600;
+  text-align:center;margin-bottom:18px;max-width:40ch;
+}
+.tz-indice{color:var(--tz-txt-2);font-size:.92rem;text-align:center;margin-top:12px;max-width:46ch}
+
+/* --------------------------------------------------- bandeau de l'épreuve */
+.tz-bandeau{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  margin-bottom:14px;font-size:.9rem;
+}
+.tz-bandeau .tz-info{font-weight:700;font-family:var(--tz-titre)}
+.tz-bandeau .tz-info span{color:var(--tz-txt-2);font-weight:600;font-size:.82rem}
+.tz-jauge{flex:1 1 150px;min-width:110px;height:9px;border-radius:99px;
+  background:var(--tz-creux);overflow:hidden}
+.tz-jauge i{display:block;height:100%;background:var(--tz-ac);border-radius:99px;
+  transition:width .1s linear}
+.tz-jauge.tz-alerte i{background:var(--tz-ko)}
+
+/* -------------------------------------------------------------- grilles de jeu */
+.tz-objets{display:grid;gap:11px;justify-content:center}
+.tz-objet{
+  width:68px;height:68px;border-radius:var(--tz-r-s);background:var(--tz-creux);
+  display:grid;place-items:center;font-size:2rem;user-select:none;
+  border:2px solid transparent;cursor:pointer;transition:transform .12s;
+}
+.tz-objet.tz-choisi{border-color:var(--tz-ac);background:var(--tz-ac-pale);transform:scale(.94)}
+.tz-objet.tz-fige{cursor:default}
+.tz-objet.tz-juste{border-color:var(--tz-ok);background:var(--tz-ok-pale)}
+.tz-objet.tz-faux{border-color:var(--tz-ko);background:var(--tz-ko-pale)}
+
+.tz-grand{
+  font-family:var(--tz-titre);font-size:clamp(3.4rem,13vw,6rem);font-weight:700;
+  line-height:1;user-select:none;
+}
+.tz-saisie{
+  font-family:var(--tz-titre);font-size:1.6rem;font-weight:700;text-align:center;
+  letter-spacing:.14em;width:11ch;padding:10px;border-radius:var(--tz-r-s);
+  border:2px solid var(--tz-bord);background:var(--tz-creux);color:var(--tz-txt);
+}
+.tz-saisie:focus{outline:none;border-color:var(--tz-ac)}
+
+.tz-couleurs{display:flex;gap:11px;flex-wrap:wrap;justify-content:center;margin-top:20px}
+.tz-couleur{
+  width:84px;height:52px;border-radius:var(--tz-r-s);border:3px solid transparent;
+  cursor:pointer;font:inherit;font-weight:700;color:#fff;font-size:.9rem;
+}
+.tz-couleur:hover{border-color:var(--tz-txt-3)}
+
+.tz-cible{
+  position:absolute;width:46px;height:46px;border-radius:50%;
+  background:var(--tz-ac);box-shadow:0 0 0 6px var(--tz-ac-pale);pointer-events:none;
+}
+.tz-cible.tz-perdue{background:var(--tz-ko);box-shadow:0 0 0 6px var(--tz-ko-pale)}
+.tz-zone-suivi{position:relative;width:100%;height:210px;border-radius:var(--tz-r);
+  background:var(--tz-creux);overflow:hidden;cursor:crosshair;margin-bottom:14px}
+
+/* ------------------------------------------------------------------ carte */
+.tz-carte-boite{width:100%;border-radius:var(--tz-r);
+  background:var(--tz-creux);overflow:hidden}
+.tz-carte-boite svg{display:block;width:100%;height:auto}
+.tz-carte-boite .tz-pays{fill:var(--tz-terre);stroke:var(--tz-bord);stroke-width:.5}
+.tz-carte-boite .tz-pays.tz-actif{fill:var(--tz-ac)}
+.tz-carte-boite .tz-pays.tz-juste{fill:var(--tz-ok)}
+.tz-carte-boite .tz-pays.tz-faux{fill:var(--tz-ko)}
+
+/* La pastille est la cible de clic : 30 px de diamètre utile, contre quelques
+   pixels pour un pays. Le pays s'allume avec elle, la lecture reste géographique. */
+.tz-pastille-carte .tz-halo{fill:var(--tz-ac);opacity:0}
+.tz-pastille-carte .tz-disque{fill:var(--tz-txt-3);stroke:var(--tz-creux);stroke-width:2;
+  transition:fill .12s}
+.tz-pastille-carte.tz-cliquable{cursor:pointer}
+.tz-pastille-carte.tz-cliquable .tz-disque{fill:var(--tz-ac-b)}
+.tz-pastille-carte.tz-cliquable:hover .tz-halo{opacity:.28}
+.tz-pastille-carte.tz-cliquable:hover .tz-disque{fill:var(--tz-ac)}
+.tz-pastille-carte.tz-actif .tz-disque{fill:var(--tz-ac);r:14}
+.tz-pastille-carte.tz-actif .tz-halo{opacity:.4}
+.tz-pastille-carte.tz-juste .tz-disque{fill:var(--tz-ok)}
+.tz-pastille-carte.tz-faux .tz-disque{fill:var(--tz-ko)}
+
+.tz-carte-boite .tz-trace{fill:none;stroke:var(--tz-ac);stroke-width:3;
+  stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:7 5}
+.tz-carte-boite .tz-num{fill:var(--tz-ac-b);font-family:var(--tz-titre);
+  font-weight:700;font-size:17px}
+
+/* ---------------------------------------------------------------- tutoriel */
+.tz-tuto{max-width:640px;margin:0 auto}
+.tz-tuto h3{font-family:var(--tz-titre);font-size:1.12rem;margin:22px 0 6px}
+.tz-tuto h3:first-child{margin-top:0}
+.tz-tuto p{margin:0 0 10px}
+.tz-exemple{
+  background:var(--tz-creux);border-radius:var(--tz-r);padding:18px;margin:14px 0;
+  display:flex;gap:22px;flex-wrap:wrap;justify-content:center;align-items:center;
+}
+.tz-cas{text-align:center;min-width:130px}
+.tz-cas .tz-vignette{
+  background:var(--tz-carte);border-radius:var(--tz-r-s);padding:12px;margin-bottom:8px;
+  display:flex;gap:10px;align-items:center;justify-content:center;min-height:86px;
+}
+.tz-cas b{display:block;font-family:var(--tz-titre);font-size:.95rem}
+.tz-cas.tz-oui b{color:var(--tz-ok)}
+.tz-cas.tz-non b{color:var(--tz-ko)}
+.tz-cas em{font-style:normal;font-size:.82rem;color:var(--tz-txt-2);display:block;margin-top:2px}
+.tz-pourquoi{
+  background:var(--tz-ac-pale);border-radius:var(--tz-r-s);padding:14px 17px;
+  font-size:.93rem;margin:16px 0 4px;
+}
+.tz-pourquoi b{font-family:var(--tz-titre)}
+
+/* ---------------------------------------------------------------- message */
+.tz-message{
+  padding:14px 18px;border-radius:var(--tz-r-s);margin-top:16px;font-weight:600;
+  text-align:center;max-width:46ch;
+}
+.tz-message.tz-ok{background:var(--tz-ok-pale);color:var(--tz-ok)}
+.tz-message.tz-ko{background:var(--tz-ko-pale);color:var(--tz-ko)}
+.tz-message.tz-neutre{background:var(--tz-creux);color:var(--tz-txt-2)}
+
+/* ------------------------------------------------------ interruption stress */
+.tz-interruption{
+  position:absolute;right:16px;top:16px;max-width:240px;z-index:5;
+  background:var(--tz-carte);border-radius:var(--tz-r-s);padding:12px 15px;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);font-size:.86rem;
+  animation:tz-arrivee .25s ease-out both;
+}
+.tz-interruption b{display:block;font-family:var(--tz-titre);margin-bottom:3px}
+
+/* ---------------------------------------------------------------- résultat */
+.tz-score-grand{
+  font-family:var(--tz-titre);font-size:clamp(3rem,10vw,4.6rem);font-weight:700;
+  color:var(--tz-ac);line-height:1;
+}
+.tz-score-grand sup{font-size:.34em;color:var(--tz-txt-3);font-weight:600}
+.tz-detail{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:18px 0}
+.tz-detail div{background:var(--tz-creux);border-radius:var(--tz-r-s);padding:11px 16px;
+  min-width:104px;text-align:center}
+.tz-detail b{display:block;font-family:var(--tz-titre);font-size:1.3rem}
+.tz-detail span{font-size:.79rem;color:var(--tz-txt-2)}
+
+/* --------------------------------------------------------------- historique */
+.tz-liste{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:7px}
+.tz-liste li{
+  display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:baseline;
+  background:var(--tz-creux);border-radius:var(--tz-r-s);padding:10px 15px;font-size:.92rem;
+}
+.tz-liste .tz-quand{color:var(--tz-txt-3);font-size:.8rem}
+.tz-liste .tz-pts{font-family:var(--tz-titre);font-weight:700}
+
+.tz-vide{color:var(--tz-txt-2);font-size:.93rem;margin:8px 0 0}
+
+canvas.tz-radar{display:block;margin:0 auto;max-width:100%;height:auto}
+
+@media(max-width:620px){
+  .tz-enveloppe{padding:0 15px 56px}
+  .tz-scene{padding:18px;min-height:340px}
+}
+
+
+/* ================================================== grades de gendarmerie
+   Bloc autonome : supprimer les fichiers training/grades.js,
+   training/epreuves-grades.js et ces règles ne laisse rien d'orphelin. */
+
+/* le fourreau d'épaule */
+.tz-galon{display:block;width:auto;max-width:100%;height:auto}
+.tz-galon-fond{fill:#141A3C;stroke:#000;stroke-width:1.5;stroke-opacity:.35}
+.tz-galon-scene{display:flex;flex-direction:column;align-items:center;gap:10px;
+  margin:6px 0 18px}
+.tz-galon-nom{font-family:var(--tz-titre);font-weight:700;font-size:1.3rem}
+
+/* propositions de réponse : larges, on teste un savoir, pas la visée */
+.tz-reponses{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+  width:100%;max-width:620px}
+.tz-reponse{font:inherit;font-weight:700;color:var(--tz-txt);text-align:center;
+  background:var(--tz-creux);border:2px solid transparent;border-radius:var(--tz-r);
+  padding:15px 14px;cursor:pointer;transition:transform .08s,border-color .12s}
+.tz-reponse:hover:not(:disabled){transform:translateY(-2px);border-color:var(--tz-ac)}
+.tz-reponse:disabled{cursor:default}
+.tz-reponse.tz-juste{border-color:var(--tz-ok);background:var(--tz-ok-pale)}
+.tz-reponse.tz-faux{border-color:var(--tz-ko);background:var(--tz-ko-pale)}
+
+/* listes de règles, dans les tutoriels et le mémento */
+.tz-regles{margin:10px 0 0;padding-left:20px;color:var(--tz-txt-2);font-size:.93rem}
+.tz-regles li{margin-bottom:6px}
+.tz-regles li::marker{color:var(--tz-ac)}
+
+/* mémento */
+.tz-memento-note{color:var(--tz-txt-2);font-size:.9rem;margin:0 0 14px}
+.tz-memento-ligne{display:flex;gap:16px;align-items:flex-start;
+  padding:12px 0;border-top:1px solid var(--tz-bord)}
+.tz-memento-ligne:first-of-type{border-top:none}
+.tz-memento-galon{flex:0 0 auto;width:130px;display:flex;align-items:center}
+.tz-memento-texte{flex:1;min-width:0}
+.tz-memento-titre{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tz-memento-titre b{font-family:var(--tz-titre);font-size:1.05rem}
+.tz-memento-abrev{font-size:.78rem;color:var(--tz-txt-3);font-weight:700;
+  letter-spacing:.04em}
+.tz-memento-appel{margin-top:4px;font-weight:700}
+.tz-memento-galon-txt{font-size:.88rem;color:var(--tz-txt-2);margin-top:2px}
+.tz-memento-piege{font-size:.88rem;color:var(--tz-txt-2);margin-top:4px;
+  border-left:3px solid var(--tz-ac);padding-left:9px}
+.tz-memento-source{font-size:.82rem;color:var(--tz-txt-3);max-width:70ch;
+  margin:4px auto 0;line-height:1.5}
+
+/* la pastille qui dit, d'un coup d'œil, si le grade prend « mon » */
+.tz-pastille-mon{display:inline-block;font-size:.72rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.05em;border-radius:99px;
+  padding:3px 9px;margin-right:6px}
+.tz-pastille-mon.tz-oui{background:var(--tz-ok-pale);color:var(--tz-ok)}
+.tz-pastille-mon.tz-non{background:var(--tz-ko-pale);color:var(--tz-ko)}
+
+@media(max-width:620px){
+  .tz-reponses{grid-template-columns:1fr}
+  .tz-memento-ligne{flex-direction:column;gap:6px}
+}

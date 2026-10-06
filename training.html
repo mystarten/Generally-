@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zone d’entraînement — Generally</title>
+<meta name="description" content="Espace personnel d’entraînement cognitif : mémoire, attention et gestion du stress. Solo, hors ligne, séparé du quiz.">
+<meta name="robots" content="noindex, follow">
+<meta name="theme-color" content="#F5A623">
+<link rel="icon" href="icones/icone-192.png" type="image/png">
+<link rel="stylesheet" href="polices/polices.css">
+<link rel="stylesheet" href="training/style.css">
+
+<!--
+  Zone d'entraînement — page autonome.
+
+  Elle ne partage avec le jeu que des fichiers lus en lecture seule :
+    - polices/      la typographie, pour rester dans la même identité
+    - lib/ data/    d3, topojson et la carte du monde, pour les épreuves spatiales
+    - data/*.js     la banque de questions, utilisée par la seule double tâche
+
+  Rien n'est écrit en dehors des clés localStorage préfixées « training_ ».
+  Supprimer ce fichier et le dossier training/ laisse le jeu intact.
+-->
+</head>
+<body class="tz-corps">
+<div class="tz-enveloppe">
+
+  <header class="tz-tete">
+    <h1>Zone d’<span>entraînement</span></h1>
+    <a class="tz-retour" href="./">← Retour au jeu</a>
+  </header>
+
+  <!-- ====================================================== ACCUEIL -->
+  <section id="tz-ecran-accueil" class="tz-ecran">
+    <p class="tz-sous">
+      Espace personnel, en solo. Des épreuves courtes de mémoire, d’attention et
+      de résistance au stress, inspirées des tests de sélection. Rien ici ne
+      touche au quiz de culture générale : scores et historique sont stockés à part.
+    </p>
+    <!-- Accès au module Culture SOG. Entièrement séparé : supprimer ce bloc,
+         sog.html et les fichiers training/tz-sog* laisse la zone intacte.
+         Le style est posé ici, et non dans style.css, pour que la suppression
+         n'y laisse aucune règle orpheline. -->
+    <style>
+      .tz-acces-sog{display:block;text-decoration:none;color:var(--tz-txt);
+        background:var(--tz-ac-pale);border-radius:var(--tz-r-l);
+        padding:20px 24px;margin-bottom:20px;transition:transform .1s}
+      .tz-acces-sog:hover{transform:translateY(-2px)}
+      .tz-acces-sog b{display:block;font-family:var(--tz-titre);font-size:1.25rem;
+        margin-bottom:4px}
+      .tz-acces-sog span{color:var(--tz-txt-2);font-size:.92rem}
+    </style>
+    <a class="tz-acces-sog" href="sog.html">
+      <b>Culture SOG</b>
+      <span>Dates, citations, notions et chiffres pour l’épreuve de culture
+            générale du concours. Révision espacée : ce que tu rates revient plus souvent.</span>
+    </a>
+
+    <div id="tz-categories"></div>
+  </section>
+
+  <!-- ====================================================== TUTORIEL -->
+  <section id="tz-ecran-tuto" class="tz-ecran" hidden>
+    <div class="tz-panneau">
+      <div id="tz-tuto"></div>
+    </div>
+  </section>
+
+  <!-- =================================================== PREPARATION -->
+  <section id="tz-ecran-preparation" class="tz-ecran" hidden>
+    <div class="tz-panneau">
+      <div id="tz-preparation"></div>
+    </div>
+  </section>
+
+  <!-- ====================================================== ÉPREUVE -->
+  <section id="tz-ecran-epreuve" class="tz-ecran" hidden>
+    <div class="tz-panneau">
+      <span class="tz-etiquette" id="tz-stress-epreuve"></span>
+      <h2 id="tz-titre-epreuve" style="font-family:var(--tz-titre);margin:0 0 6px"></h2>
+      <p id="tz-comment" style="color:var(--tz-txt-2);margin:0 0 14px;font-size:.93rem"></p>
+      <div id="tz-bandeau" class="tz-bandeau"></div>
+      <div id="tz-scene" class="tz-scene"></div>
+      <div class="tz-rangee">
+        <button id="tz-quitter" class="tz-btn tz-fantome tz-mini" type="button">
+          Abandonner l’épreuve
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== RÉSULTAT -->
+  <section id="tz-ecran-resultat" class="tz-ecran" hidden>
+    <div class="tz-panneau" style="text-align:center">
+      <div id="tz-resultat"></div>
+    </div>
+  </section>
+
+  <!-- ================================================== PROGRESSION -->
+  <section id="tz-ecran-progression" class="tz-ecran" hidden>
+    <div class="tz-panneau">
+      <div id="tz-progression"></div>
+    </div>
+  </section>
+
+  <!-- ===================================== MÉMENTO DES GRADES -->
+  <section id="tz-ecran-memento" class="tz-ecran" hidden>
+    <div id="tz-memento"></div>
+    <div class="tz-rangee">
+      <button id="tz-memento-retour" class="tz-btn tz-fantome" type="button">
+        Retour
+      </button>
+    </div>
+  </section>
+
+</div>
+
+<!-- Fichiers du jeu, lus sans jamais être modifiés -->
+<script src="lib/d3.min.js"></script>
+<script src="lib/topojson-client.min.js"></script>
+<script src="data/monde.js"></script>
+<script src="data/geographie.js"></script>
+<script src="data/histoire.js"></script>
+<script src="data/sciences.js"></script>
+
+<!-- Zone d'entraînement -->
+<script src="training/moteur.js"></script>
+<script src="training/ui.js"></script>
+<script src="training/carte.js"></script>
+<script src="training/epreuves-memoire.js"></script>
+<script src="training/epreuves-attention.js"></script>
+<!-- Grades de gendarmerie : données + deux épreuves de révision.
+     Supprimer ces deux lignes et les fichiers laisse la zone intacte. -->
+<script src="training/grades.js"></script>
+<script src="training/epreuves-grades.js"></script>
+<script src="training/app.js"></script>
+</body>
+</html>
