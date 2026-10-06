@@ -1,0 +1,185 @@
+/* =============================================================================
+   tz-sog.css — module Culture SOG.
+
+   Reprend les jetons --tz-* posés par training/style.css, pour que le module
+   appartienne visuellement à la Zone d'entraînement. Toutes les classes sont
+   préfixées « sog- » : aucune n'existe ailleurs, et supprimer ce fichier ne
+   dérègle ni le jeu ni les épreuves cognitives.
+
+   Parti pris : peu de bruit. Une carte à la fois, une barre de progression,
+   rien d'autre à l'écran pendant qu'on révise.
+   ============================================================================= */
+
+/* --------------------------------------------------------------- structure */
+.sog-ecran{animation:sog-apparait .18s ease-out}
+@keyframes sog-apparait{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+.sog-panneau{background:var(--tz-carte);border-radius:var(--tz-r-l);
+  box-shadow:0 2px 0 var(--tz-bord);padding:24px;margin-bottom:18px}
+
+.sog-etiquette{display:block;font-size:.73rem;letter-spacing:.09em;font-weight:700;
+  text-transform:uppercase;color:var(--tz-txt-3);margin-bottom:10px}
+.sog-sous{color:var(--tz-txt-2);font-size:.95rem;margin:0 0 16px}
+.sog-ecran h2{font-family:var(--tz-titre);margin:0 0 8px}
+
+/* ----------------------------------------------------------------- boutons */
+.sog-btn{font-family:var(--tz-titre);font-size:1rem;font-weight:600;
+  padding:12px 22px;border:none;border-radius:99px;cursor:pointer;
+  background:var(--tz-ac);color:#2E2A3B;box-shadow:0 3px 0 var(--tz-ac-b);
+  transition:transform .08s}
+.sog-btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--tz-ac-b)}
+.sog-btn.sog-fantome{background:var(--tz-carte);color:var(--tz-txt);
+  box-shadow:0 2px 0 var(--tz-bord)}
+.sog-btn.sog-mini{font-size:.85rem;padding:8px 15px}
+.sog-rangee{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+
+/* ------------------------------------------------------- accueil et modes */
+.sog-bloc-principal{background:var(--tz-ac-pale);border-radius:var(--tz-r-l);
+  padding:26px;margin-bottom:18px}
+.sog-bloc-principal h2{font-size:1.8rem}
+
+.sog-modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+  gap:12px;margin:18px 0}
+.sog-carte{display:flex;flex-direction:column;gap:3px;text-align:left;
+  background:var(--tz-carte);border:none;border-radius:var(--tz-r);
+  box-shadow:0 2px 0 var(--tz-bord);padding:16px 18px;cursor:pointer;
+  font-family:var(--tz-texte);color:var(--tz-txt);transition:transform .1s}
+.sog-carte:hover{transform:translateY(-2px)}
+.sog-carte b{font-family:var(--tz-titre);font-size:1.05rem}
+.sog-carte span{color:var(--tz-txt-2);font-size:.86rem}
+
+.sog-reglages{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-end;
+  background:var(--tz-creux);border-radius:var(--tz-r);padding:16px 20px}
+/* l'etiquette coiffe le bloc : sans cela elle se range en colonne a gauche */
+.sog-reglages .sog-etiquette{flex:0 0 100%;margin-bottom:0}
+.sog-segment-titre{display:block;font-size:.8rem;color:var(--tz-txt-2);margin-bottom:6px}
+.sog-segment{display:inline-flex;background:var(--tz-creux);border-radius:99px;
+  padding:3px;gap:3px;box-shadow:inset 0 0 0 1px var(--tz-bord)}
+.sog-segment button{border:none;background:none;cursor:pointer;border-radius:99px;
+  padding:6px 14px;font-family:var(--tz-texte);font-size:.9rem;color:var(--tz-txt-2)}
+.sog-segment button[aria-pressed="true"]{background:var(--tz-carte);color:var(--tz-txt);
+  font-weight:700;box-shadow:0 1px 0 var(--tz-bord)}
+.sog-bas{margin-top:26px;padding-top:18px;border-top:1px solid var(--tz-bord)}
+
+/* ---------------------------------------------------------------- session */
+.sog-barre{height:6px;background:var(--tz-creux);border-radius:99px;overflow:hidden;
+  margin-bottom:6px}
+.sog-barre i{display:block;height:100%;width:0;background:var(--tz-ac);
+  transition:width .3s ease-out}
+.sog-compte{font-size:.8rem;color:var(--tz-txt-3);margin-bottom:18px}
+
+.sog-haut{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.sog-pastille{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 10px;border-radius:99px;background:var(--tz-creux);color:var(--tz-txt-2)}
+.sog-date{color:#8B7BE8}.sog-citation{color:#4EA3F5}.sog-notion{color:#34C77B}
+.sog-chiffre{color:#E8875A}.sog-repere{color:var(--tz-txt-2)}
+.sog-theme{font-size:.82rem;color:var(--tz-txt-2)}
+.sog-boite{font-size:.75rem;color:var(--tz-txt-3);margin-left:auto}
+.sog-alerte{font-size:.72rem;padding:3px 9px;border-radius:99px;
+  background:var(--tz-ko-pale);color:var(--tz-ko);font-weight:600}
+.sog-cle{font-size:.72rem;padding:3px 9px;border-radius:99px;
+  background:var(--tz-ac-pale);color:var(--tz-ac-b);font-weight:700}
+
+.sog-enonce{font-family:var(--tz-titre);font-size:1.3rem;line-height:1.45;margin:0 0 14px}
+.sog-support{margin:0 0 18px;padding:14px 18px;border-left:3px solid var(--tz-ac);
+  background:var(--tz-creux);border-radius:0 var(--tz-r-s) var(--tz-r-s) 0;
+  font-size:1.05rem;line-height:1.5}
+.sog-consigne{color:var(--tz-txt-2);font-size:.92rem;margin:0 0 10px}
+
+.sog-zone{display:flex;flex-direction:column;gap:9px}
+.sog-option{display:flex;align-items:center;gap:12px;text-align:left;
+  background:var(--tz-carte);border:none;border-radius:var(--tz-r);
+  box-shadow:0 2px 0 var(--tz-bord);padding:14px 16px;cursor:pointer;
+  font-family:var(--tz-texte);font-size:1rem;color:var(--tz-txt);
+  transition:transform .08s}
+.sog-option:hover{transform:translateX(3px)}
+.sog-touche{flex:0 0 26px;height:26px;display:grid;place-items:center;
+  border-radius:8px;background:var(--tz-creux);color:var(--tz-txt-3);
+  font-size:.82rem;font-weight:700}
+
+.sog-saisie{font-family:var(--tz-texte);font-size:1.05rem;padding:13px 16px;
+  border-radius:var(--tz-r);border:2px solid var(--tz-bord);
+  background:var(--tz-carte);color:var(--tz-txt);width:100%}
+.sog-saisie:focus{outline:none;border-color:var(--tz-ac)}
+.sog-note,.sog-brouillon{font-family:var(--tz-texte);font-size:1rem;padding:12px 15px;
+  border-radius:var(--tz-r);border:2px solid var(--tz-bord);
+  background:var(--tz-carte);color:var(--tz-txt);width:100%;resize:vertical}
+.sog-note:focus,.sog-brouillon:focus{outline:none;border-color:var(--tz-ac)}
+
+.sog-chrono{height:4px;background:var(--tz-creux);border-radius:99px;overflow:hidden;
+  margin-bottom:14px}
+.sog-chrono i{display:block;height:100%;width:100%;background:var(--tz-ko);
+  transition:width 15s linear}
+
+/* ------------------------------------------------------------- correction */
+.sog-verdict{font-family:var(--tz-titre);font-weight:700;font-size:1.05rem;
+  padding:9px 18px;border-radius:99px;align-self:flex-start}
+.sog-v-juste{background:var(--tz-ok-pale);color:var(--tz-ok)}
+.sog-v-presque{background:var(--tz-ac-pale);color:var(--tz-ac-b)}
+.sog-v-rate,.sog-v-ignore{background:var(--tz-ko-pale);color:var(--tz-ko)}
+
+.sog-correction{background:var(--tz-creux);border-radius:var(--tz-r);padding:18px 20px}
+.sog-bonne{font-family:var(--tz-titre);font-size:1.15rem;font-weight:700;margin-bottom:8px}
+.sog-source{color:var(--tz-txt-2);font-size:.95rem;margin:0 0 6px}
+.sog-aide{color:var(--tz-txt-2);font-size:.9rem;margin:0 0 6px;font-style:italic}
+.sog-avertit{color:var(--tz-ko);font-size:.88rem;margin:0 0 6px}
+.sog-tags{margin:10px 0 0;padding-top:10px;border-top:1px solid var(--tz-bord);
+  font-size:.9rem;color:var(--tz-txt-2)}
+
+/* --------------------------------------------------------- bilan, arsenal */
+.sog-grille-chiffres{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  gap:12px;margin:16px 0}
+.sog-chiffre{background:var(--tz-creux);border-radius:var(--tz-r);padding:16px;
+  text-align:center}
+.sog-chiffre b{display:block;font-family:var(--tz-titre);font-size:2rem;line-height:1.1}
+.sog-chiffre span{font-size:.82rem;color:var(--tz-txt-2)}
+
+.sog-jauges,.sog-courbe,.sog-liste,.sog-bloc{background:var(--tz-creux);
+  border-radius:var(--tz-r);padding:18px 20px;margin-bottom:16px}
+.sog-jauge{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.sog-jauge-nom{flex:0 0 220px;font-size:.9rem}
+.sog-jauge-piste{flex:1;height:9px;background:var(--tz-bord);border-radius:99px;overflow:hidden}
+.sog-jauge-piste i{display:block;height:100%;background:var(--tz-ac);border-radius:99px}
+.sog-jauge-piste i.sog-plein{background:var(--tz-ok)}
+.sog-jauge-val{flex:0 0 52px;text-align:right;font-size:.85rem;color:var(--tz-txt-2)}
+.sog-courbe canvas{width:100%;height:auto;display:block}
+
+.sog-ligne{display:flex;gap:10px;align-items:center;padding:8px 0;
+  border-bottom:1px solid var(--tz-bord)}
+.sog-ligne:last-child{border-bottom:none}
+.sog-ligne-txt{flex:1;font-size:.92rem}
+.sog-ligne-val{font-size:.85rem;color:var(--tz-ko);font-weight:600}
+
+/* ----------------------------------------------------------------- fiches */
+.sog-filtres{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.sog-filtres .sog-saisie{flex:1;min-width:220px}
+.sog-select{font-family:var(--tz-texte);font-size:.95rem;padding:12px 14px;
+  border-radius:var(--tz-r);border:2px solid var(--tz-bord);
+  background:var(--tz-carte);color:var(--tz-txt)}
+.sog-fiche{background:var(--tz-carte);border-radius:var(--tz-r);padding:14px 16px;
+  margin-bottom:9px}
+.sog-fiche-q{font-weight:600;margin:0 0 4px}
+.sog-fiche-r{color:var(--tz-txt-2);margin:0 0 4px}
+
+/* ---------------------------------------------------------- sujet et frise */
+.sog-compteur{font-family:var(--tz-titre);font-size:2.4rem;font-weight:700;
+  color:var(--tz-ac-b);margin-bottom:12px}
+.sog-coche{display:flex;gap:10px;align-items:flex-start;padding:6px 0;font-size:.93rem}
+.sog-coche input{margin-top:4px;flex:0 0 auto}
+.sog-puces{margin:0;padding-left:22px}
+.sog-puces li{margin-bottom:7px}
+
+.sog-frise-pose{display:flex;flex-direction:column;gap:7px;min-height:30px;margin-bottom:16px}
+.sog-frise-place{display:flex;gap:11px;align-items:center;background:var(--tz-creux);
+  border-radius:var(--tz-r-s);padding:10px 14px;font-size:.95rem}
+.sog-frise-place.sog-ok{background:var(--tz-ok-pale)}
+.sog-frise-place.sog-ko{background:var(--tz-ko-pale)}
+.sog-frise-rang{flex:0 0 24px;height:24px;display:grid;place-items:center;
+  border-radius:50%;background:var(--tz-ac);color:#2E2A3B;font-weight:700;font-size:.8rem}
+.sog-frise-an{margin-left:auto;font-weight:700;color:var(--tz-txt-2)}
+.sog-frise-banc{display:flex;flex-wrap:wrap;gap:8px}
+.sog-frise-item{background:var(--tz-carte);border:none;border-radius:var(--tz-r);
+  box-shadow:0 2px 0 var(--tz-bord);padding:11px 15px;cursor:pointer;
+  font-family:var(--tz-texte);font-size:.93rem;color:var(--tz-txt);
+  max-width:360px;text-align:left}
+.sog-frise-item:disabled{opacity:.35;cursor:default}

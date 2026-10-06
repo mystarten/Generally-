@@ -1,0 +1,17 @@
+Lignes que le script n’a pas su lire sans deviner.
+Corrige-les dans culture-sog.md puis relance l’extraction.
+
+1. Puce qui n’est ni « terme : définition » ni datée :
+    Marianne, figure de la République.
+
+2. Puce qui n’est ni « terme : définition » ni datée :
+    Le 14 juillet, fête nationale depuis 1880.
+
+3. Puce qui n’est ni « terme : définition » ni datée :
+    Démocratie représentative (on élit des représentants) et démocratie participative (référendum, conventions citoyennes, consultations).
+
+4. Puce de chiffres sans valeur repérable :
+    Les transports sont le premier secteur émetteur en France.
+
+5. Puce de la section « citations » sans citation ni définition :
+    Rapport Brundtland (1987), définition ci-dessus.

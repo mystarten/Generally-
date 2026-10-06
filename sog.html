@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Culture SOG — Zone d’entraînement</title>
+<meta name="description" content="Révision espacée des dates, citations, notions et chiffres de culture générale pour le concours de sous-officier de gendarmerie. Solo, hors ligne.">
+<meta name="robots" content="noindex, follow">
+<meta name="theme-color" content="#F5A623">
+<link rel="icon" href="icones/icone-192.png" type="image/png">
+<link rel="stylesheet" href="polices/polices.css">
+<link rel="stylesheet" href="training/style.css">
+<link rel="stylesheet" href="training/tz-sog.css">
+
+<!--
+  Culture SOG — page autonome du module de révision.
+
+  Elle ne charge que trois choses propres au module :
+      training/tz-sog-data.js   les cartes, produites depuis culture-sog.md
+      training/tz-sog.js        le moteur (boîtes de Leitner, sessions, écrans)
+      training/tz-sog.css       l'habillage
+
+  training/style.css n'est lu que pour les jetons de couleur et de typographie,
+  afin de rester dans l'identité de la Zone d'entraînement.
+
+  Rien n'est écrit en dehors des clés localStorage préfixées « training_sog_ ».
+  Supprimer ce fichier, les trois fichiers ci-dessus et la carte d'accès dans
+  training.html laisse le jeu et les épreuves cognitives intacts.
+-->
+</head>
+<body class="tz-corps">
+<div class="tz-enveloppe">
+
+  <header class="tz-tete">
+    <h1>Culture <span>SOG</span></h1>
+    <a class="tz-retour" href="training.html">← Zone d’entraînement</a>
+  </header>
+
+  <!-- ====================================================== ACCUEIL -->
+  <section id="sog-ecran-accueil" class="sog-ecran">
+    <p class="sog-sous">
+      Révision espacée des dates, citations, notions et chiffres du document
+      « Culture générale SOG ». Les cartes que tu rates reviennent plus souvent.
+      Rien ici ne touche au quiz ni aux épreuves cognitives.
+    </p>
+    <div id="sog-accueil"></div>
+  </section>
+
+  <!-- ====================================================== SESSION -->
+  <section id="sog-ecran-session" class="sog-ecran" hidden>
+    <div class="sog-barre"><i></i></div>
+    <div class="sog-compte" id="sog-compte"></div>
+    <div class="sog-panneau">
+      <div id="sog-scene"></div>
+    </div>
+    <div class="sog-rangee">
+      <button id="sog-quitter" class="sog-btn sog-fantome sog-mini" type="button">
+        Quitter la session
+      </button>
+    </div>
+  </section>
+
+  <!-- ======================================================== BILAN -->
+  <section id="sog-ecran-bilan" class="sog-ecran" hidden>
+    <div class="sog-panneau">
+      <div id="sog-bilan"></div>
+    </div>
+  </section>
+
+  <!-- ====================================================== ARSENAL -->
+  <section id="sog-ecran-arsenal" class="sog-ecran" hidden>
+    <div class="sog-panneau">
+      <div id="sog-arsenal"></div>
+    </div>
+  </section>
+
+  <!-- ======================================================= FICHES -->
+  <section id="sog-ecran-fiches" class="sog-ecran" hidden>
+    <div class="sog-panneau">
+      <div id="sog-fiches"></div>
+    </div>
+  </section>
+
+  <!-- ====================================================== MÉTHODE -->
+  <section id="sog-ecran-methode" class="sog-ecran" hidden>
+    <div class="sog-panneau">
+      <div id="sog-methode"></div>
+    </div>
+  </section>
+
+  <!-- ======================================================== SUJET -->
+  <section id="sog-ecran-sujet" class="sog-ecran" hidden>
+    <div class="sog-panneau">
+      <div id="sog-sujet"></div>
+    </div>
+    <div class="sog-panneau" id="sog-sujet-res" hidden></div>
+  </section>
+
+  <!-- ======================================================== FRISE -->
+  <section id="sog-ecran-frise" class="sog-ecran" hidden>
+    <div class="sog-panneau">
+      <div id="sog-frise"></div>
+    </div>
+  </section>
+
+</div>
+
+<script src="training/tz-sog-data.js"></script>
+<script src="training/tz-sog.js"></script>
+</body>
+</html>
