@@ -54,23 +54,32 @@
 
   /* Le tirage commun : la force courante, le palier atteint, le genre voulu,
      et les thèmes retenus par le candidat. */
+  /* Le bassin réellement disponible, aux réglages du moment. Sert au tirage,
+     et à l'écran de préparation pour annoncer la longueur de la séance. */
+  function tzBassin(genre, niveau) {
+    return TZ.fdo.banque({
+      force: TZ.fdo.force(),
+      niveau: niveau,
+      genre: genre,
+      themes: TZ.fdo.filtreThemes()
+    });
+  }
+
+  /* IL N'Y A PLUS DE REPLI SILENCIEUX.
+
+     Avant, un bassin de moins de quatre questions faisait retomber le tirage
+     sur TOUS les thèmes, sans rien dire. Comme neuf thèmes sur douze passent
+     sous ce seuil dans au moins un genre, choisir « Secours à personne » et
+     lancer Vrai ou faux servait des questions de procédure pénale : le filtre
+     paraissait cassé, et il l'était.
+
+     Désormais la séance fait la taille du bassin choisi, et l'écran de
+     préparation l'annonce avant de commencer. Une séance de six questions sur
+     le thème qu'on voulait vaut mieux qu'une séance de dix-huit sur autre
+     chose. */
   function tzTirage(genre) {
     return function (niveau, nb) {
-      var bassin = TZ.fdo.banque({
-        force: TZ.fdo.force(),
-        niveau: niveau,
-        genre: genre,
-        themes: TZ.fdo.filtreThemes()
-      });
-      /* Un thème trop étroit peut vider le bassin : plutôt que de rendre
-         l'épreuve injouable, on retombe sur tous les thèmes. Le candidat
-         préfère réviser large que voir un écran vide. */
-      if (bassin.length < 4) {
-        bassin = TZ.fdo.banque({
-          force: TZ.fdo.force(), niveau: niveau, genre: genre
-        });
-      }
-      return TZ.fdo.tirer(bassin, nb).map(tzVersOption);
+      return TZ.fdo.tirer(tzBassin(genre, niveau), nb).map(tzVersOption);
     };
   }
 
@@ -153,6 +162,7 @@
     },
 
     tirage: tzTirage('qcm'),
+    disponibles: function (niveau) { return tzBassin('qcm', niveau).length; },
     libelleRate: tzLibelleRate,
     difficulte: 0.7
   }));
@@ -193,6 +203,7 @@
     },
 
     tirage: tzTirage('vf'),
+    disponibles: function (niveau) { return tzBassin('vf', niveau).length; },
     libelleRate: tzLibelleRate,
     difficulte: 0.6
   }));
@@ -233,6 +244,7 @@
     },
 
     tirage: tzTirage('situation'),
+    disponibles: function (niveau) { return tzBassin('situation', niveau).length; },
     libelleRate: tzLibelleRate,
     difficulte: 0.75
   }));

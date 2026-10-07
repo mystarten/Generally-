@@ -17,12 +17,41 @@
    scripts — ce qui est pire qu'une version entièrement ancienne, parce que
    les deux moitiés ne s'accordent pas.
    ============================================================================= */
-const VERSION = 'generally-v7';
+const VERSION = 'generally-v8';
 
+/* Ce qui est telecharge des l'installation, pour que le site fonctionne sans
+   reseau meme sur une page jamais ouverte.
+
+   La zone d'entrainement y figure desormais en entier. Elle pese, mais c'est
+   precisement ce qu'on vient y chercher : reviser dans un vehicule, dans un
+   sous-sol, en zone blanche. Un entrainement qui exige du reseau n'est pas un
+   entrainement de terrain. */
 const COQUILLE = [
   './',
   './index.html',
   './manifest.json',
+  './training.html',
+  './sog.html',
+  './training/style.css',
+  './training/tz-sog.css',
+  './training/moteur.js',
+  './training/ui.js',
+  './training/carte.js',
+  './training/fdo-savoirs.js',
+  './training/fdo.js',
+  './training/quizz.js',
+  './training/grades.js',
+  './training/grades-police.js',
+  './training/epreuves-memoire.js',
+  './training/epreuves-attention.js',
+  './training/epreuves-grades.js',
+  './training/epreuves-police.js',
+  './training/epreuves-savoirs.js',
+  './training/epreuves-terrain.js',
+  './training/salon.js',
+  './training/app.js',
+  './training/tz-sog-data.js',
+  './training/tz-sog.js',
   './lib/d3.min.js',
   './lib/topojson-client.min.js',
   './data/monde.js',
@@ -75,22 +104,33 @@ self.addEventListener('fetch', (e) => {
   if (estPage) {
     /* Réseau d'abord : une nouvelle version se voit immédiatement.
 
-       Seule la page du jeu est remise en cache sous la clé index.html. Toute
-       autre page — contenu éditorial, zone d'entraînement, module SOG — y
-       prendrait sa place, et le mode hors ligne servirait autre chose que le
-       jeu. */
-    const base = new URL(self.registration.scope).pathname;
-    const estLeJeu = url.pathname === base || url.pathname === base + 'index.html';
+       CHAQUE page est remise en cache SOUS SA PROPRE CLÉ, et le repli hors
+       ligne cherche d'abord la page demandée.
+
+       Avant, tout était rangé sous './index.html' et le repli y renvoyait
+       quelle que soit la page : sans réseau, la zone d'entraînement et le
+       module Culture SOG affichaient le quiz de culture générale. Promettre
+       un entraînement hors ligne et servir autre chose est pire que ne rien
+       promettre — c'est au moment où l'on n'a pas de réseau qu'on découvrait
+       la panne.
+
+       Ranger chaque page sous sa clé supprime du même coup la crainte qui
+       avait motivé l'ancien montage : une page ne peut plus prendre la place
+       d'une autre. */
     e.respondWith(
       fetch(req)
         .then((rep) => {
-          if (estLeJeu && rep && rep.ok) {
+          if (rep && rep.ok) {
             const copie = rep.clone();
-            caches.open(VERSION).then((c) => c.put('./index.html', copie));
+            caches.open(VERSION).then((c) => c.put(req, copie));
           }
           return rep;
         })
-        .catch(() => caches.match('./index.html').then((r) => r || caches.match('./')))
+        .catch(() =>
+          caches.match(req, { ignoreSearch: true })
+            .then((r) => r || caches.match('./index.html'))
+            .then((r) => r || caches.match('./'))
+        )
     );
     return;
   }

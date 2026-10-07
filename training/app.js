@@ -87,6 +87,7 @@
        3. les catégories d'épreuves, les mémentos, la session, les réglages. */
   function tzPeindreAccueil() {
     var hote = TZ.vide(TZ.q('#tz-categories'));
+    tzPeindreBascule();
     tzCarteSog();
     if (TZ.fdo && !TZ.fdo.force()) { tzChoisirForce(hote); return; }
     tzBandeauForce(hote);
@@ -141,10 +142,15 @@
       segT.appendChild(b);
     });
     reg.appendChild(segT);
+    /* La phrase sur Culture SOG ne s'affiche que si le module est bien
+       proposé à ce candidat. Sinon elle nommait, au seul parcours police,
+       un module dont l'accès est masqué — et elle survivait à la suppression
+       du bloc Culture SOG, que training.html promet sans conséquence. */
+    var aSog = !!TZ.q('#tz-acces-sog') && TZ.fdo && TZ.fdo.force() === 'gn';
     reg.appendChild(TZ.el('p', 'tz-vide',
       'Le mode nuit ne suit plus le réglage de votre appareil : il s’allume '
-      + 'ici, et seulement si vous le demandez. Le choix vaut aussi pour '
-      + 'Culture SOG.'));
+      + 'ici, et seulement si vous le demandez.'
+      + (aSog ? ' Le choix vaut aussi pour Culture SOG.' : '')));
 
     var l2 = TZ.el('div', 'tz-rangee');
     var bSon = TZ.el('button', 'tz-btn tz-fantome tz-mini',
@@ -170,7 +176,37 @@
   function tzCarteSog() {
     var carte = TZ.q('#tz-acces-sog');
     if (!carte) return;
-    carte.hidden = !(TZ.fdo && TZ.fdo.force() === 'gn');
+    var enGendarmerie = TZ.fdo && TZ.fdo.force() === 'gn';
+    if (enGendarmerie) { carte.hidden = false; tzSousTitreSog(carte, null); return; }
+
+    /* En parcours police, on masque la carte — sauf si une progression
+       Culture SOG existe déjà. La faire disparaître sans un mot donnerait
+       l'impression que le travail est perdu ; on la garde, requalifiée, pour
+       que son propriétaire sache où la retrouver. */
+    var commence = false;
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var c = localStorage.key(i);
+        if (c && c.indexOf('training_sog_') === 0) { commence = true; break; }
+      }
+    } catch (e) { commence = false; }
+
+    carte.hidden = !commence;
+    if (commence) {
+      tzSousTitreSog(carte,
+        'Programme du concours de sous-officier de gendarmerie. Vous êtes en '
+        + 'parcours police : ce module ne fait pas partie de votre préparation, '
+        + 'mais votre progression est intacte et reste accessible ici.');
+    }
+  }
+
+  /* Remplace le sous-titre de la carte sans toucher à son titre. Passer null
+     restitue le texte d'origine, conservé à la première visite. */
+  function tzSousTitreSog(carte, texte) {
+    var span = carte.querySelector('span');
+    if (!span) return;
+    if (!carte.dataset.sousTitre) carte.dataset.sousTitre = span.textContent;
+    span.textContent = texte || carte.dataset.sousTitre;
   }
 
   /* ------------------------------------------------------------- thème
@@ -208,6 +244,7 @@
       b.appendChild(TZ.el('span', null, f.resume));
       b.addEventListener('click', function () {
         TZ.fdo.fixerForce(f.id);
+        tzPeindreBascule();
         tzPeindreAccueil();
       });
       grille.appendChild(b);
@@ -223,6 +260,41 @@
     hote.appendChild(note);
   }
 
+  /* ------------------------------------------- bascule dans l'en-tête
+     Visible sur tous les écrans, parce qu'on change d'avis au milieu d'une
+     session, pas seulement devant l'accueil. Deux boutons plutôt qu'un
+     bouton « passer à l'autre » : on voit d'un coup d'œil où l'on est, et
+     on y va d'un geste au lieu de deviner ce que fait la bascule.
+
+     Repeinte à chaque changement, et appelée au démarrage : elle ne dépend
+     pas de l'écran affiché. */
+  function tzPeindreBascule() {
+    var hote = TZ.q('#tz-bascule-force');
+    if (!hote || !TZ.fdo) return;
+    TZ.vide(hote);
+    var courante = TZ.fdo.force();
+    if (!courante) { hote.hidden = true; return; }
+    hote.hidden = false;
+
+    TZ.fdo.FORCES.forEach(function (f) {
+      var b = TZ.el('button', 'tz-bascule-bouton', f.court);
+      b.type = 'button';
+      b.style.setProperty('--tz-c', f.couleur);
+      b.setAttribute('aria-pressed', f.id === courante ? 'true' : 'false');
+      b.title = f.nom;
+      b.addEventListener('click', function () {
+        if (TZ.fdo.force() === f.id) return;
+        TZ.fdo.fixerForce(f.id);
+        tzPeindreBascule();
+        /* On ramène à l'accueil : rester dans une épreuve de l'autre force
+           n'aurait pas de sens, et le mémento affiché deviendrait faux. */
+        tzPeindreAccueil();
+        tzEcran('accueil');
+      });
+      hote.appendChild(b);
+    });
+  }
+
   function tzBandeauForce(hote) {
     var f = TZ.fdo.laForce(TZ.fdo.force());
     var autre = TZ.fdo.FORCES.filter(function (x) { return x.id !== f.id; })[0];
@@ -232,13 +304,11 @@
     bande.appendChild(TZ.el('span', 'tz-force-note',
       TZ.fdo.compte({ force: f.id }) + ' fiches de savoirs pour ce parcours, '
       + 'socle commun compris.'));
-    var b = TZ.el('button', 'tz-btn tz-fantome tz-mini', 'Passer en ' + autre.court);
-    b.type = 'button';
-    b.addEventListener('click', function () {
-      TZ.fdo.fixerForce(autre.id);
-      tzPeindreAccueil();
-    });
-    bande.appendChild(b);
+    /* Plus de bouton ici : la bascule vit dans l'en-tête, atteignable de
+       partout. En garder un second au même endroit ferait douter de savoir
+       lequel fait quoi. On renvoie simplement vers celui du haut. */
+    bande.appendChild(TZ.el('span', 'tz-force-aide',
+      'Changer de parcours : en haut de la page.'));
     hote.appendChild(bande);
   }
 
@@ -458,6 +528,32 @@
       + ' Visuel uniquement, et sans effet sur le score.');
     rd.style.margin = '8px 0 4px';
     hote.appendChild(rd);
+
+    /* --- ce que le réglage rend réellement disponible ---
+       Une épreuve adossée à la banque ne fait pas toujours la longueur
+       annoncée : les thèmes retenus peuvent la raccourcir. On le dit avant,
+       plutôt que de le laisser découvrir au bout de six questions. */
+    if (ep.disponibles) {
+      var dispo = 0;
+      try { dispo = ep.disponibles(courant) || 0; } catch (e) { dispo = 0; }
+      var voulu = (ep.reglages[courant] || {}).essais || 0;
+      var seance = Math.min(dispo, voulu);
+      var filtres = TZ.fdo ? TZ.fdo.themesChoisis().length : 0;
+      var t;
+      if (!dispo) {
+        t = 'Aucune question disponible avec ces thèmes à ce palier. '
+          + 'Élargissez les thèmes ou descendez d’un palier.';
+      } else if (seance < voulu) {
+        t = dispo + ' question(s) disponible(s)' + (filtres ? ' avec vos thèmes' : '')
+          + ' : la séance en comptera ' + seance + ' au lieu de ' + voulu + '.';
+      } else {
+        t = seance + ' questions dans cette séance, tirées parmi ' + dispo
+          + (filtres ? ' sur vos thèmes.' : ' disponibles.');
+      }
+      var d = TZ.el('p', dispo ? 'tz-vide' : 'tz-salon-souci', t);
+      d.style.margin = '10px 0 0';
+      hote.appendChild(d);
+    }
 
     /* --- record sur cette combinaison précise --- */
     var rec = TZ.record(ep.id, courant, TZ.etat.stress);
@@ -943,6 +1039,7 @@
   /* ================================================================ départ */
   function tzDemarrer() {
     TZ.carte.preparer();
+    tzPeindreBascule();
     tzPeindreAccueil();
     tzEcran('accueil');
 

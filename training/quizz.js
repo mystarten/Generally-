@@ -71,6 +71,10 @@
       tuto: spec.tuto,
       etiquettes: spec.etiquettes,
       reglages: spec.reglages,
+      /* Combien de questions le réglage courant rend réellement disponibles.
+         L'écran de préparation s'en sert pour annoncer la longueur de la
+         séance plutôt que de la découvrir en jouant. */
+      disponibles: spec.disponibles,
 
       init: function (ctx) {
         this.ctx = ctx;

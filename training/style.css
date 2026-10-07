@@ -701,3 +701,27 @@ canvas.tz-radar{display:block;margin:0 auto;max-width:100%;height:auto}
   .tz-salon-code b{font-size:1.9rem}
   .tz-salon-joueurs{grid-template-columns:1fr}
 }
+
+
+/* ------------------------------------------- bascule de force dans l'en-tête
+   Elle vit hors des écrans, donc reste atteignable pendant une épreuve comme
+   dans un mémento. Deux boutons plutôt qu'un seul « passer à l'autre » : on
+   lit où l'on est sans avoir à deviner ce que ferait le bouton. */
+.tz-bascule-force{display:inline-flex;gap:3px;background:var(--tz-creux);
+  border-radius:99px;padding:3px}
+.tz-bascule-force[hidden]{display:none}
+.tz-bascule-bouton{
+  font:inherit;font-size:.84rem;font-weight:700;color:var(--tz-txt-2);
+  background:transparent;border:none;border-radius:99px;padding:7px 15px;
+  cursor:pointer;transition:background .12s,color .12s;
+}
+.tz-bascule-bouton:hover{color:var(--tz-txt)}
+.tz-bascule-bouton[aria-pressed="true"]{background:var(--tz-carte);
+  color:var(--tz-c,var(--tz-ac));box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.tz-force-aide{color:var(--tz-txt-3);font-size:.84rem}
+
+@media(max-width:620px){
+  .tz-tete{gap:10px}
+  .tz-bascule-force{order:3;width:100%;justify-content:center}
+  .tz-bascule-bouton{flex:1}
+}
