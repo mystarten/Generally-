@@ -88,6 +88,13 @@ self.addEventListener('activate', (e) => {
     caches.keys()
       .then((noms) => Promise.all(noms.filter((n) => n !== VERSION).map((n) => caches.delete(n))))
       .then(() => self.clients.claim())
+      /* Prevenir les pages ouvertes plutot que de les recharger d'autorite :
+         une epreuve en cours serait perdue. La page decide quoi en faire —
+         la zone d'entrainement propose un bouton « Recharger ». */
+      .then(() => self.clients.matchAll({ type: 'window' }))
+      .then((pages) => pages.forEach((p) => {
+        try { p.postMessage({ type: 'tz-version-prete', version: VERSION }); } catch (e) {}
+      }))
   );
 });
 

@@ -142,15 +142,19 @@
       segT.appendChild(b);
     });
     reg.appendChild(segT);
-    /* La phrase sur Culture SOG ne s'affiche que si le module est bien
-       proposé à ce candidat. Sinon elle nommait, au seul parcours police,
-       un module dont l'accès est masqué — et elle survivait à la suppression
-       du bloc Culture SOG, que training.html promet sans conséquence. */
-    var aSog = !!TZ.q('#tz-acces-sog') && TZ.fdo && TZ.fdo.force() === 'gn';
+    /* La phrase nommait « Culture SOG » à tout le monde, y compris aux
+       candidats policiers pour qui c'était la seule mention d'un module dont
+       l'accès est masqué — et elle survivait à la suppression du bloc, que
+       training.html promet sans conséquence.
+
+       Une formule neutre règle les deux sans conditionner sur la force :
+       inscrire la politique « SOG = gendarmerie » à un second endroit
+       donnerait deux sites à tenir d'accord, et une divergence silencieuse
+       le jour où elle bougerait. */
     reg.appendChild(TZ.el('p', 'tz-vide',
       'Le mode nuit ne suit plus le réglage de votre appareil : il s’allume '
-      + 'ici, et seulement si vous le demandez.'
-      + (aSog ? ' Le choix vaut aussi pour Culture SOG.' : '')));
+      + 'ici, et seulement si vous le demandez. Le choix suit d’une page à '
+      + 'l’autre de la zone.'));
 
     var l2 = TZ.el('div', 'tz-rangee');
     var bSon = TZ.el('button', 'tz-btn tz-fantome tz-mini',
@@ -1036,8 +1040,43 @@
     return boite;
   }
 
+  /* ======================================== une nouvelle version est prête
+     Au premier chargement suivant une mise en ligne, la page arrive du
+     réseau pendant que les scripts peuvent encore sortir du cache de la
+     version précédente : l'écran est alors moitié neuf, moitié ancien, et
+     rien ne le dit.
+
+     On ne recharge pas d'autorité — ce serait perdre une épreuve en cours.
+     Le service worker prévient quand il a fini de s'installer, et on propose
+     le rechargement, que l'utilisateur déclenche quand il veut. */
+  function tzEcouterMiseAJour() {
+    if (!navigator.serviceWorker) return;
+    navigator.serviceWorker.addEventListener('message', function (ev) {
+      if (!ev.data || ev.data.type !== 'tz-version-prete') return;
+      tzAnnoncerMiseAJour();
+    });
+  }
+
+  function tzAnnoncerMiseAJour() {
+    if (TZ.q('#tz-maj')) return;
+    var barre = TZ.el('div', 'tz-maj');
+    barre.id = 'tz-maj';
+    barre.appendChild(TZ.el('span', null, 'Une nouvelle version est prête.'));
+    var b = TZ.el('button', 'tz-btn tz-mini', 'Recharger');
+    b.type = 'button';
+    b.addEventListener('click', function () { global.location.reload(); });
+    barre.appendChild(b);
+    var plus = TZ.el('button', 'tz-maj-fermer', '×');
+    plus.type = 'button';
+    plus.setAttribute('aria-label', 'Masquer');
+    plus.addEventListener('click', function () { barre.remove(); });
+    barre.appendChild(plus);
+    document.body.appendChild(barre);
+  }
+
   /* ================================================================ départ */
   function tzDemarrer() {
+    tzEcouterMiseAJour();
     TZ.carte.preparer();
     tzPeindreBascule();
     tzPeindreAccueil();

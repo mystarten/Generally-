@@ -725,3 +725,21 @@ canvas.tz-radar{display:block;margin:0 auto;max-width:100%;height:auto}
   .tz-bascule-force{order:3;width:100%;justify-content:center}
   .tz-bascule-bouton{flex:1}
 }
+
+
+/* ----------------------------------------- bandeau « nouvelle version »
+   Pose en bas, discret, et refermable : il informe sans interrompre. On ne
+   recharge jamais d'autorite — ce serait perdre une epreuve en cours. */
+.tz-maj{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:90;
+  display:flex;align-items:center;gap:12px;max-width:calc(100% - 28px);
+  background:var(--tz-carte);border:2px solid var(--tz-ac);
+  border-radius:99px;padding:9px 10px 9px 20px;
+  box-shadow:0 6px 22px rgba(0,0,0,.18);font-size:.92rem;
+  animation:tz-arrivee .3s cubic-bezier(.2,1.1,.3,1) both}
+.tz-maj-fermer{font:inherit;font-size:1.2rem;line-height:1;color:var(--tz-txt-3);
+  background:none;border:none;cursor:pointer;padding:0 6px}
+.tz-maj-fermer:hover{color:var(--tz-txt)}
+@media(max-width:620px){
+  .tz-maj{left:14px;right:14px;transform:none;border-radius:var(--tz-r);
+    justify-content:space-between;padding-left:16px}
+}
