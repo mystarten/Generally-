@@ -75,6 +75,9 @@
          L'écran de préparation s'en sert pour annoncer la longueur de la
          séance plutôt que de la découvrir en jouant. */
       disponibles: spec.disponibles,
+      /* Une épreuve dont le bassin n'est pas un tirage uniforme décrit
+         elle-même la séance à venir. */
+      resumeBassin: spec.resumeBassin,
 
       init: function (ctx) {
         this.ctx = ctx;

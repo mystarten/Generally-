@@ -780,3 +780,22 @@ details[open] > .tz-memento-sommaire::before{transform:rotate(90deg)}
 .tz-memento-theme[open] .tz-memento-sommaire{margin-bottom:10px;
   padding-bottom:10px;border-bottom:1px solid var(--tz-bord)}
 .tz-jeton-ratee{background:var(--tz-ko-pale);color:var(--tz-ko)}
+
+
+/* ------------------------------------------------------------ plan du jour
+   En tete, avant les categories : la premiere question n'est pas « quelles
+   epreuves existent » mais « par quoi je commence aujourd'hui ». Trois
+   chiffres, une phrase, deux boutons — pas un tableau de bord. */
+.tz-plan{border:2px solid var(--tz-ac-pale)}
+.tz-plan-chiffres{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 14px}
+.tz-plan-chiffre{flex:1 1 120px;background:var(--tz-creux);
+  border-radius:var(--tz-r-s);padding:12px 16px;text-align:center}
+.tz-plan-chiffre b{display:block;font-family:var(--tz-titre);font-size:1.6rem;
+  line-height:1.1}
+.tz-plan-chiffre span{font-size:.79rem;color:var(--tz-txt-2)}
+.tz-plan-chiffre.tz-alerte{background:var(--tz-ac-pale)}
+.tz-plan-chiffre.tz-alerte b{color:var(--tz-ac-b)}
+@media(max-width:620px){
+  .tz-plan-chiffre{flex:1 1 90px;padding:10px 8px}
+  .tz-plan-chiffre b{font-size:1.3rem}
+}

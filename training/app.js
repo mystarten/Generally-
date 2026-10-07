@@ -92,6 +92,8 @@
     if (TZ.fdo && !TZ.fdo.force()) { tzChoisirForce(hote); return; }
     tzBandeauForce(hote);
 
+    tzPlanDuJour(hote);
+
     CATEGORIES.forEach(function (cat) {
       var lot = tzEpreuvesVisibles().filter(function (e) {
         return e.categorie === cat.id;
@@ -223,6 +225,103 @@
     TZ.ecrire('theme', id);
     if (id === 'nuit') document.documentElement.setAttribute('data-theme', 'nuit');
     else document.documentElement.removeAttribute('data-theme');
+  }
+
+  /* ----------------------------------------------------- plan du jour
+     En haut, avant tout le reste : la première question de quelqu'un qui
+     ouvre la zone un soir de semaine n'est pas « quelles épreuves existent »
+     mais « par quoi je commence aujourd'hui ».
+
+     Trois choses, pas davantage : ce qui est dû, une suggestion, et la
+     régularité. Un tableau de bord de douze indicateurs se regarde une fois
+     et ne sert jamais. */
+  function tzPlanDuJour(hote) {
+    if (!TZ.fdo) return;
+    var force = TZ.fdo.force();
+    var dues = TZ.fdo.dues(force).length;
+    var neuves = TZ.fdo.nouvelles(force).length;
+    var acquises = TZ.fdo.acquises(force).length;
+    var total = TZ.fdo.compte({ force: force });
+    var serie = TZ.fdo.serie();
+    var vues = TZ.fdo.vuesAujourdhui();
+
+    var bloc = TZ.el('section', 'tz-panneau tz-plan');
+    bloc.appendChild(TZ.el('span', 'tz-etiquette', 'Aujourd’hui'));
+
+    /* --- la ligne de chiffres --- */
+    var chiffres = TZ.el('div', 'tz-plan-chiffres');
+    function chiffre(valeur, libelle, alerte) {
+      var d = TZ.el('div', 'tz-plan-chiffre' + (alerte ? ' tz-alerte' : ''));
+      d.appendChild(TZ.el('b', null, String(valeur)));
+      d.appendChild(TZ.el('span', null, libelle));
+      chiffres.appendChild(d);
+    }
+    chiffre(dues, dues > 1 ? 'fiches à revoir' : 'fiche à revoir', dues > 0);
+    chiffre(acquises + ' / ' + total, 'acquises');
+    chiffre(serie, serie > 1 ? 'jours de suite' : 'jour de suite');
+    bloc.appendChild(chiffres);
+
+    /* --- ce qu'on propose de faire --- */
+    /* On connaît le nombre : écrire « fiche(s) » quand on sait qu'il y en a
+       six est une paresse qui se voit. */
+    function fiches(n) { return n + (n > 1 ? ' fiches' : ' fiche'); }
+
+    var phrase;
+    if (dues) {
+      phrase = fiches(dues) + (dues > 1 ? ' arrivent' : ' arrive') + ' à échéance. '
+             + 'C’est par là qu’il faut commencer : ' + (dues > 1 ? 'ce sont celles' : 'c’est celle')
+             + ' que vous êtes sur le point d’oublier.';
+    } else if (neuves) {
+      phrase = 'Rien à revoir aujourd’hui — vos échéances sont à jour. '
+             + fiches(neuves) + ' jamais ' + (neuves > 1 ? 'vues attendent' : 'vue attend') + '.';
+    } else {
+      phrase = 'Tout est à jour et toutes les fiches ont été vues au moins une fois. '
+             + 'Les épreuves de terrain et cognitives, elles, ne s’épuisent pas.';
+    }
+    bloc.appendChild(TZ.el('p', null, phrase));
+    if (vues) {
+      bloc.appendChild(TZ.el('p', 'tz-vide',
+        vues + (vues > 1 ? ' réponses déjà données' : ' réponse déjà donnée') + ' aujourd’hui.'));
+    }
+
+    var revision = tzEpreuvesVisibles().filter(function (e) { return e.id === 'revision'; })[0];
+    var actions = [];
+    if (revision) {
+      actions.push({
+        texte: dues ? ('Réviser ' + (dues > 1 ? 'les ' : 'la ') + fiches(dues) + (dues > 1 ? ' dues' : ' due'))
+                    : 'Séance de révision',
+        action: function () { tzPreparer(revision); }
+      });
+    }
+
+    /* Une suggestion, choisie sur ce qui n'a jamais été tenté puis sur le
+       plus faible record : on travaille ses trous, pas ses points forts. */
+    var suggestion = tzSuggestion();
+    if (suggestion) {
+      actions.push({
+        texte: (TZ.record(suggestion.id) ? 'Retravailler : ' : 'Découvrir : ') + suggestion.nom,
+        fantome: true,
+        action: function () { tzPreparer(suggestion); }
+      });
+    }
+    if (actions.length) UI.actions(bloc, actions);
+    hote.appendChild(bloc);
+  }
+
+  /* L'épreuve à proposer : d'abord une jamais tentée, sinon celle dont le
+     record est le plus bas. La révision du jour est exclue — elle a déjà
+     son bouton. */
+  function tzSuggestion() {
+    var lot = tzEpreuvesVisibles().filter(function (e) {
+      if (e.id === 'revision') return false;
+      return !e.requiert || e.requiert !== 'carte' || TZ.carte.preparer();
+    });
+    if (!lot.length) return null;
+    var jamais = lot.filter(function (e) { return !TZ.record(e.id); });
+    if (jamais.length) return jamais[TZ.hasard(jamais.length)];
+    return lot.slice().sort(function (a, b) {
+      return TZ.record(a.id) - TZ.record(b.id);
+    })[0];
   }
 
   /* ---------------------------------------------------- choix de la force */
@@ -544,7 +643,17 @@
       var seance = Math.min(dispo, voulu);
       var filtres = TZ.fdo ? TZ.fdo.themesChoisis().length : 0;
       var t;
-      if (!dispo) {
+      /* Une épreuve dont le bassin n'est pas un simple tirage peut décrire
+         elle-même sa séance : « tirées parmi 251 » serait faux pour une
+         révision, qui compose d'abord avec ce qui est dû. */
+      if (ep.resumeBassin) {
+        try { t = ep.resumeBassin(courant, seance); } catch (e) { t = null; }
+      }
+      if (t) {
+        var rb = TZ.el('p', 'tz-vide', t);
+        rb.style.margin = '10px 0 0';
+        hote.appendChild(rb);
+      } else if (!dispo) {
         t = 'Aucune question disponible avec ces thèmes à ce palier. '
           + 'Élargissez les thèmes ou descendez d’un palier.';
       } else if (seance < voulu) {

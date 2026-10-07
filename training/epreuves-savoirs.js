@@ -249,4 +249,88 @@
     difficulte: 0.75
   }));
 
+  /* ================================================ 16. Révision du jour
+     L'épreuve adossée aux boîtes de révision espacée. Elle ne suit ni le
+     palier ni les thèmes : elle pose ce qui est DÛ, tous genres mêlés — QCM,
+     vrai-faux et situations à la suite, comme une vraie séance de révision.
+
+     Le niveau n'y règle donc pas le programme mais la LONGUEUR de la séance,
+     et les libellés le disent : « Courte », « Normale », « Longue ». Appeler
+     « École » un réglage qui ne change que le nombre de fiches tromperait. */
+  TZ.epreuves.push(TZ.quizz.creer({
+    id: 'revision',
+    nom: 'Révision du jour',
+    categorie: 'savoirs',
+    axe: 'connaissances',
+    force: 'commun',
+    but: 'Ce que vos boîtes de révision ramènent aujourd’hui : ce qui est dû, ce que vous ratez, puis du neuf.',
+    comment: 'Tous genres mêlés. Ce que vous réussissez espace son retour, ce que vous ratez revient dès demain.',
+    etiquettes: {
+      decouverte: 'Courte', standard: 'Normale',
+      confirme: 'Longue', expert: 'Très longue'
+    },
+
+    tuto: {
+      regle: 'Cette séance ne tire pas au hasard : elle pose d’abord les fiches arrivées à '
+           + 'échéance, puis celles que vous ratez le plus, puis des fiches jamais vues. '
+           + 'Une bonne réponse fait monter la fiche d’une boîte et espace son retour ; une '
+           + 'erreur la renvoie à la première boîte, et elle revient dès demain.',
+      exemple: function (hote) {
+        var ul = TZ.el('ul', 'tz-regles');
+        [ 'Boîte 1 — revue demain.',
+          'Boîte 2 — dans 2 jours.',
+          'Boîte 3 — dans 4 jours.',
+          'Boîte 4 — dans 8 jours.',
+          'Boîte 5 — dans 16 jours : la fiche est acquise.'
+        ].forEach(function (t) { ul.appendChild(TZ.el('li', null, t)); });
+        hote.appendChild(ul);
+        hote.appendChild(TZ.el('p', null,
+          'C’est le principe des boîtes de Leitner, celui qu’utilise déjà le module '
+          + 'Culture SOG. L’intérêt n’apparaît qu’avec le temps : au bout de quelques '
+          + 'semaines, vous ne repassez plus votre temps sur ce que vous savez déjà.'));
+        hote.appendChild(TZ.el('p', 'tz-vide',
+          'Le réglage de difficulté ne change ici que la LONGUEUR de la séance : '
+          + 'le programme, lui, est décidé par vos échéances.'));
+      },
+      pourquoi: 'Sans échéance, rien ne ramène une fiche qu’on croyait sue il y a trois '
+              + 'semaines — et c’est précisément celle-là qu’on ratera le jour de l’épreuve. '
+              + 'La révision espacée est la seule méthode qui tienne sur six mois.'
+    },
+
+    reglages: {
+      decouverte: { essais: 10, limite: 22000 },
+      standard:   { essais: 16, limite: 20000 },
+      confirme:   { essais: 22, limite: 18000 },
+      expert:     { essais: 30, limite: 16000 }
+    },
+
+    tirage: function (niveau, nb) {
+      return TZ.fdo.composerRevision(TZ.fdo.force(), nb).map(tzVersOption);
+    },
+    disponibles: function () {
+      var f = TZ.fdo.force();
+      return TZ.fdo.dues(f).length + TZ.fdo.nouvelles(f).length;
+    },
+    /* Ce que la séance contiendra vraiment, et dans quel ordre — plutôt
+       qu'un « tirées parmi 251 » qui laisserait croire à un tirage au sort. */
+    resumeBassin: function (niveau, seance) {
+      var f = TZ.fdo.force();
+      var dues = TZ.fdo.dues(f).length;
+      var neuves = TZ.fdo.nouvelles(f).length;
+      if (!dues && !neuves) {
+        return 'Rien à revoir et plus aucune fiche nouvelle : vos boîtes sont à jour.';
+      }
+      var bouts = [];
+      var nDues = Math.min(dues, seance);
+      if (nDues) bouts.push(nDues + (nDues > 1 ? ' arrivées' : ' arrivée') + ' à échéance');
+      var place = seance - nDues;
+      var nNeuves = Math.min(neuves, place);
+      if (place > 0 && nNeuves) bouts.push(nNeuves + (nNeuves > 1 ? ' jamais vues' : ' jamais vue'));
+      return 'Séance de ' + seance + ' fiches : ' + bouts.join(', puis ')
+        + '. Les échéances passent toujours en premier.';
+    },
+    libelleRate: tzLibelleRate,
+    difficulte: 0.7
+  }));
+
 })(window);

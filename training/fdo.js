@@ -169,20 +169,80 @@
     return l.length ? l : null;
   }
 
-  /* ========================================================= suivi des ratés
-     Ce qu'on rate doit revenir. On ne construit pas ici une révision espacée
-     complète — le module Culture SOG en a déjà une — mais on retient le
-     nombre d'échecs par question, et le tirage s'en sert pour revenir plus
-     souvent sur ce qui résiste. C'est trois lignes, et ça change tout sur la
-     durée d'un entraînement. */
-  function tzFaiblesses() { return TZ.lire('fdo_ratees', {}); }
+  /* ==================================================== révision espacée
+     Le module Culture SOG a de vraies boîtes de Leitner ; le volet métier
+     n'avait qu'une pondération sommaire des questions ratées. L'écart se
+     payait sur la durée : sans échéance, rien ne ramène une fiche qu'on
+     croyait sue il y a trois semaines, et on repasse son temps sur ce qu'on
+     maîtrise déjà.
 
+     Six boîtes, et un intervalle qui double. Une réponse juste fait monter
+     d'une boîte, une erreur renvoie à la boîte 1 — c'est brutal, et c'est le
+     principe : ce qu'on vient de rater n'est pas su.
+
+         boîte 0  jamais vue      à voir aujourd'hui
+         boîte 1  revue hier      dans 1 jour
+         boîte 2                  dans 2 jours
+         boîte 3                  dans 4 jours
+         boîte 4                  dans 8 jours
+         boîte 5  acquise         dans 16 jours
+
+     L'état tient dans une seule clé, et une fiche inconnue vaut boîte 0 :
+     agrandir la banque n'invalide donc jamais la progression. */
+  var INTERVALLES = [0, 1, 2, 4, 8, 16];
+
+  function tzJour(decalage) {
+    var d = new Date();
+    if (decalage) d.setDate(d.getDate() + decalage);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function tzBoites() {
+    var b = TZ.lire('fdo_boites', null);
+    if (b) return b;
+    /* Première ouverture après la mise en place : on reprend ce que
+       l'ancien suivi des ratés savait déjà, plutôt que de repartir de zéro
+       et de faire perdre son travail à quelqu'un qui révisait déjà. */
+    b = {};
+    var ancien = TZ.lire('fdo_ratees', {});
+    Object.keys(ancien).forEach(function (id) {
+      b[id] = { b: 1, d: tzJour(), e: Math.round(ancien[id] / 2) || 1 };
+    });
+    TZ.ecrire('fdo_boites', b);
+    return b;
+  }
+
+  function tzEtatFiche(id) {
+    return tzBoites()[id] || { b: 0, d: tzJour(), e: 0 };
+  }
+
+  /* Enregistre une réponse et replace la fiche dans le temps. */
   function tzNoter(idQuestion, juste) {
-    var m = tzFaiblesses();
-    var n = m[idQuestion] || 0;
-    m[idQuestion] = juste ? Math.max(0, n - 1) : Math.min(6, n + 2);
-    if (!m[idQuestion]) delete m[idQuestion];
-    TZ.ecrire('fdo_ratees', m);
+    if (!idQuestion) return;
+    var boites = tzBoites();
+    var e = boites[idQuestion] || { b: 0, d: tzJour(), e: 0 };
+    if (juste) {
+      e.b = Math.min(5, e.b + 1);
+    } else {
+      e.b = 1;
+      e.e = Math.min(99, (e.e || 0) + 1);
+    }
+    e.d = tzJour(INTERVALLES[e.b]);
+    boites[idQuestion] = e;
+    TZ.ecrire('fdo_boites', boites);
+    tzNoterJournee(juste);
+  }
+
+  /* Le poids d'une fiche dans un tirage libre : ce qu'on rate revient plus
+     souvent, y compris hors révision du jour. */
+  function tzFaiblesses() {
+    var boites = tzBoites();
+    var poids = {};
+    Object.keys(boites).forEach(function (id) {
+      var n = boites[id].e || 0;
+      if (n) poids[id] = Math.min(6, n * 2);
+    });
+    return poids;
   }
 
   /* Tirage pondéré sans répétition : une question ratée pèse plus lourd.
@@ -204,6 +264,88 @@
       sortie.push(reste.splice(choisi, 1)[0]);
     }
     return sortie;
+  }
+
+  /* ------------------------------------------------- ce qui est dû aujourd'hui */
+  function tzDues(force) {
+    var boites = tzBoites();
+    var aujourdhui = tzJour();
+    return tzBanque({ force: force }).filter(function (q) {
+      var e = boites[q.id];
+      return e && e.b > 0 && e.d <= aujourdhui;
+    });
+  }
+
+  function tzNouvelles(force) {
+    var boites = tzBoites();
+    return tzBanque({ force: force }).filter(function (q) {
+      return !boites[q.id];
+    });
+  }
+
+  function tzAcquises(force) {
+    var boites = tzBoites();
+    return tzBanque({ force: force }).filter(function (q) {
+      return boites[q.id] && boites[q.id].b >= 4;
+    });
+  }
+
+  /* La séance du jour : d'abord ce qui est dû, puis ce qu'on rate le plus,
+     puis des fiches neuves pour avancer. Une révision qui ne contient que
+     du nouveau n'ancre rien ; une qui n'en contient jamais n'avance pas. */
+  function tzComposerRevision(force, taille) {
+    var pris = {}, lot = [];
+    function ajouter(liste, combien) {
+      for (var i = 0; i < liste.length && combien > 0 && lot.length < taille; i++) {
+        if (pris[liste[i].id]) continue;
+        pris[liste[i].id] = 1; lot.push(liste[i]); combien--;
+      }
+    }
+    var dues = tzDues(force).sort(function (a, b) {
+      return tzEtatFiche(a.id).d < tzEtatFiche(b.id).d ? -1 : 1;
+    });
+    ajouter(dues, taille);
+
+    var faibles = tzBanque({ force: force }).filter(function (q) {
+      return (tzEtatFiche(q.id).e || 0) >= 2;
+    }).sort(function (a, b) { return tzEtatFiche(b.id).e - tzEtatFiche(a.id).e; });
+    ajouter(faibles, Math.round(taille * 0.3));
+
+    ajouter(TZ.melanger(tzNouvelles(force)), taille);
+    return lot;
+  }
+
+  /* ------------------------------------------------------------- journal
+     Une série de jours n'est pas un gadget : c'est le seul retour qu'on ait
+     sur la régularité, et la régularité est ce qui fait tenir une
+     préparation de six mois. */
+  function tzJournal() { return TZ.lire('fdo_journal', {}); }
+
+  function tzNoterJournee(juste) {
+    var j = tzJournal();
+    var d = tzJour();
+    j[d] = j[d] || { vues: 0, justes: 0 };
+    j[d].vues++;
+    if (juste) j[d].justes++;
+    /* On ne garde pas l'historique complet : cent jours suffisent à une
+       série, et la clé reste légère. */
+    var cles = Object.keys(j).sort();
+    while (cles.length > 100) { delete j[cles.shift()]; }
+    TZ.ecrire('fdo_journal', j);
+  }
+
+  function tzSerie() {
+    var j = tzJournal(), n = 0, i = 0;
+    /* La série survit à la journée en cours : on ne la casse pas à minuit
+       parce que la séance du jour n'a pas encore été faite. */
+    if (!j[tzJour()]) i = -1;
+    while (j[tzJour(i)]) { n++; i--; }
+    return n;
+  }
+
+  function tzVuesAujourdhui() {
+    var e = tzJournal()[tzJour()];
+    return e ? e.vues : 0;
   }
 
   /* ================================================================ mémento
@@ -376,6 +518,10 @@
     etiquettes: tzEtiquettes, rang: tzRang,
     THEMES: THEMES, themes: tzThemes, nomTheme: tzNomTheme,
     banque: tzBanque, compte: tzCompte, tirer: tzTirer,
+    boites: tzBoites, etatFiche: tzEtatFiche, jour: tzJour,
+    dues: tzDues, nouvelles: tzNouvelles, acquises: tzAcquises,
+    composerRevision: tzComposerRevision,
+    journal: tzJournal, serie: tzSerie, vuesAujourdhui: tzVuesAujourdhui,
     themesChoisis: tzThemesChoisis, basculerTheme: tzBasculerTheme,
     tousThemes: tzTousThemes, filtreThemes: tzFiltreThemes,
     faiblesses: tzFaiblesses, noter: tzNoter,
