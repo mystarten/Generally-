@@ -743,3 +743,40 @@ canvas.tz-radar{display:block;margin:0 auto;max-width:100%;height:auto}
   .tz-maj{left:14px;right:14px;transform:none;border-radius:var(--tz-r);
     justify-content:space-between;padding-left:16px}
 }
+
+
+/* --------------------------------------------- bilan : la note et les erreurs
+   Le pourcentage de reussite passe devant le score pondere : c'est la
+   question qu'on se pose en premier. Et la liste des erreurs vaut mieux
+   qu'un chiffre — on apprend de ce qu'on a manque, pas de ce qu'on a eu. */
+.tz-score-libelle{margin:-6px 0 4px;color:var(--tz-txt-2);font-size:.95rem}
+
+.tz-erreurs{margin-top:26px;text-align:left}
+.tz-erreur{background:var(--tz-creux);border-left:4px solid var(--tz-ko);
+  border-radius:var(--tz-r-s);padding:14px 18px;margin:10px 0}
+.tz-erreur-contexte{margin:0 0 7px;font-size:.87rem;color:var(--tz-txt-2);
+  border-left:3px solid var(--tz-bord);padding-left:10px}
+.tz-erreur-enonce{margin:0;font-weight:700;line-height:1.45}
+.tz-erreur-reponse{margin:8px 0 0;color:var(--tz-ok);font-size:.95rem}
+.tz-erreur-reponse b{color:var(--tz-txt-2);font-weight:700}
+.tz-erreur-expli{margin:7px 0 0;font-size:.9rem;color:var(--tz-txt-2);line-height:1.5}
+
+
+/* ------------------------------------------------------ mémento de poche
+   Il faisait soixante ecrans de defilement : illisible sur un telephone et
+   inutilisable pour retrouver une regle avant une prise de service. Thèmes
+   replies, recherche, et un filtre sur ce qu'on rate. */
+.tz-memento-recherche{width:100%;margin:12px 0 4px}
+.tz-memento-theme{padding-top:14px}
+.tz-memento-sommaire{cursor:pointer;list-style:none;display:flex;
+  align-items:baseline;gap:10px;padding:2px 0}
+.tz-memento-sommaire::-webkit-details-marker{display:none}
+.tz-memento-sommaire::before{content:'▸';color:var(--tz-ac);font-size:.9rem;
+  transition:transform .15s;display:inline-block}
+details[open] > .tz-memento-sommaire::before{transform:rotate(90deg)}
+.tz-memento-sommaire b{font-family:var(--tz-titre);font-size:1.05rem;flex:1}
+.tz-memento-compte{font-size:.78rem;font-weight:700;color:var(--tz-txt-3);
+  background:var(--tz-creux);border-radius:99px;padding:3px 10px}
+.tz-memento-theme[open] .tz-memento-sommaire{margin-bottom:10px;
+  padding-bottom:10px;border-bottom:1px solid var(--tz-bord)}
+.tz-jeton-ratee{background:var(--tz-ko-pale);color:var(--tz-ko)}

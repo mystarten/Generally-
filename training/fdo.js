@@ -216,62 +216,149 @@
   function tzMemento(hote, force) {
     TZ.vide(hote);
     var f = tzLaForce(force);
+    var etat = { recherche: '', ratees: false };
 
+    /* --- en-tête et commandes ---------------------------------------- */
     var intro = TZ.el('div', 'tz-panneau');
     intro.appendChild(TZ.el('span', 'tz-etiquette', 'Mémento métier · ' + f.nom));
     intro.appendChild(TZ.el('p', null,
-      'Tout ce que les quiz peuvent demander, à plat et dans l’ordre des thèmes. '
+      'Tout ce que les quiz peuvent demander, réponse donnée d’emblée. '
       + 'Chaque fiche porte sa source : c’est ce qui permet de la vérifier.'));
-    var compte = tzBanque({ force: f.id }).length;
-    intro.appendChild(TZ.el('p', 'tz-vide',
-      compte + ' fiches pour le parcours ' + f.nom.toLowerCase()
-      + ', socle commun aux deux forces inclus.'));
+
+    /* Le mémento faisait soixante écrans de défilement : illisible sur un
+       téléphone, et inutilisable pour retrouver une règle précise avant une
+       prise de service. Une recherche, des thèmes repliés et un filtre sur
+       ce qu'on rate le transforment en mémento de poche. */
+    var champ = TZ.el('input', 'tz-salon-champ tz-memento-recherche');
+    champ.type = 'search';
+    champ.placeholder = 'Rechercher une règle, un mot, un article…';
+    champ.setAttribute('aria-label', 'Rechercher dans le mémento');
+    intro.appendChild(champ);
+
+    var ligne = TZ.el('div', 'tz-puces');
+    var bRatees = TZ.el('button', 'tz-puce', 'Seulement mes fiches ratées');
+    bRatees.type = 'button';
+    bRatees.setAttribute('aria-pressed', 'false');
+    ligne.appendChild(bRatees);
+    var bTout = TZ.el('button', 'tz-puce', 'Tout déplier');
+    bTout.type = 'button';
+    ligne.appendChild(bTout);
+    intro.appendChild(ligne);
+
+    var compteur = TZ.el('p', 'tz-vide', '');
+    intro.appendChild(compteur);
     hote.appendChild(intro);
 
-    THEMES.forEach(function (th) {
-      var lot = tzBanque({ force: f.id, themes: [th.id] });
-      if (!lot.length) return;
+    var corps = TZ.el('div');
+    hote.appendChild(corps);
 
-      var bloc = TZ.el('section', 'tz-panneau');
-      bloc.appendChild(TZ.el('span', 'tz-etiquette', th.nom));
+    /* --- rendu, rejoué à chaque changement de filtre ------------------- */
+    function correspond(q) {
+      if (etat.ratees && !tzFaiblesses()[q.id]) return false;
+      if (!etat.recherche) return true;
+      var m = etat.recherche;
+      return [q.question, q.explication, q.source, tzReponseLisible(q),
+              tzNomTheme(q.theme)]
+        .concat(q.choix || [])
+        .some(function (t) { return t && tzSansAccent(t).indexOf(m) >= 0; });
+    }
 
-      /* dans l'ordre des paliers : on révise comme on apprend */
-      PALIERS.forEach(function (p) {
-        var fiches = lot.filter(function (q) { return q.palier === p.id; });
-        if (!fiches.length) return;
-        bloc.appendChild(TZ.el('p', 'tz-memento-note', p.nom + ' — ' + p.resume));
+    function peindre(toutDeplier) {
+      TZ.vide(corps);
+      var total = 0;
 
-        fiches.forEach(function (q) {
-          var l = TZ.el('div', 'tz-fiche-savoir');
+      THEMES.forEach(function (th) {
+        var lot = tzBanque({ force: f.id, themes: [th.id] }).filter(correspond);
+        if (!lot.length) return;
+        total += lot.length;
 
-          var t = TZ.el('div', 'tz-fiche-titre');
-          t.appendChild(TZ.el('b', null, q.genre === 'vf' ? q.question : q.question));
-          if (q.force !== 'commun') {
-            t.appendChild(TZ.el('span', 'tz-jeton tz-jeton-' + q.force,
-                                tzLaForce(q.force).court));
-          } else {
-            t.appendChild(TZ.el('span', 'tz-jeton', 'Commun'));
-          }
-          l.appendChild(t);
+        /* <details> plutôt qu'un bouton : le repli est natif, il fonctionne
+           sans script, et la recherche du navigateur le déplie toute seule. */
+        var bloc = TZ.el('details', 'tz-panneau tz-memento-theme');
+        bloc.open = !!toutDeplier || !!etat.recherche || etat.ratees;
+        var titre = TZ.el('summary', 'tz-memento-sommaire');
+        titre.appendChild(TZ.el('b', null, th.nom));
+        titre.appendChild(TZ.el('span', 'tz-memento-compte', String(lot.length)));
+        bloc.appendChild(titre);
 
-          l.appendChild(TZ.el('div', 'tz-fiche-reponse', tzReponseLisible(q)));
-          if (q.explication) {
-            l.appendChild(TZ.el('div', 'tz-fiche-expli', q.explication));
-          }
-          if (q.source) {
-            l.appendChild(TZ.el('div', 'tz-fiche-source', q.source));
-          }
-          bloc.appendChild(l);
+        PALIERS.forEach(function (p) {
+          var fiches = lot.filter(function (q) { return q.palier === p.id; });
+          if (!fiches.length) return;
+          bloc.appendChild(TZ.el('p', 'tz-memento-note', p.nom + ' — ' + p.resume));
+
+          fiches.forEach(function (q) {
+            var l = TZ.el('div', 'tz-fiche-savoir');
+            var t = TZ.el('div', 'tz-fiche-titre');
+            t.appendChild(TZ.el('b', null, q.question));
+            if (q.force !== 'commun') {
+              t.appendChild(TZ.el('span', 'tz-jeton tz-jeton-' + q.force,
+                                  tzLaForce(q.force).court));
+            } else {
+              t.appendChild(TZ.el('span', 'tz-jeton', 'Commun'));
+            }
+            if (tzFaiblesses()[q.id]) {
+              t.appendChild(TZ.el('span', 'tz-jeton tz-jeton-ratee', 'à revoir'));
+            }
+            l.appendChild(t);
+            l.appendChild(TZ.el('div', 'tz-fiche-reponse', tzReponseLisible(q)));
+            if (q.explication) l.appendChild(TZ.el('div', 'tz-fiche-expli', q.explication));
+            if (q.source) l.appendChild(TZ.el('div', 'tz-fiche-source', q.source));
+            bloc.appendChild(l);
+          });
         });
+        corps.appendChild(bloc);
       });
 
-      hote.appendChild(bloc);
+      if (!total) {
+        var vide = TZ.el('div', 'tz-panneau');
+        vide.appendChild(TZ.el('p', 'tz-vide', etat.ratees
+          ? 'Aucune fiche ratée pour l’instant — rien à revoir de ce côté.'
+          : 'Aucune fiche ne correspond à cette recherche.'));
+        corps.appendChild(vide);
+      }
+
+      var tout = tzBanque({ force: f.id }).length;
+      compteur.textContent = (etat.recherche || etat.ratees)
+        ? total + ' fiche(s) sur ' + tout
+        : tout + ' fiches pour le parcours ' + f.nom.toLowerCase()
+          + ', socle commun aux deux forces inclus.';
+
+      corps.appendChild(TZ.el('p', 'tz-memento-source',
+        'Ces fiches sont un support de révision, pas une source de droit. Les '
+        + 'textes bougent : avant un examen ou une épreuve, vérifiez l’article '
+        + 'cité sur Légifrance ou dans votre documentation de service.'));
+    }
+
+    var minuteur = null;
+    champ.addEventListener('input', function () {
+      /* On attend une respiration : repeindre à chaque frappe sur deux cent
+         quatre-vingts fiches hache la saisie sur un téléphone. */
+      clearTimeout(minuteur);
+      minuteur = setTimeout(function () {
+        etat.recherche = tzSansAccent(champ.value.trim());
+        peindre(false);
+      }, 180);
+    });
+    bRatees.addEventListener('click', function () {
+      etat.ratees = !etat.ratees;
+      bRatees.setAttribute('aria-pressed', etat.ratees ? 'true' : 'false');
+      peindre(false);
+    });
+    bTout.addEventListener('click', function () {
+      var deplie = corps.querySelectorAll('details[open]').length === 0;
+      bTout.textContent = deplie ? 'Tout replier' : 'Tout déplier';
+      peindre(deplie);
     });
 
-    hote.appendChild(TZ.el('p', 'tz-memento-source',
-      'Ces fiches sont un support de révision, pas une source de droit. Les '
-      + 'textes bougent : avant un examen ou une épreuve, vérifiez l’article '
-      + 'cité sur Légifrance ou dans votre documentation de service.'));
+    peindre(false);
+  }
+
+  /* Recherche insensible à la casse ET aux accents : personne ne tape
+     « légitime » avec son accent dans un champ de recherche en urgence. */
+  function tzSansAccent(t) {
+    return String(t).toLowerCase()
+      .normalize ? String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                 : String(t).toLowerCase();
   }
 
   /* La réponse, telle qu'on la lit dans un mémento — donc en clair, et non

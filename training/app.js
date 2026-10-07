@@ -669,10 +669,23 @@
 
     hote.appendChild(TZ.el('span', 'tz-etiquette',
       ep.nom + ' · ' + tzNomNiveau(ep, idNiveau) + ' · ' + TZ.STRESS[TZ.etat.stress].nom));
-    var grand = TZ.el('div', 'tz-score-grand', String(score));
-    var sup = TZ.el('sup', null, ' / 100');
-    grand.appendChild(sup);
+
+    /* Ce qu'on met en grand, c'est le POURCENTAGE DE RÉUSSITE.
+
+       Le score sur 100 du moteur mêle précision, vitesse, difficulté et
+       stress : il sert à comparer ses propres séances et à nourrir le radar,
+       mais il ne répond pas à la question qu'on se pose en premier — « j'en
+       ai eu combien de bonnes ? ». Afficher 72 quand on a répondu juste à
+       neuf questions sur dix, c'est décourager pour rien. Les deux chiffres
+       sont donc montrés, chacun à sa place. */
+    var pct = Math.round(TZ.borne(brut.precision == null ? 0 : brut.precision, 0, 1) * 100);
+    var grand = TZ.el('div', 'tz-score-grand', String(pct));
+    grand.appendChild(TZ.el('sup', null, ' %'));
     hote.appendChild(grand);
+    hote.appendChild(TZ.el('p', 'tz-score-libelle', 'de bonnes réponses'));
+    hote.appendChild(TZ.el('p', 'tz-vide',
+      'Score pondéré : ' + score + ' / 100 — il tient compte de la vitesse, '
+      + 'de la difficulté et du stress, et c’est lui qui sert aux records.'));
 
     var record = TZ.record(ep.id, idNiveau, TZ.etat.stress);
     if (score >= record && score > 0) {
@@ -696,6 +709,15 @@
     } else {
       hote.appendChild(TZ.el('p', 'tz-vide',
         'Jouez la même épreuve en Calme puis en Intense pour obtenir votre indice de résistance.'));
+    }
+
+    /* --- ce qui a été raté, et de quoi y revenir ---
+       Un score sans la liste des erreurs n'apprend rien : on sait qu'on a
+       manqué quelque chose, pas quoi. On les réaffiche en entier, avec la
+       bonne réponse et la source, et on propose de les rejouer — c'est le
+       seul moment où l'on est encore devant elles. */
+    if (brut.erreurs && brut.erreurs.length) {
+      tzPanneauErreurs(hote, ep, brut, idNiveau);
     }
 
     /* proposition de progression : seulement hors session, pour ne pas
@@ -752,6 +774,63 @@
         { texte: 'Ma progression', fantome: true, action: function () { tzPeindreProgression(); } }
       ]);
     }
+  }
+
+  /* ------------------------------------------------- panneau des erreurs */
+  function tzPanneauErreurs(hote, ep, brut, idNiveau) {
+    var bloc = TZ.el('div', 'tz-erreurs');
+    bloc.appendChild(TZ.el('span', 'tz-etiquette',
+      brut.erreurs.length + (brut.erreurs.length > 1 ? ' questions ratées' : ' question ratée')));
+
+    brut.erreurs.forEach(function (q) {
+      var l = TZ.el('div', 'tz-erreur');
+      if (q.contexte) l.appendChild(TZ.el('p', 'tz-erreur-contexte', q.contexte));
+      l.appendChild(TZ.el('p', 'tz-erreur-enonce', q.enonce));
+      var bonne = (q.options || []).filter(function (o) { return o.juste; })[0];
+      if (bonne) {
+        var r = TZ.el('p', 'tz-erreur-reponse');
+        r.appendChild(TZ.el('b', null, 'Réponse : '));
+        r.appendChild(document.createTextNode(bonne.texte));
+        l.appendChild(r);
+      }
+      if (q.explication) l.appendChild(TZ.el('p', 'tz-erreur-expli', q.explication));
+      if (q.source) l.appendChild(TZ.el('p', 'tz-expli-source', q.source));
+      bloc.appendChild(l);
+    });
+
+    var actions = [{
+      texte: 'Rejouer ces ' + brut.erreurs.length + ' question(s)',
+      action: function () {
+        ep.lotImpose = brut.erreurs.slice();
+        tzLancer(ep, { rang: 1, total: 1, niveau: idNiveau });
+      }
+    }];
+
+    /* Les thèmes concernés, pour aller réviser la source du problème plutôt
+       que de repasser l'épreuve en espérant mieux tomber. */
+    if (brut.themeDe && TZ.fdo) {
+      var themes = {};
+      brut.erreurs.forEach(function (q) {
+        if (!q.theme) return;
+        var id = q.theme;
+        var nom = TZ.fdo.nomTheme(id);
+        if (nom !== id) themes[id] = nom;
+      });
+      Object.keys(themes).slice(0, 3).forEach(function (id) {
+        actions.push({
+          texte: 'Réviser « ' + themes[id] + ' »',
+          fantome: true,
+          action: function () {
+            TZ.fdo.tousThemes();
+            TZ.fdo.basculerTheme(id);
+            tzPeindreAccueil();
+            tzEcran('accueil');
+          }
+        });
+      });
+    }
+    UI.actions(bloc, actions);
+    hote.appendChild(bloc);
   }
 
   /* ======================================================== session complète */

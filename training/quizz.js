@@ -79,10 +79,18 @@
       init: function (ctx) {
         this.ctx = ctx;
         this.r = this.reglages[ctx.niveau] || this.reglages.standard;
-        /* On tire tout le lot d'avance : une question déjà posée ne doit pas
-           revenir dans la même séance, et le tirage est le seul endroit qui
-           connaisse la source des questions. */
-        this.lot = spec.tirage(ctx.niveau, this.r.essais) || [];
+        /* Un lot imposé prime sur le tirage : c'est ce qui permet de rejouer
+           exactement les questions ratées. Il ne sert qu'une fois, sinon
+           « rejouer » enfermerait dans la même poignée de questions. */
+        if (this.lotImpose && this.lotImpose.length) {
+          this.lot = this.lotImpose.slice();
+          this.lotImpose = null;
+        } else {
+          /* On tire tout le lot d'avance : une question déjà posée ne doit pas
+             revenir dans la même séance, et le tirage est le seul endroit qui
+             connaisse la source des questions. */
+          this.lot = spec.tirage(ctx.niveau, this.r.essais) || [];
+        }
         this.ESSAIS = this.lot.length;
         this.essai = 0;
         this.justes = 0;
@@ -148,9 +156,35 @@
           }
           if (q.cle && TZ.fdo) TZ.fdo.noter(q.cle, juste);
           tzExpliquer(scene, q);
-          /* On laisse plus longtemps quand c'est raté : c'est là qu'on lit
-             l'explication. Une bonne réponse n'a pas besoin d'être relue. */
-          TZ.apres(juste ? 1100 : 3200, function () { self.suivant(); });
+
+          /* Une bonne réponse n'a rien à relire : on enchaîne. Une erreur,
+             si — et c'est précisément là qu'on apprend. L'explication
+             défilait au bout de trois secondes, ce qui suffit rarement à
+             lire trois lignes de droit : on rend la main au lecteur, qui
+             passe quand il a fini. Entrée fonctionne aussi, pour ceux qui
+             enchaînent vite. */
+          if (juste) {
+            TZ.apres(900, function () { self.suivant(); });
+            return;
+          }
+
+          var passe = false;
+          function passer() {
+            if (passe) return;
+            passe = true;
+            document.removeEventListener('keydown', surTouche);
+            self.suivant();
+          }
+          function surTouche(ev) {
+            if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); passer(); }
+          }
+          document.addEventListener('keydown', surTouche);
+          self.liberer = function () { document.removeEventListener('keydown', surTouche); };
+
+          UI.actions(scene, [{
+            texte: self.essai >= self.ESSAIS ? 'Voir le bilan' : 'Question suivante',
+            action: passer
+          }]);
         }
 
         var noeuds = tzReponses(scene, q.options, function (o, b, tous) {
@@ -170,7 +204,12 @@
       },
 
       update: function () {},
-      end: function () { if (this.chrono) this.chrono.arreter(); },
+      end: function () {
+        if (this.chrono) this.chrono.arreter();
+        /* L'écouteur clavier du bouton « Question suivante » survivrait à
+           l'épreuve et volerait la touche Entrée au reste de la page. */
+        if (this.liberer) { this.liberer(); this.liberer = null; }
+      },
 
       getScore: function () {
         var faits = Math.max(1, this.essai);
@@ -198,7 +237,11 @@
           precision: this.justes / faits,
           vitesse: TZ.borne((this.r.limite - moy) / Math.max(1, this.r.limite * 0.7), 0, 1),
           difficulte: spec.difficulte == null ? 0.65 : spec.difficulte,
-          details: details
+          details: details,
+          /* Les questions ratées, en entier : le bilan les réaffiche et
+             permet de les rejouer. Un score ne dit pas ce qu'on a manqué. */
+          erreurs: this.rates.slice(),
+          themeDe: spec.libelleRate || null
         };
       }
     };
