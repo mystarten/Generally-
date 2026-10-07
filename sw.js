@@ -10,7 +10,7 @@
    À chaque publication, incrémenter VERSION : les anciens caches sont alors
    supprimés à l'activation.
    ============================================================================= */
-const VERSION = 'generally-v4';
+const VERSION = 'generally-v5';
 
 const COQUILLE = [
   './',

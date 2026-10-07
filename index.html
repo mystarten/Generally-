@@ -4736,7 +4736,8 @@ function ecouterSalon() {
           /* en course, le changement de manche est l'événement qui fait
              basculer tout le monde sur la question suivante en même temps */
           if (course) courseEtatSalon(n);
-          else if (n.etat === 'attente' && $('#ecran-salon') && !$('#ecran-salon').hidden) {
+          else if (n.etat === 'attente' && !salon.hote &&
+                   $('#ecran-salon') && !$('#ecran-salon').hidden) {
             salon.mode = n.mode || 'libre';
             salon.secondes = n.secondes || 20;
             salon.categorie = n.categorie;
@@ -4770,8 +4771,10 @@ function rafraichirSalon() {
     .then(function (r) {
       if (!salon || salon.code !== code || r.error || !r.data) return;
       var d = r.data;
-      /* tant qu'on attend, les réglages de l'hôte redescendent à tout le monde */
-      if (d.etat === 'attente') {
+      /* Les réglages redescendent aux INVITÉS seulement. Chez l'hôte, qui les
+         modifie, ce rappel écraserait son choix avec la valeur encore en base
+         au moment du sondage — et son réglage s'annulerait tout seul. */
+      if (d.etat === 'attente' && !salon.hote) {
         salon.mode = d.mode || 'libre';
         salon.secondes = d.secondes || 20;
         salon.categorie = d.categorie;
