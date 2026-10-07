@@ -453,9 +453,11 @@ button,input{font:inherit;color:inherit;font-family:var(--police-texte)}
 .profil .puce.flamme{background:#FFE9D6;color:#C2550C}
 .profil .puce.menace{animation:pulse-flamme 1.4s ease-in-out infinite}
 @keyframes pulse-flamme{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
-:root[data-theme="nuit"] .profil .puce.flamme,
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .profil .puce.flamme{
-  background:#4A2A14;color:#FFB071}}
+/* Une liste de selecteurs terminee par une virgule suivie d'un @media est
+   invalide : la premiere ligne etait donc jetee, et la pastille ne prenait
+   pas sa teinte sombre dans le mode nuit choisi. Une seule regle, sur le
+   theme choisi, comme partout ailleurs. */
+:root[data-theme="nuit"] .profil .puce.flamme{background:#4A2A14;color:#FFB071}
 
 /* ------------------------------------------------------------- combo */
 .combo{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:70;

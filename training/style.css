@@ -44,13 +44,19 @@
   --tz-texte:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 
-@media(prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --tz-fond:#191530; --tz-carte:#241E42; --tz-creux:#1F1A3A; --tz-bord:#332B58;
-    --tz-terre:#3B3266;
-    --tz-txt:#F2EEFF; --tz-txt-2:#A79FC4; --tz-txt-3:#7E7799;
-    --tz-ac-pale:#33284A; --tz-ok-pale:#1C3A2C; --tz-ko-pale:#3E2130;
-  }
+/* Mode nuit : sur CHOIX, jamais tout seul.
+
+   Ces jetons se déclenchaient sur prefers-color-scheme, donc sur le réglage
+   du système d'exploitation. Qui avait son téléphone en sombre recevait une
+   zone d'entraînement sombre sans l'avoir demandé, et sans pouvoir y couper.
+   Le jeu, lui, demandait déjà le thème à l'utilisateur et posait
+   data-theme="nuit" : on s'aligne sur sa convention, et le réglage de la
+   zone pilote les deux pages qui lisent cette feuille. */
+:root[data-theme="nuit"]{
+  --tz-fond:#191530; --tz-carte:#241E42; --tz-creux:#1F1A3A; --tz-bord:#332B58;
+  --tz-terre:#3B3266;
+  --tz-txt:#F2EEFF; --tz-txt-2:#A79FC4; --tz-txt-3:#7E7799;
+  --tz-ac-pale:#33284A; --tz-ok-pale:#1C3A2C; --tz-ko-pale:#3E2130;
 }
 
 *{box-sizing:border-box}

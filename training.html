@@ -10,6 +10,23 @@
 <link rel="icon" href="icones/icone-192.png" type="image/png">
 <link rel="stylesheet" href="polices/polices.css">
 <link rel="stylesheet" href="training/style.css">
+<!-- Theme, applique avant le premier rendu : pose sur <html> plutot qu'attendu
+     du script de page, sinon un utilisateur en mode nuit verrait la page
+     s'afficher claire puis basculer. Huit lignes, en tete, volontairement
+     dupliquees entre les deux pages — une balise <script src> differee
+     rouvrirait le clignotement qu'elles servent a fermer.
+
+     Le mode nuit ne s'allume plus tout seul : il se choisit dans les reglages
+     de la zone d'entrainement, et le choix vaut pour les deux pages. -->
+<script>
+(function () {
+  try {
+    var t = JSON.parse(localStorage.getItem('training_theme') || '"clair"');
+    if (t === 'nuit') document.documentElement.setAttribute('data-theme', 'nuit');
+  } catch (e) {}
+})();
+</script>
+
 
 <!--
   Zone d'entraînement — page autonome.
@@ -44,8 +61,19 @@
     <!-- Accès au module Culture SOG. Entièrement séparé : supprimer ce bloc,
          sog.html et les fichiers training/tz-sog* laisse la zone intacte.
          Le style est posé ici, et non dans style.css, pour que la suppression
-         n'y laisse aucune règle orpheline. -->
+         n'y laisse aucune règle orpheline.
+
+         Masqué par défaut : c'est app.js qui le révèle, et seulement dans le
+         parcours gendarmerie. Le module révise le programme du concours de
+         sous-officier de GENDARMERIE — le proposer à un candidat policier
+         serait l'envoyer travailler un autre concours que le sien. La page
+         sog.html reste joignable par son adresse : on retire une proposition,
+         on ne ferme pas une porte. -->
     <style>
+      /* display:block l'emporte sur la regle [hidden] du navigateur : sans
+         cette ligne, masquer la carte par l'attribut n'a aucun effet et elle
+         reste affichee dans le parcours police. */
+      .tz-acces-sog[hidden]{display:none}
       .tz-acces-sog{display:block;text-decoration:none;color:var(--tz-txt);
         background:var(--tz-ac-pale);border-radius:var(--tz-r-l);
         padding:20px 24px;margin-bottom:20px;transition:transform .1s}
@@ -54,7 +82,7 @@
         margin-bottom:4px}
       .tz-acces-sog span{color:var(--tz-txt-2);font-size:.92rem}
     </style>
-    <a class="tz-acces-sog" href="sog.html">
+    <a class="tz-acces-sog" href="sog.html" id="tz-acces-sog" hidden>
       <b>Culture SOG</b>
       <span>Dates, citations, notions et chiffres pour l’épreuve de culture
             générale du concours. Révision espacée : ce que tu rates revient plus souvent.</span>

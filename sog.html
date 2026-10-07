@@ -11,6 +11,23 @@
 <link rel="stylesheet" href="polices/polices.css">
 <link rel="stylesheet" href="training/style.css">
 <link rel="stylesheet" href="training/tz-sog.css">
+<!-- Theme, applique avant le premier rendu : pose sur <html> plutot qu'attendu
+     du script de page, sinon un utilisateur en mode nuit verrait la page
+     s'afficher claire puis basculer. Huit lignes, en tete, volontairement
+     dupliquees entre les deux pages — une balise <script src> differee
+     rouvrirait le clignotement qu'elles servent a fermer.
+
+     Le mode nuit ne s'allume plus tout seul : il se choisit dans les reglages
+     de la zone d'entrainement, et le choix vaut pour les deux pages. -->
+<script>
+(function () {
+  try {
+    var t = JSON.parse(localStorage.getItem('training_theme') || '"clair"');
+    if (t === 'nuit') document.documentElement.setAttribute('data-theme', 'nuit');
+  } catch (e) {}
+})();
+</script>
+
 
 <!--
   Culture SOG — page autonome du module de révision.

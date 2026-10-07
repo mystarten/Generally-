@@ -17,7 +17,7 @@
    scripts — ce qui est pire qu'une version entièrement ancienne, parce que
    les deux moitiés ne s'accordent pas.
    ============================================================================= */
-const VERSION = 'generally-v6';
+const VERSION = 'generally-v7';
 
 const COQUILLE = [
   './',

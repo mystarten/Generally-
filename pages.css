@@ -155,13 +155,14 @@ a{color:var(--ac-b)}
 .pied a{color:var(--txt-2)}
 
 /* ------------------------------------------------------------- mode sombre */
-@media(prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --fond:#191530; --carte:#241E42; --creux:#1F1A3A;
-    --bord:#332B58; --bord-fort:#443A6E;
-    --txt:#F2EEFF; --txt-2:#A79FC4; --txt-3:#7E7799;
-    --ac:#F5A623; --ac-b:#FFC531; --ac-pale:#33284A;
-  }
+/* Mode nuit : sur choix, jamais tout seul — même convention que le jeu
+   (data-theme="nuit"). Ces pages de contenu n'ont pas de réglage propre :
+   elles suivent donc le thème clair, qui est celui de la marque. */
+:root[data-theme="nuit"]{
+  --fond:#191530; --carte:#241E42; --creux:#1F1A3A;
+  --bord:#332B58; --bord-fort:#443A6E;
+  --txt:#F2EEFF; --txt-2:#A79FC4; --txt-3:#7E7799;
+  --ac:#F5A623; --ac-b:#FFC531; --ac-pale:#33284A;
 }
 
 @media(max-width:620px){

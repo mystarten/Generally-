@@ -87,6 +87,7 @@
        3. les catégories d'épreuves, les mémentos, la session, les réglages. */
   function tzPeindreAccueil() {
     var hote = TZ.vide(TZ.q('#tz-categories'));
+    tzCarteSog();
     if (TZ.fdo && !TZ.fdo.force()) { tzChoisirForce(hote); return; }
     tzBandeauForce(hote);
 
@@ -130,6 +131,21 @@
     reg.appendChild(TZ.el('p', 'tz-vide',
       'La difficulté et le niveau de stress se choisissent au lancement de chaque épreuve.'));
 
+    reg.appendChild(TZ.el('span', 'tz-etiquette', 'Apparence'));
+    var segT = TZ.el('div', 'tz-segment');
+    [['clair', 'Clair'], ['nuit', 'Nuit']].forEach(function (t) {
+      var b = TZ.el('button', null, t[1]);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', tzTheme() === t[0] ? 'true' : 'false');
+      b.addEventListener('click', function () { tzFixerTheme(t[0]); tzPeindreAccueil(); });
+      segT.appendChild(b);
+    });
+    reg.appendChild(segT);
+    reg.appendChild(TZ.el('p', 'tz-vide',
+      'Le mode nuit ne suit plus le réglage de votre appareil : il s’allume '
+      + 'ici, et seulement si vous le demandez. Le choix vaut aussi pour '
+      + 'Culture SOG.'));
+
     var l2 = TZ.el('div', 'tz-rangee');
     var bSon = TZ.el('button', 'tz-btn tz-fantome tz-mini',
                      TZ.etat.son ? 'Sons activés' : 'Sons coupés');
@@ -144,6 +160,29 @@
     l2.appendChild(bRaz);
     reg.appendChild(l2);
     hote.appendChild(reg);
+  }
+
+  /* La carte d'accès à Culture SOG vit dans training.html, hors du conteneur
+     repeint : on ne fait que la montrer ou la cacher. Elle ne s'affiche que
+     dans le parcours gendarmerie, puisque le module révise le programme du
+     concours de sous-officier de gendarmerie. Le test sur le nœud permet de
+     supprimer le bloc HTML sans rien casser ici. */
+  function tzCarteSog() {
+    var carte = TZ.q('#tz-acces-sog');
+    if (!carte) return;
+    carte.hidden = !(TZ.fdo && TZ.fdo.force() === 'gn');
+  }
+
+  /* ------------------------------------------------------------- thème
+     Deux états, les mêmes que le jeu. Le mode nuit ne s'allume plus sur le
+     réglage du système : il se choisit ici, et le choix vaut aussi pour la
+     page Culture SOG, qui lit la même feuille et la même clé. */
+  function tzTheme() { return TZ.lire('theme', 'clair'); }
+
+  function tzFixerTheme(id) {
+    TZ.ecrire('theme', id);
+    if (id === 'nuit') document.documentElement.setAttribute('data-theme', 'nuit');
+    else document.documentElement.removeAttribute('data-theme');
   }
 
   /* ---------------------------------------------------- choix de la force */
@@ -303,6 +342,9 @@
     var n = TZ.effacerTout();
     TZ.etat.stress = 'calme';
     TZ.etat.son = true;
+    /* effacerTout a emporté la clé du thème : sans cette ligne l'écran
+       resterait sombre alors que le réglage est revenu au clair. */
+    tzFixerTheme('clair');
     tzPeindreAccueil();
     global.alert(n + ' entrée(s) effacée(s). Le jeu principal est intact.');
   }
