@@ -348,7 +348,11 @@
 
     start: function () {
       var self = this;
-      UI.depart(this.ctx.scene, function () { self.manchePresentation(); });
+      /* Décompte en points : « 3 2 1 » s'affichait comme les chiffres à
+         mémoriser, au même endroit et plus vite qu'eux. On ne savait plus
+         où commençait la suite. */
+      UI.depart(this.ctx.scene, function () { self.manchePresentation(); },
+                { sansChiffres: true });
     },
 
     manchePresentation: function () {
@@ -373,8 +377,15 @@
       var n = TZ.el('div', 'tz-grand', '');
       scene.appendChild(n);
 
+      /* Un temps d'arrêt avant le premier chiffre : la consigne doit être lue
+         avant que la suite commence, sinon on rate le début en la lisant. */
+      n.textContent = '·';
+      n.classList.add('tz-decompte');
+
       var k = 0;
-      (function afficher() {
+      TZ.apres(700, function () { n.classList.remove('tz-decompte'); afficher(); });
+
+      function afficher() {
         if (k >= self.suite.length) {
           n.textContent = '';
           TZ.apres(320, function () { self.mancheRappel(); });
@@ -384,8 +395,11 @@
         n.style.animation = 'none'; void n.offsetWidth; n.style.animation = '';
         TZ.son.tic();
         k++;
-        TZ.apres(self.r.ms, function () { n.textContent = ''; TZ.apres(180, afficher); });
-      })();
+        /* 280 ms de blanc, pas 180 : quand la suite contient deux fois le même
+           chiffre d'affilée, une coupure trop brève les fait lire comme un
+           seul. */
+        TZ.apres(self.r.ms, function () { n.textContent = ''; TZ.apres(280, afficher); });
+      }
     },
 
     mancheRappel: function () {

@@ -270,19 +270,13 @@
   }
 
   /* ===================================================== interruptions et bruit */
+  /* Secousse brève sur une erreur. C'est un retour immédiat, pas une
+     distraction : il reste actif quel que soit le réglage, et ne fait aucun
+     bruit — le son d'erreur a déjà été joué par l'appelant. */
   function tzDeclencherDistracteur(scene) {
-    var reglage = TZ_STRESS[tzEtat.stress];
-    if (!reglage.distracteurs || !scene) return;
-    var tirage = Math.random();
-    if (tirage < 0.34) {
-      scene.classList.add('tz-flash');
-      tzApres(220, function () { scene.classList.remove('tz-flash'); });
-    } else if (tirage < 0.67) {
-      scene.classList.add('tz-secousse');
-      tzApres(420, function () { scene.classList.remove('tz-secousse'); });
-    } else {
-      tzSon.parasite();
-    }
+    if (!scene) return;
+    scene.classList.add('tz-secousse');
+    tzApres(420, function () { scene.classList.remove('tz-secousse'); });
   }
 
   function tzDeclencherInterruption(scene) {
@@ -299,16 +293,135 @@
 
   /* Programme le harcèlement pendant toute la durée d'une épreuve.
      Renvoie une fonction d'arrêt. */
-  function tzLancerPerturbations(scene) {
-    var reglage = TZ_STRESS[tzEtat.stress];
-    if (!reglage.interruptions && !reglage.distracteurs) return function () {};
-    var idA = tzChaque(reglage.distracteurs ? 4200 : 9000, function () {
-      tzDeclencherDistracteur(scene);
-    });
-    var idB = tzChaque(reglage.interruptions ? 11000 : 99999, function () {
-      tzDeclencherInterruption(scene);
-    });
-    return function () { clearInterval(idA); clearInterval(idB); tzRetirer(idA); tzRetirer(idB); };
+  /* ========================================================== distractions
+     Le stress règle le temps et le score ; les distractions règlent ce qui
+     se passe autour de la tâche. Les deux étaient liés, ce qui interdisait
+     de s'entraîner au calme avec du bruit visuel — ou l'inverse.
+
+     Trois règles, pour que la distraction gêne sans fausser l'épreuve :
+       — tout est visuel, jamais sonore ;
+       — tout vit dans un calque sans pointer-events : rien n'intercepte un
+         clic, même en passant au-dessus d'un bouton ;
+       — tout reste en périphérie. Masquer le stimulus ne serait plus une
+         distraction mais un handicap, et rendrait le score ininterprétable.
+
+     Les figures retenues sont celles qui captent le regard malgré soi :
+     l'apparition brusque et le mouvement périphérique d'abord, puis
+     l'information concurrente — message, chiffres qui défilent. */
+  var TZ_DISTRACTIONS = [
+    { id: 'aucune',  nom: 'Aucune',  periode: 0,    force: 0,
+      resume: 'Rien autour de la tâche.' },
+    { id: 'legere',  nom: 'Légère',  periode: 6200, force: 0.45,
+      resume: 'Un mouvement en périphérie de temps en temps.' },
+    { id: 'moyenne', nom: 'Moyenne', periode: 3800, force: 0.75,
+      resume: 'Mouvements, apparitions brusques et messages parasites.' },
+    { id: 'forte',   nom: 'Forte',   periode: 2200, force: 1,
+      resume: 'Sollicitations rapprochées sur tout le pourtour, et secousses.' }
+  ];
+
+  /* Par défaut la distraction suit le stress : tant qu'on ne touche pas au
+     réglage, on retrouve le comportement d'avant. */
+  var TZ_DISTRACTION_DEFAUT = { calme: 'aucune', modere: 'legere', intense: 'forte' };
+
+  function tzDistraction(id) {
+    for (var i = 0; i < TZ_DISTRACTIONS.length; i++) {
+      if (TZ_DISTRACTIONS[i].id === id) return TZ_DISTRACTIONS[i];
+    }
+    return TZ_DISTRACTIONS[0];
+  }
+
+  function tzDistractionDe(idEpreuve) {
+    var m = tzLire('distraction', {});
+    return m[idEpreuve] || TZ_DISTRACTION_DEFAUT[tzEtat.stress] || 'aucune';
+  }
+
+  function tzFixerDistraction(idEpreuve, id) {
+    var m = tzLire('distraction', {});
+    m[idEpreuve] = id;
+    tzEcrire('distraction', m);
+  }
+
+  function tzCalqueDistraction(scene) {
+    var c = scene.querySelector('.tz-distractions');
+    if (!c) { c = tzEl('div', 'tz-distractions'); scene.appendChild(c); }
+    return c;
+  }
+
+  function tzPoserFigure(calque, classe, duree, style) {
+    var n = tzEl('div', 'tz-dis ' + classe);
+    if (style) n.style.cssText = style;
+    calque.appendChild(n);
+    tzApres(duree, function () { if (n.parentNode) n.parentNode.removeChild(n); });
+    return n;
+  }
+
+  function tzFigureDistraction(scene, force) {
+    if (!scene || !scene.isConnected) return;
+    var calque = tzCalqueDistraction(scene);
+    var bande = Math.random() < 0.5 ? 'top:8px' : 'bottom:8px';
+    var cote = Math.random() < 0.5 ? 'left:10px' : 'right:10px';
+    var opacite = (0.3 + 0.55 * force).toFixed(2);
+    var tirage = Math.random();
+
+    if (tirage < 0.32) {
+      /* mouvement périphérique : le regard suit, c'est involontaire */
+      var sens = Math.random() < 0.5 ? 'tz-dis-vers-d' : 'tz-dis-vers-g';
+      tzPoserFigure(calque, 'tz-dis-passage ' + sens, 1600,
+                    bande + ';opacity:' + opacite);
+
+    } else if (tirage < 0.58) {
+      /* apparition brusque : le signal qui capte le mieux l'attention */
+      tzPoserFigure(calque, 'tz-dis-apparition', 950,
+                    bande + ';' + cote + ';opacity:' + opacite);
+
+    } else if (tirage < 0.74) {
+      /* Une ombre qui balaie, comme quelqu'un passant devant une lampe.
+         C'est la seule figure qui traverse le centre : elle est donc
+         plafonnée à 0,35 d'opacité, de quoi atténuer sans empêcher de juger
+         une couleur ou de lire une silhouette. */
+      tzPoserFigure(calque, 'tz-dis-ombre', 1800,
+                    'opacity:' + (0.15 + 0.2 * force).toFixed(2));
+
+    } else if (tirage < 0.89) {
+      /* information concurrente : on la lit malgré soi */
+      var m = TZ_INTERRUPTIONS[tzHasard(TZ_INTERRUPTIONS.length)];
+      var b = tzEl('div', 'tz-dis tz-dis-message');
+      b.style.cssText = bande + ';' + cote;
+      b.appendChild(tzEl('b', null, m.titre));
+      b.appendChild(tzEl('span', null, m.corps));
+      calque.appendChild(b);
+      tzApres(2400, function () { if (b.parentNode) b.parentNode.removeChild(b); });
+
+    } else {
+      /* un compte à rebours qui ne sert à rien : difficile à ignorer */
+      var n = tzEl('div', 'tz-dis tz-dis-compteur');
+      n.style.cssText = bande + ';' + cote;
+      var v = 20 + tzHasard(80);
+      n.textContent = String(v);
+      calque.appendChild(n);
+      var tic = tzChaque(240, function () { v--; n.textContent = String(v); });
+      tzApres(2300, function () {
+        clearInterval(tic); tzRetirer(tic);
+        if (n.parentNode) n.parentNode.removeChild(n);
+      });
+    }
+
+    /* à pleine intensité, la scène tremble par moments */
+    if (force >= 1 && Math.random() < 0.22) {
+      scene.classList.add('tz-secousse');
+      tzApres(420, function () { scene.classList.remove('tz-secousse'); });
+    }
+  }
+
+  function tzLancerPerturbations(scene, idDistraction) {
+    var d = tzDistraction(idDistraction);
+    if (!d.periode || !scene) return function () {};
+    var id = tzChaque(d.periode, function () { tzFigureDistraction(scene, d.force); });
+    return function () {
+      clearInterval(id); tzRetirer(id);
+      var c = scene.querySelector('.tz-distractions');
+      if (c && c.parentNode) c.parentNode.removeChild(c);
+    };
   }
 
   /* ================================================================= chrono
@@ -371,6 +484,8 @@
     calculerScore: tzCalculerScore, noteVitesse: tzNoteVitesse,
     enregistrer: tzEnregistrer, record: tzRecord, indiceResistance: tzIndiceResistance,
     perturbations: tzLancerPerturbations, chrono: tzChrono,
+    DISTRACTIONS: TZ_DISTRACTIONS, distraction: tzDistraction,
+    distractionDe: tzDistractionDe, fixerDistraction: tzFixerDistraction,
     distracteur: tzDeclencherDistracteur, interruption: tzDeclencherInterruption,
     /* registre des épreuves : chaque module s'y inscrit lui-même */
     epreuves: []

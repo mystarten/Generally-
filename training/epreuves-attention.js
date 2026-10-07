@@ -187,9 +187,9 @@
     categorie: 'attention',
     axe: 'inhibition',
     but: 'Inhiber une réponse automatique — lire — au profit d’une autre.',
-    comment: 'Un mot de couleur s’affiche dans une encre différente. Cliquez la couleur de l’encre, jamais le mot.',
+    comment: 'Un mot de couleur s’affiche dans une encre différente. Donnez la couleur de l’ENCRE, jamais le mot. Touches 1 à 5, ou clic.',
     tuto: {
-      regle: 'Un mot de couleur s’affiche, écrit dans une encre d’une autre couleur. Cliquez le bouton correspondant à la COULEUR DE L’ENCRE. Ignorez ce que le mot dit.',
+      regle: 'Un mot de couleur s’affiche, écrit dans une encre d’une autre couleur. Désignez la COULEUR DE L’ENCRE, pas le mot. Les touches 1 à 5 correspondent aux cinq boutons, dans l’ordre : c’est beaucoup plus rapide que viser à la souris.',
       exemple: function (hote) {
         var ex = TZ.el('div', 'tz-exemple');
         [['oui', 'ROUGE', '#3E86E0', 'BLEU', 'Bonne réponse', 'L’encre est bleue'],
@@ -213,11 +213,14 @@
       pourquoi: 'Lire est devenu automatique : le mot s’impose avant la couleur. Réussir demande d’inhiber cette réponse automatique. C’est la mesure classique du contrôle inhibiteur.'
     },
 
+    /* Un essai Stroop incongruent se résout en 700 à 1100 ms chez un adulte
+       entraîné. Les planchers d'avant (820 ms, ramenés à 476 ms par le
+       coefficient Intense) étaient donc hors d'atteinte, même au clavier. */
     reglages: {
-      decouverte: { essais: 16, base: 3400, retrait: 25, plancher: 1800, incongru: 0.55 },
-      standard:   { essais: 24, base: 2800, retrait: 45, plancher: 1250, incongru: 0.75 },
-      confirme:   { essais: 30, base: 2300, retrait: 50, plancher: 1000, incongru: 0.85 },
-      expert:     { essais: 34, base: 1950, retrait: 50, plancher: 820,  incongru: 0.92 }
+      decouverte: { essais: 16, base: 4200, retrait: 25, plancher: 2600, incongru: 0.55 },
+      standard:   { essais: 24, base: 3400, retrait: 40, plancher: 2000, incongru: 0.75 },
+      confirme:   { essais: 30, base: 2900, retrait: 45, plancher: 1700, incongru: 0.85 },
+      expert:     { essais: 34, base: 2500, retrait: 45, plancher: 1500, incongru: 0.92 }
     },
 
     init: function (ctx) {
@@ -241,14 +244,29 @@
       this.mot = TZ.el('div', 'tz-grand', '');
       scene.appendChild(this.mot);
       var rangee = TZ.el('div', 'tz-couleurs');
-      COULEURS_STROOP.forEach(function (c) {
-        var b = TZ.el('button', 'tz-couleur', c.nom);
+      /* L'ordre des couleurs ne change jamais d'un essai à l'autre : les
+         touches 1 à 5 restent donc au même endroit, et la réponse devient
+         un réflexe au lieu d'une visée. */
+      COULEURS_STROOP.forEach(function (c, i) {
+        var b = TZ.el('button', 'tz-couleur');
         b.type = 'button';
         b.style.background = c.css;
+        b.appendChild(TZ.el('span', 'tz-touche', String(i + 1)));
+        b.appendChild(TZ.el('span', null, c.nom));
         b.addEventListener('click', function () { self.repondre(c.nom); });
         rangee.appendChild(b);
       });
       scene.appendChild(rangee);
+      UI.indice(scene, 'Touches 1 à 5 pour répondre, ou clic sur la couleur.');
+
+      this.surTouche = function (ev) {
+        var n = parseInt(ev.key, 10);
+        if (!n || n < 1 || n > COULEURS_STROOP.length) return;
+        ev.preventDefault();
+        self.repondre(COULEURS_STROOP[n - 1].nom);
+      };
+      document.addEventListener('keydown', this.surTouche);
+
       this.suivant();
     },
 
@@ -297,7 +315,10 @@
     },
 
     update: function () {},
-    end: function () { if (this.chrono) this.chrono.arreter(); },
+    end: function () {
+      if (this.chrono) this.chrono.arreter();
+      if (this.surTouche) document.removeEventListener('keydown', this.surTouche);
+    },
 
     getScore: function () {
       var precision = this.essai ? this.justes / this.essai : 0;
@@ -319,9 +340,9 @@
     categorie: 'attention',
     axe: 'vitesse',
     but: 'Décider vite, et surtout savoir ne pas agir.',
-    comment: 'Des silhouettes apparaissent. Cliquez sur les cibles hostiles, jamais sur les civils. On mesure votre temps de réaction et vos fausses alertes.',
+    comment: 'Des silhouettes apparaissent. Appuyez sur Espace pour les cibles hostiles, rien pour les civils. On mesure votre temps de réaction et vos fausses alertes.',
     tuto: {
-      regle: 'Une silhouette apparaît brièvement. Cliquez-la si elle est hostile. Ne cliquez pas si c’est un civil. Ne rien faire est une réponse.',
+      regle: 'Une silhouette apparaît brièvement. Appuyez sur Espace si elle est hostile. Ne touchez à rien si c’est un civil : ne rien faire est une réponse. Le clic sur la silhouette marche aussi, mais la touche est bien plus rapide.',
       exemple: function (hote) {
         var ex = TZ.el('div', 'tz-exemple');
         var self = this;
@@ -340,16 +361,21 @@
         });
         hote.appendChild(ex);
         hote.appendChild(TZ.el('p', null,
-          'Cliquer un civil compte comme une fausse alerte, et pèse plus lourd qu’une cible manquée.'));
+          'Répondre sur un civil compte comme une fausse alerte, et pèse plus lourd qu’une cible manquée.'));
       },
       pourquoi: 'Le Go / No-Go mesure deux choses à la fois : la vitesse de décision et la capacité à retenir un geste déjà lancé. Dans les métiers concernés, la seconde compte davantage que la première.'
     },
 
+    /* La difficulté d'un Go/No-Go tient à l'inhibition, pas à la vitesse du
+       bras : ce qui discrimine, ce sont les fausses alertes. Les anciens
+       planchers (450 ms, soit 261 ms une fois le coefficient Intense
+       appliqué) passaient sous le temps de réaction visuel simple — la
+       cible était manquée même quand la décision était juste. */
     reglages: {
-      decouverte: { essais: 18, fenetre: 1600, retrait: 8,  plancher: 900, partGo: 0.75 },
-      standard:   { essais: 26, fenetre: 1250, retrait: 12, plancher: 620, partGo: 0.65 },
-      confirme:   { essais: 32, fenetre: 1050, retrait: 14, plancher: 520, partGo: 0.58 },
-      expert:     { essais: 36, fenetre: 900,  retrait: 14, plancher: 450, partGo: 0.52 }
+      decouverte: { essais: 18, fenetre: 2000, retrait: 8,  plancher: 1500, partGo: 0.75 },
+      standard:   { essais: 26, fenetre: 1600, retrait: 12, plancher: 1150, partGo: 0.65 },
+      confirme:   { essais: 32, fenetre: 1350, retrait: 14, plancher: 1000, partGo: 0.58 },
+      expert:     { essais: 36, fenetre: 1200, retrait: 14, plancher: 880,  partGo: 0.52 }
     },
 
     init: function (ctx) {
@@ -370,7 +396,17 @@
     preparer: function () {
       var self = this, ctx = this.ctx;
       var scene = TZ.vide(ctx.scene);
-      UI.indice(scene, 'Hostile : silhouette orange avec objet. Civil : silhouette bleue, mains levées.');
+      UI.indice(scene, 'Hostile : silhouette orange avec objet — Espace. Civil : silhouette bleue, mains levées — ne rien faire.');
+
+      /* La touche est la vraie voie de réponse : viser une silhouette à la
+         souris mesurerait le déplacement du curseur, pas la décision. */
+      this.surTouche = function (ev) {
+        if (ev.code !== 'Space' && ev.key !== ' ' && ev.key !== 'Enter') return;
+        ev.preventDefault();
+        self.cliquer();
+      };
+      document.addEventListener('keydown', this.surTouche);
+
       this.zone = TZ.el('div');
       this.zone.style.cssText = 'display:grid;place-items:center;height:190px;width:100%';
       scene.insertBefore(this.zone, scene.firstChild);
@@ -456,7 +492,10 @@
     },
 
     update: function () {},
-    end: function () { if (this.chrono) this.chrono.arreter(); },
+    end: function () {
+      if (this.chrono) this.chrono.arreter();
+      if (this.surTouche) document.removeEventListener('keydown', this.surTouche);
+    },
 
     getScore: function () {
       var rappel = this.cibles ? this.touches / this.cibles : 0;

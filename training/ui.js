@@ -10,11 +10,18 @@
   var TZ = global.TZ;
 
   /* Compte à rebours d'entrée. Toutes les épreuves démarrent pareil : le
-     joueur a besoin d'une seconde pour poser les yeux au bon endroit. */
-  function tzDepart(scene, surFin) {
-    var suite = ['3', '2', '1', 'Go'];
+     joueur a besoin d'une seconde pour poser les yeux au bon endroit.
+
+     Le décompte est volontairement gris et plus petit que le contenu des
+     épreuves. Il le faut : dans l'empan, « 3 2 1 » s'affichait exactement
+     comme les chiffres à mémoriser, au même endroit, et on ne savait plus
+     lesquels comptaient. Les épreuves dont le contenu est chiffré passent en
+     plus par un décompte en points, qui ne peut pas se confondre. */
+  function tzDepart(scene, surFin, options) {
+    var sansChiffres = options && options.sansChiffres;
+    var suite = sansChiffres ? ['•', '• •', '• • •', 'Go'] : ['3', '2', '1', 'Go'];
     var i = 0;
-    var n = TZ.el('div', 'tz-grand');
+    var n = TZ.el('div', 'tz-grand tz-decompte');
     TZ.vide(scene).appendChild(n);
     (function pas() {
       if (i >= suite.length) { surFin(); return; }

@@ -2,7 +2,7 @@
    Zone d'entraînement — grades de la gendarmerie nationale.
 
    Ce fichier ne contient que des données et un dessin : la hiérarchie des
-   grades, l'appellation réglementaire de chacun, et un galon schématique.
+   grades, l'appellation réglementaire de chacun, et un insigne schématique.
    Les épreuves qui s'en servent vivent dans epreuves-grades.js.
 
    SOURCE. Les appellations proviennent de la colonne « Appellation » des
@@ -12,14 +12,22 @@
    Major_gd.svg, Slt_gd.svg … Col_gd.svg), couleurs lues dans le code SVG
    plutôt qu'estimées à l'œil.
 
-   PÉRIMÈTRE. Les galons représentés sont ceux de la GENDARMERIE
+   PÉRIMÈTRE. Les insignes représentés sont ceux de la GENDARMERIE
    DÉPARTEMENTALE, dont la couleur dominante est l'argent. La gendarmerie
    mobile et la garde républicaine portent les mêmes figures en OR : c'est la
    couleur qui change, ni le nombre ni la forme.
 
+   SUPPORT. On dessine l'INSIGNE DE POITRINE — le carré d'environ 5 × 5 cm
+   monté sur velcro, porté sur le polo, le gilet pare-balles et la chasuble —
+   et non le fourreau d'épaule de la veste et de la parka. Le format carré est
+   relevé sur les catalogues d'équipement (grade de poitrine en gomme, « environ
+   5 × 5 cm, se monte sur velcro »).
+
    Le dessin est un schéma de révision, pas une reproduction réglementaire :
    il retient ce qui se demande à un examen — la figure (chevron, barre,
-   étoile), le nombre et la couleur.
+   étoile), le nombre et la couleur. La disposition exacte des figures sur le
+   carré n'est pas publiée ; celle retenue ici reprend celle des planches
+   d'insignes, ramenée au format carré.
    ============================================================================= */
 (function (global) {
   'use strict';
@@ -156,10 +164,17 @@
       note: 'Sommet de la hiérarchie : le directeur général de la Gendarmerie nationale.' }
   ];
 
-  /* ============================================================ dessin du galon
-     On représente un fourreau d'épaule vu de face. La pointe est à gauche,
-     côté col ; les figures se lisent depuis cette pointe. */
+  /* ========================================================= dessin de l'insigne
+     On représente l'INSIGNE DE POITRINE : le carré d'environ 5 × 5 cm monté
+     sur velcro, porté sur le polo, le gilet pare-balles et la chasuble. C'est
+     celui qu'on a sous les yeux en service, et non le fourreau d'épaule, qui
+     se porte sur la veste et la parka.
+
+     Les figures, leur nombre et leur couleur sont inchangés : ce sont ceux
+     relevés sur les planches d'insignes, et c'est ce qui se demande. Seul le
+     support change — carré, et non effilé côté col. */
   var NS = 'http://www.w3.org/2000/svg';
+  var COTE = 100;   /* viewBox carré : l'insigne de poitrine l'est aussi */
 
   function tzEtoile(cx, cy, r, couleur) {
     var pts = [];
@@ -177,14 +192,17 @@
 
   function tzGalon(grade, hauteur) {
     var svg = document.createElementNS(NS, 'svg');
-    svg.setAttribute('viewBox', '0 0 200 76');
+    svg.setAttribute('viewBox', '0 0 ' + COTE + ' ' + COTE);
     svg.setAttribute('height', String(hauteur || 62));
     svg.setAttribute('class', 'tz-galon');
     svg.setAttribute('role', 'img');
-    svg.setAttribute('aria-label', 'Galon : ' + tzDecrire(grade));
+    svg.setAttribute('aria-label', 'Insigne de poitrine : ' + tzDecrire(grade));
 
-    var fond = document.createElementNS(NS, 'path');
-    fond.setAttribute('d', 'M4,38 L34,10 L196,10 L196,66 L34,66 Z');
+    var fond = document.createElementNS(NS, 'rect');
+    fond.setAttribute('x', '3'); fond.setAttribute('y', '3');
+    fond.setAttribute('width', String(COTE - 6));
+    fond.setAttribute('height', String(COTE - 6));
+    fond.setAttribute('rx', '9');
     fond.setAttribute('class', 'tz-galon-fond');
     svg.appendChild(fond);
 
@@ -192,28 +210,35 @@
     var teinte = TEINTES[g.teinte] || TEINTES.argent;
 
     if (g.figure === 'chevron') {
+      /* Chevrons emboîtés, pointe à gauche, lus depuis l'extérieur. */
+      var pasC = 19, largeurC = 15;
+      var droite = 50 + ((g.nb - 1) * pasC + largeurC) / 2;
       for (var i = 0; i < g.nb; i++) {
-        var x = 176 - i * 26;
+        var x = droite - i * pasC;
         var c = document.createElementNS(NS, 'path');
-        c.setAttribute('d', 'M' + x + ',14 L' + (x - 26) + ',38 L' + x + ',62');
+        c.setAttribute('d', 'M' + x + ',22 L' + (x - largeurC) + ',50 L' + x + ',78');
         c.setAttribute('fill', 'none');
         c.setAttribute('stroke', teinte);
-        c.setAttribute('stroke-width', '9');
+        c.setAttribute('stroke-width', '8');
+        c.setAttribute('stroke-linecap', 'square');
         svg.appendChild(c);
       }
 
     } else if (g.figure === 'barre') {
-      var ecart = 15;
-      var debut = 184 - (g.nb - 1) * ecart;
+      /* Barres droites verticales, centrées. Le liseré rouge se range à
+         gauche du groupe, comme sur le fourreau. */
+      var ecart = 14, largeur = 8;
+      var total = (g.nb - 1) * ecart + largeur + (g.lisere ? 11 : 0);
+      var debut = 50 - total / 2 + (g.lisere ? 11 : 0);
       var premiereOpposee = Math.floor((g.nb - (g.opposees || 0)) / 2);
       for (var j = 0; j < g.nb; j++) {
         var opposee = !!g.opposees &&
                       j >= premiereOpposee && j < premiereOpposee + g.opposees;
         var b = document.createElementNS(NS, 'rect');
         b.setAttribute('x', String(debut + j * ecart));
-        b.setAttribute('y', '12');
-        b.setAttribute('width', '9');
-        b.setAttribute('height', '52');
+        b.setAttribute('y', '20');
+        b.setAttribute('width', String(largeur));
+        b.setAttribute('height', '60');
         b.setAttribute('fill', opposee
           ? (g.teinte === 'or' ? TEINTES.argent : TEINTES.or)
           : teinte);
@@ -221,25 +246,28 @@
       }
       if (g.lisere) {
         var l = document.createElementNS(NS, 'rect');
-        l.setAttribute('x', String(debut - 11));
-        l.setAttribute('y', '12');
+        l.setAttribute('x', String(debut - 10));
+        l.setAttribute('y', '20');
         l.setAttribute('width', '5');
-        l.setAttribute('height', '52');
+        l.setAttribute('height', '60');
         l.setAttribute('fill', TEINTES.rouge);
         svg.appendChild(l);
       }
 
     } else if (g.figure === 'etoile') {
       /* au-delà de trois, les étoiles se rangent sur deux lignes */
+      var r = g.nb >= 4 ? 12 : 14, pas = g.nb >= 4 ? 26 : 28;
       if (g.nb >= 4) {
-        var haut = Math.ceil(g.nb / 2);
-        for (var k = 0; k < g.nb; k++) {
-          if (k < haut) svg.appendChild(tzEtoile(168 - k * 30, 26, 13, TEINTES.argent));
-          else          svg.appendChild(tzEtoile(153 - (k - haut) * 30, 54, 13, TEINTES.argent));
+        var haut = Math.ceil(g.nb / 2), bas = g.nb - haut;
+        for (var k = 0; k < haut; k++) {
+          svg.appendChild(tzEtoile(50 - (haut - 1) * pas / 2 + k * pas, 36, r, TEINTES.argent));
+        }
+        for (var n = 0; n < bas; n++) {
+          svg.appendChild(tzEtoile(50 - (bas - 1) * pas / 2 + n * pas, 68, r, TEINTES.argent));
         }
       } else {
         for (var m = 0; m < g.nb; m++) {
-          svg.appendChild(tzEtoile(168 - m * 30, 38, 13, TEINTES.argent));
+          svg.appendChild(tzEtoile(50 - (g.nb - 1) * pas / 2 + m * pas, 50, r, TEINTES.argent));
         }
       }
     }
@@ -251,7 +279,7 @@
      attendue dans l'épreuve « Lire un galon ». */
   function tzDecrire(grade) {
     var g = grade.galon || { figure: 'aucune' };
-    if (g.figure === 'aucune') return 'aucun galon';
+    if (g.figure === 'aucune') return 'aucune figure';
     var nom = { argent: 'argent', or: 'or', bleu: 'bleu' }[g.teinte] || '';
     if (g.figure === 'chevron') {
       return g.nb + (g.nb > 1 ? ' chevrons ' : ' chevron ') + nom;
@@ -310,7 +338,7 @@
         var l = TZ.el('div', 'tz-memento-ligne');
 
         var vis = TZ.el('div', 'tz-memento-galon');
-        vis.appendChild(tzGalon(g, 48));
+        vis.appendChild(tzGalon(g, 56));
         l.appendChild(vis);
 
         var txt = TZ.el('div', 'tz-memento-texte');
@@ -334,10 +362,12 @@
     });
 
     var src = TZ.el('p', 'tz-memento-source',
-      'Galons de la gendarmerie départementale (couleur argent). En gendarmerie '
-      + 'mobile et à la garde républicaine, mêmes figures en or. Schémas de '
-      + 'révision relevés sur les planches d’insignes de l’article Wikipédia '
-      + '« Grades de la Gendarmerie nationale française » ; vérifiez toujours sur '
+      'Insignes de POITRINE (le carré d’environ 5 × 5 cm du polo et du gilet), '
+      + 'gendarmerie départementale, couleur argent. En gendarmerie mobile et à '
+      + 'la garde républicaine, mêmes figures en or. Figures, nombres et couleurs '
+      + 'relevés sur les planches d’insignes de l’article Wikipédia « Grades de la '
+      + 'Gendarmerie nationale française » ; la disposition exacte sur le carré '
+      + 'n’est pas publiée, ce sont des schémas de révision. Vérifiez toujours sur '
       + 'le texte officiel avant un examen.');
     hote.appendChild(src);
   }

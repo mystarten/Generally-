@@ -5,7 +5,7 @@
    Les données viennent de grades.js, qui reste la seule source.
 
    Deux épreuves, parce que ce sont deux savoirs distincts :
-     — « Lire un galon » : voir un insigne et nommer le grade ;
+     — « Lire un insigne » : voir l'insigne de poitrine et nommer le grade ;
      — « Appellations »  : savoir comment on s'adresse à ce grade, donc
        savoir quand on dit « mon » et quand on ne le dit pas.
    ============================================================================= */
@@ -60,17 +60,17 @@
     return TZ.melanger(pool).slice(0, nb);
   }
 
-  /* ===================================================== 11. Lire un galon */
+  /* ================================================== 11. Lire un insigne */
   TZ.epreuves.push({
     id: 'galons',
-    nom: 'Lire un galon',
+    nom: 'Lire un insigne',
     categorie: 'gendarmerie',
     axe: 'connaissances',
-    but: 'Reconnaître un grade de gendarmerie à son galon.',
-    comment: 'Un galon s’affiche. Nommez le grade. Les galons dessinés sont ceux de la gendarmerie départementale.',
+    but: 'Reconnaître un grade de gendarmerie à son insigne de poitrine.',
+    comment: 'Un insigne de poitrine s’affiche. Nommez le grade. Les insignes dessinés sont ceux de la gendarmerie départementale.',
 
     tuto: {
-      regle: 'Un galon de gendarmerie départementale s’affiche. Choisissez le grade qui lui correspond. Trois repères suffisent à s’y retrouver : la FIGURE, le NOMBRE, la COULEUR.',
+      regle: 'L’insigne de poitrine — le carré porté sur le polo et le gilet — s’affiche. Choisissez le grade qui lui correspond. Trois repères suffisent à s’y retrouver : la FIGURE, le NOMBRE, la COULEUR.',
       exemple: function (hote) {
         var ex = TZ.el('div', 'tz-exemple');
         [['oui', 'gnd', 'Chevrons', 'Jusqu’au maréchal des logis-chef'],
@@ -79,7 +79,7 @@
         .forEach(function (c) {
           var b = TZ.el('div', 'tz-cas tz-' + c[0]);
           var v = TZ.el('div', 'tz-vignette');
-          v.appendChild(TZ.grades.galon(TZ.grades.parId(c[1]), 52));
+          v.appendChild(TZ.grades.galon(TZ.grades.parId(c[1]), 70));
           b.appendChild(v);
           b.appendChild(TZ.el('b', null, c[2]));
           b.appendChild(TZ.el('em', null, c[3]));
@@ -108,8 +108,8 @@
       this.ctx = ctx;
       this.r = this.reglages[ctx.niveau] || this.reglages.standard;
       this.bassin = TZ.grades.duGroupe(this.r.groupes);
-      /* Deux grades ne portent aucun galon : l’élève-gendarme et le gendarme
-         adjoint de 2e classe. Montrer un fourreau vide et demander lequel des
+      /* Deux grades ne portent aucune figure : l’élève-gendarme et le gendarme
+         adjoint de 2e classe. Montrer un carré vide et demander lequel des
          deux c’est n’aurait pas de réponse. Ils restent proposés comme
          distracteurs, mais ne sont jamais la bonne réponse. */
       this.aDeviner = this.bassin.filter(function (g) {
@@ -142,10 +142,10 @@
           })));
 
       var scene = TZ.vide(ctx.scene);
-      UI.consigne(scene, 'Quel grade porte ce galon ?');
+      UI.consigne(scene, 'Quel grade porte cet insigne ?');
 
       var boite = TZ.el('div', 'tz-galon-scene');
-      boite.appendChild(TZ.grades.galon(bon, 96));
+      boite.appendChild(TZ.grades.galon(bon, 150));
       scene.appendChild(boite);
 
       ctx.bandeau.info('essai', this.essai + ' / ' + this.ESSAIS, 'essai');

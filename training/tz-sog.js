@@ -187,29 +187,67 @@
      Le format de réponse dépend de la maîtrise (la boîte), le contenu dépend
      du type de carte. Une question n'affiche jamais rien qui ne vienne du
      document. */
+  /* L'échelle est ce qui empêche d'avancer en devinant. Un QCM ne mène qu'à
+     la boîte 2 ; à partir de là il faut écrire la réponse, et plus haut la
+     restituer sans rien à l'écran. Une carte jamais vue n'est pas interrogée
+     du tout : on la lit d'abord, puis elle revient dans la séance. */
   function format(boite) {
-    if (boite <= 2) return 'qcm';
-    if (boite === 3) return 'saisie';
+    if (!boite) return 'decouverte';
+    if (boite === 1) return 'qcm';
+    if (boite <= 3) return 'saisie';
     return 'libre';
   }
 
-  function questionPlacement(carte) {
+  function questionPlacement(carte, boite) {
     var bonne = carte.tags[Math.floor(Math.random() * carte.tags.length)];
     var normBonnes = carte.tags.map(normaliser);
-    var faux = [];
-    melanger(cartes).some(function (c) {
-      if (c.theme === carte.theme) return false;
-      c.tags.forEach(function (t) {
-        if (faux.length >= 3) return;
-        if (normBonnes.indexOf(normaliser(t)) >= 0) return;
-        if (faux.some(function (f) { return normaliser(f) === normaliser(t); })) return;
-        faux.push(t);
-      });
-      return faux.length >= 3;
-    });
-    if (faux.length < 2) return null;
 
     function enonceDe(c) { return c.contenu.valeur || c.contenu.citation || c.contenu.question; }
+
+    /* À partir de la boîte 3, on ne choisit plus : on produit. C'est ce que
+       demande une copie — trouver soi-même la référence qui sert le sujet —
+       et aucune des réponses n'est soufflée. */
+    if (boite >= 3) {
+      var memeTag = cartes.filter(function (c) {
+        return c.tags.some(function (t) { return normaliser(t) === normaliser(bonne); });
+      });
+      if (memeTag.length >= 2) {
+        return {
+          genre: 'placementLibre', format: 'production',
+          masquerCarte: true,
+          enonce: 'Cite une référence que tu placerais dans un sujet « ' + bonne + ' »',
+          consigne: 'Une date, une citation, une notion ou un chiffre. Écris-la de mémoire.',
+          acceptees: memeTag,
+          bonne: enonceDe(carte),
+          aide: memeTag.length + ' références du document portent ce sujet.'
+        };
+      }
+      /* Pas assez de matière pour produire : on renonce au placement plutôt
+         que de retomber sur un QCM. Au-delà de la boîte 2, rien ne doit se
+         jouer sur quatre cases. */
+      return null;
+    }
+
+    /* Les leurres se prennent d'abord dans le MÊME thème. Pris ailleurs, ils
+       sautaient aux yeux : « Loi sur les accidents du travail » contre
+       « petite enfance », « loisirs », « égalité des chances », on répond sans
+       rien savoir. */
+    var faux = [];
+    function ramasser(memeTheme) {
+      melanger(cartes).some(function (c) {
+        if ((c.theme === carte.theme) !== memeTheme) return false;
+        c.tags.forEach(function (t) {
+          if (faux.length >= 3) return;
+          if (normBonnes.indexOf(normaliser(t)) >= 0) return;
+          if (faux.some(function (f) { return normaliser(f) === normaliser(t); })) return;
+          faux.push(t);
+        });
+        return faux.length >= 3;
+      });
+    }
+    ramasser(true);
+    if (faux.length < 3) ramasser(false);
+    if (faux.length < 2) return null;
 
     /* Dans un sens : la référence est donnée, on cherche le sujet. Dans
        l'autre : le sujet est donné, on cherche la référence. Les deux se
@@ -220,15 +258,20 @@
          la reponse attendue, et la question n'aurait plus de reponse. */
       var motSujet = normaliser(bonne);
       var autres = [];
-      melanger(cartes).some(function (c) {
-        if (c.id === carte.id || c.theme === carte.theme) return false;
-        if (c.tags.some(function (t) { return normBonnes.indexOf(normaliser(t)) >= 0; })) return false;
-        var e = enonceDe(c);
-        if (!e || autres.indexOf(e) >= 0) return false;
-        if (motSujet.length > 3 && normaliser(e).indexOf(motSujet) >= 0) return false;
-        autres.push(e);
-        return autres.length >= 3;
-      });
+      function ramasserRefs(memeTheme) {
+        melanger(cartes).some(function (c) {
+          if (c.id === carte.id) return false;
+          if ((c.theme === carte.theme) !== memeTheme) return false;
+          if (c.tags.some(function (t) { return normBonnes.indexOf(normaliser(t)) >= 0; })) return false;
+          var e = enonceDe(c);
+          if (!e || autres.indexOf(e) >= 0) return false;
+          if (motSujet.length > 3 && normaliser(e).indexOf(motSujet) >= 0) return false;
+          autres.push(e);
+          return autres.length >= 3;
+        });
+      }
+      ramasserRefs(true);                      /* même thème d'abord : plus dur */
+      if (autres.length < 3) ramasserRefs(false);
       if (autres.length >= 2) {
         var vraie = enonceDe(carte);
         return {
@@ -278,16 +321,73 @@
     };
   }
 
+  /* Les indices : trois paliers, tirés de la carte et de rien d'autre. Demander
+     un indice n'est pas tricher, mais la carte ne montera pas pour autant —
+     elle sera comptée « presque » au mieux. */
+  function indices(carte, qst) {
+    var c = carte.contenu, liste = [];
+
+    /* La production libre accepte TOUTE référence portant le sujet : un indice
+       qui décrit une carte précise induirait en erreur. On parle du stock. */
+    if (qst.genre === 'placementLibre') {
+      var types = {};
+      qst.acceptees.forEach(function (x) { types[x.type] = (types[x.type] || 0) + 1; });
+      liste.push(qst.acceptees.length + ' références du document portent ce sujet.');
+      liste.push('Il y a ' + Object.keys(types).sort().map(function (t) {
+        return types[t] + ' ' + t + (types[t] > 1 ? 's' : '');
+      }).join(', ') + '.');
+      var ex = qst.acceptees[Math.floor(Math.random() * qst.acceptees.length)];
+      liste.push('L’une d’elles commence par « ' +
+                 String(ex.contenu.question).slice(0, 18) + '… ».');
+      return liste;
+    }
+
+    liste.push(carte.type === 'citation'
+      ? 'Une citation du thème « ' + carte.theme + ' ».'
+      : 'Une carte « ' + carte.type + ' » du thème « ' + carte.theme + ' ».');
+
+    var rep = String(qst.bonne || '');
+    var an = rep.match(/\b(1[5-9]\d{2}|20\d{2})\b/);
+    if (an) {
+      var siecle = Math.floor(parseInt(an[1], 10) / 100) + 1;
+      liste.push('C’est le ' + siecle + 'e siècle, années ' +
+                 (Math.floor(parseInt(an[1], 10) / 10) * 10) + '.');
+    } else {
+      var mots = rep.split(/\s+/).filter(Boolean);
+      liste.push('La réponse fait ' + mots.length + ' mot' + (mots.length > 1 ? 's' : '') +
+                 ' et commence par « ' + rep.slice(0, 2).trim() + '… ».');
+    }
+
+    if (carte.tags.length) liste.push('À placer dans : ' + carte.tags.join(', ') + '.');
+    else if (c.valeur && normaliser(c.valeur) !== normaliser(rep)) liste.push(c.valeur);
+    else liste.push('Dernier indice : ' + rep.slice(0, Math.ceil(rep.length / 2)) + '…');
+
+    return liste;
+  }
+
   function questionCarte(carte, boite) {
     var c = carte.contenu;
 
-    /* une référence sur cinq se joue sur son emploi, pas sur son contenu */
-    if (carte.tags.length >= 2 && Math.random() < 0.2) {
-      var p = questionPlacement(carte);
+    /* Une carte jamais vue ne se devine pas : on la montre, puis elle revient
+       dans la séance sous forme de question. Interroger d'abord, c'était
+       demander de choisir au hasard entre quatre inconnues. */
+    if (!boite) {
+      return {
+        genre: 'decouverte', format: 'decouverte',
+        enonce: c.question,
+        bonne: c.reponse
+      };
+    }
+
+    /* une référence sur quatre se joue sur son emploi, pas sur son contenu */
+    if (carte.tags.length >= 2 && Math.random() < 0.25) {
+      var p = questionPlacement(carte, boite);
       if (p) return p;
     }
-    /* une citation attribuée se vérifie régulièrement : c'est le piège */
-    if (carte.attribuee && carte.type === 'citation' && Math.random() < 0.34) {
+    /* Une citation attribuée se vérifie régulièrement : c'est le piège. Mais
+       seulement jusqu'à la boîte 2 — c'est une question à deux cases, donc une
+       pièce à pile ou face, et ça n'a pas sa place plus haut. */
+    if (boite <= 2 && carte.attribuee && carte.type === 'citation' && Math.random() < 0.34) {
       var at = questionAttribuee(carte);
       if (at) return at;
     }
@@ -297,8 +397,9 @@
     var enonce = inverse ? c.inverse.question : c.question;
     var bonne = inverse ? c.inverse.reponse : c.reponse;
 
-    /* trou de citation : disponible dès la boîte 3 */
-    if (f === 'saisie' && carte.type === 'citation' && c.trou) {
+    /* trou de citation : dès qu'on passe à la saisie, en alternance avec la
+       question « qui a dit ? », pour ne pas toujours travailler le même bout */
+    if (f === 'saisie' && carte.type === 'citation' && c.trou && Math.random() < 0.6) {
       return {
         genre: 'trou', format: 'saisie',
         enonce: 'Complète la citation',
@@ -423,8 +524,11 @@
 
   function poserQuestion(item) {
     var carte = item.carte, e = etat(carte.id);
-    var boite = e.boite || 1;
-    var qst = questionCarte(carte, boite);
+    /* boîte 0 assumée : une carte jamais vue passe par la découverte, elle
+       n'est pas traitée comme si elle était déjà en boîte 1. */
+    var boite = e.boite || 0;
+    var qst = item.forcerQuestion || questionCarte(carte, boite);
+    item.forcerQuestion = null;
 
     var hote = vide(q('#sog-scene'));
     barre();
@@ -434,7 +538,7 @@
       haut.appendChild(el('span', 'sog-pastille sog-' + carte.type, carte.type));
       haut.appendChild(el('span', 'sog-theme', carte.theme));
     }
-    haut.appendChild(el('span', 'sog-boite', 'boîte ' + boite));
+    haut.appendChild(el('span', 'sog-boite', boite ? 'boîte ' + boite : 'nouvelle'));
     if (!qst.masquerCarte) {
       if (carte.priorite) haut.appendChild(el('span', 'sog-cle', 'à connaître'));
       if (carte.volatile) haut.appendChild(el('span', 'sog-alerte', 'ordre de grandeur'));
@@ -453,7 +557,28 @@
       if (repondu) return;
       repondu = true;
       if (session.chrono) { clearTimeout(session.chrono); session.chrono = null; }
+      /* Un indice demandé plafonne à « presque » : la carte ne monte pas,
+         mais on n'est pas puni d'avoir cherché. */
+      if (item.indicesPris && verdict === 'juste') verdict = 'presque';
       appliquer(item, qst, verdict, donnee);
+    }
+
+    /* ------------------------------------------------- découverte d'une carte
+       Pas de question : on lit la carte. Elle repart dans la file et sera
+       posée plus loin dans la séance, en QCM. */
+    if (qst.format === 'decouverte') {
+      zone.appendChild(el('p', 'sog-consigne',
+        'Nouvelle carte. Lis-la : elle reviendra en question dans cette séance.'));
+      zone.appendChild(reponseAffichee(carte, qst));
+      var lu = el('button', 'sog-btn sog-suite', 'J’ai lu');
+      lu.type = 'button';
+      lu.addEventListener('click', function () { conclure('decouverte'); });
+      var rLu = el('div', 'sog-rangee');
+      rLu.appendChild(lu);
+      zone.appendChild(rLu);
+      setTimeout(function () { lu.focus(); }, 20);
+      session.clavier = null;
+      return;
     }
 
     /* ------------------------------------------------------------- QCM */
@@ -496,6 +621,39 @@
       session.clavier = null;
     }
 
+    /* --------------------------------------------------- production libre
+       On ne choisit pas une référence, on en produit une. Toute carte du
+       document portant ce sujet est acceptée : c'est l'exercice de la copie. */
+    if (qst.format === 'production') {
+      if (qst.consigne) zone.appendChild(el('p', 'sog-consigne', qst.consigne));
+      var zoneProd = el('textarea', 'sog-note');
+      zoneProd.rows = 2;
+      zoneProd.placeholder = 'Ta référence';
+      zone.appendChild(zoneProd);
+      var validerProd = el('button', 'sog-btn', 'Valider');
+      validerProd.type = 'button';
+      validerProd.addEventListener('click', function () {
+        var saisi = zoneProd.value;
+        var trouvee = null;
+        qst.acceptees.some(function (c) {
+          var cibles = [c.contenu.reponse, c.contenu.valeur, c.contenu.citation,
+                        c.contenu.cle, c.contenu.auteurCourt];
+          return cibles.some(function (t) {
+            if (!t || String(t).length < 4) return false;
+            if (reponseJuste(saisi, t) ||
+                (normaliser(saisi).length > 5 &&
+                 normaliser(t).indexOf(normaliser(saisi)) >= 0)) { trouvee = c; return true; }
+            return false;
+          });
+        });
+        qst.trouvee = trouvee;
+        conclure(trouvee ? 'juste' : 'rate', saisi);
+      });
+      zone.appendChild(validerProd);
+      setTimeout(function () { zoneProd.focus(); }, 30);
+      session.clavier = null;
+    }
+
     /* ----------------------------------------------------- rappel libre */
     if (qst.format === 'libre') {
       zone.appendChild(el('p', 'sog-consigne',
@@ -514,8 +672,32 @@
       };
     }
 
-    /* ------------------------------------------------- je ne sais pas */
+    /* -------------------------------------------- indices, puis l'aveu
+       L'indice n'existe que là où il faut produire la réponse : sur un QCM
+       il reviendrait à barrer des cases. */
     var rangee = el('div', 'sog-rangee');
+
+    if (qst.format !== 'qcm') {
+      var paliers = indices(carte, qst);
+      item.indicesPris = 0;
+      /* La boîte se place avant la rangée de boutons : on l'ajoute donc
+         maintenant, la rangée étant ajoutée à la fin. */
+      var boiteIndices = el('div', 'sog-indices');
+      hote.appendChild(boiteIndices);
+
+      var btnIndice = el('button', 'sog-btn sog-fantome', 'Un indice');
+      btnIndice.type = 'button';
+      btnIndice.addEventListener('click', function () {
+        if (item.indicesPris >= paliers.length) return;
+        boiteIndices.appendChild(el('p', 'sog-indice', paliers[item.indicesPris]));
+        item.indicesPris++;
+        btnIndice.textContent = item.indicesPris >= paliers.length
+          ? 'Plus d’indice' : 'Un autre indice (' + item.indicesPris + '/' + paliers.length + ')';
+        btnIndice.disabled = item.indicesPris >= paliers.length;
+      });
+      rangee.appendChild(btnIndice);
+    }
+
     var sais = el('button', 'sog-btn sog-fantome', 'Je ne sais pas');
     sais.type = 'button';
     sais.addEventListener('click', function () { conclure('ignore'); });
@@ -557,6 +739,27 @@
   function reponseAffichee(carte, qst) {
     var c = carte.contenu;
     var b = el('div', 'sog-correction');
+
+    /* Production libre : la réponse n'est pas « la » carte mais l'une des
+       références du document qui portent ce sujet. On montre celle qui a été
+       reconnue, puis quelques autres, parce que c'est le stock qui compte. */
+    if (qst.genre === 'placementLibre') {
+      if (qst.trouvee) {
+        b.appendChild(el('div', 'sog-bonne',
+          qst.trouvee.contenu.question + ' — ' + qst.trouvee.contenu.reponse));
+        b.appendChild(el('p', 'sog-aide', 'Reconnue dans le document.'));
+      } else {
+        b.appendChild(el('div', 'sog-bonne', 'Par exemple :'));
+      }
+      var liste = el('ul', 'sog-puces');
+      melanger(qst.acceptees).slice(0, 5).forEach(function (x) {
+        if (qst.trouvee && x.id === qst.trouvee.id) return;
+        liste.appendChild(el('li', null, x.contenu.question + ' — ' + x.contenu.reponse));
+      });
+      b.appendChild(liste);
+      return b;
+    }
+
     b.appendChild(el('div', 'sog-bonne', qst.bonne));
     if (qst.aide) b.appendChild(el('p', 'sog-aide', qst.aide));
 
@@ -584,6 +787,21 @@
   /* --------------------------------------- application du verdict Leitner */
   function appliquer(item, qst, verdict, donnee) {
     var carte = item.carte, e = etat(carte.id);
+
+    /* La découverte n'est pas une réponse : on a seulement lu la carte. Elle
+       ne change pas de boîte et ne compte dans aucun total ; elle repart dans
+       la file pour être posée plus loin, en question. */
+    if (verdict === 'decouverte') {
+      e.vues++;
+      e.dernier = jour();
+      poserEtat(carte.id, e);
+      item.indicesPris = 0;
+      item.forcerQuestion = questionCarte(carte, 1);
+      replacer(item);
+      suivante();
+      return;
+    }
+
     /* Seule la premiere rencontre de la seance deplace la carte dans les
        boites. Les passages suivants sont du retravail immediat : les compter
        ferait grimper une carte de trois boites en un quart d'heure, ce que la

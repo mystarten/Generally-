@@ -186,6 +186,11 @@ body.tz-corps{
   font-family:var(--tz-titre);font-size:clamp(3.4rem,13vw,6rem);font-weight:700;
   line-height:1;user-select:none;
 }
+/* Le décompte ne doit jamais se lire comme du contenu à mémoriser : plus
+   petit, gris, et à l'écart de la taille des chiffres de l'empan. */
+.tz-grand.tz-decompte{
+  font-size:clamp(2rem,6vw,3rem);color:var(--tz-txt-3);letter-spacing:.12em;
+}
 .tz-saisie{
   font-family:var(--tz-titre);font-size:1.6rem;font-weight:700;text-align:center;
   letter-spacing:.14em;width:11ch;padding:10px;border-radius:var(--tz-r-s);
@@ -194,9 +199,16 @@ body.tz-corps{
 .tz-saisie:focus{outline:none;border-color:var(--tz-ac)}
 
 .tz-couleurs{display:flex;gap:11px;flex-wrap:wrap;justify-content:center;margin-top:20px}
+/* Le numéro de touche est affiché sur le bouton : la réponse au clavier
+   n'a d'intérêt que si l'on n'a pas à compter les boutons des yeux. */
 .tz-couleur{
-  width:84px;height:52px;border-radius:var(--tz-r-s);border:3px solid transparent;
+  width:84px;height:58px;border-radius:var(--tz-r-s);border:3px solid transparent;
   cursor:pointer;font:inherit;font-weight:700;color:#fff;font-size:.9rem;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+}
+.tz-couleur .tz-touche{
+  min-width:18px;padding:0 5px;border-radius:5px;background:rgba(0,0,0,.32);
+  font-size:.72rem;line-height:1.55;font-variant-numeric:tabular-nums;
 }
 .tz-couleur:hover{border-color:var(--tz-txt-3)}
 
@@ -341,7 +353,9 @@ canvas.tz-radar{display:block;margin:0 auto;max-width:100%;height:auto}
 .tz-memento-ligne{display:flex;gap:16px;align-items:flex-start;
   padding:12px 0;border-top:1px solid var(--tz-bord)}
 .tz-memento-ligne:first-of-type{border-top:none}
-.tz-memento-galon{flex:0 0 auto;width:130px;display:flex;align-items:center}
+/* L'insigne de poitrine est carré : la colonne n'a plus besoin de la largeur
+   d'un fourreau d'épaule. */
+.tz-memento-galon{flex:0 0 auto;width:62px;display:flex;align-items:center}
 .tz-memento-texte{flex:1;min-width:0}
 .tz-memento-titre{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .tz-memento-titre b{font-family:var(--tz-titre);font-size:1.05rem}
@@ -364,4 +378,56 @@ canvas.tz-radar{display:block;margin:0 auto;max-width:100%;height:auto}
 @media(max-width:620px){
   .tz-reponses{grid-template-columns:1fr}
   .tz-memento-ligne{flex-direction:column;gap:6px}
+}
+
+
+/* ====================================================== distractions
+   Calque posé au-dessus de la scène. Deux garde-fous tiennent tout le
+   dispositif : pointer-events:none, pour qu'aucune figure n'intercepte
+   jamais un clic ; et des figures confinées aux bandes haute et basse,
+   pour que le stimulus et les boutons restent toujours lisibles. */
+.tz-distractions{position:absolute;inset:0;pointer-events:none;
+  overflow:hidden;z-index:3}
+.tz-dis{position:absolute;pointer-events:none}
+
+/* mouvement périphérique — une forme qui traverse une bande */
+.tz-dis-passage{width:88px;height:26px;border-radius:99px;
+  background:linear-gradient(90deg,transparent,var(--tz-txt-3),transparent);
+  filter:blur(1px)}
+.tz-dis-vers-d{animation:tz-dis-vers-d 1.6s linear forwards}
+.tz-dis-vers-g{animation:tz-dis-vers-g 1.6s linear forwards}
+@keyframes tz-dis-vers-d{from{left:-100px}to{left:100%}}
+@keyframes tz-dis-vers-g{from{right:-100px}to{right:100%}}
+
+/* apparition brusque — pas de fondu à l'entrée, c'est ce qui capte */
+.tz-dis-apparition{width:34px;height:34px;border-radius:50%;
+  background:var(--tz-stress);animation:tz-dis-pop .95s ease-out forwards}
+@keyframes tz-dis-pop{
+  0%{transform:scale(.4)} 12%{transform:scale(1.15)}
+  22%{transform:scale(1)} 100%{transform:scale(1);opacity:0}}
+
+/* ombre portée qui balaie, comme quelqu'un passant devant une lampe */
+.tz-dis-ombre{top:0;bottom:0;width:150px;
+  background:linear-gradient(90deg,transparent,#000,transparent);
+  animation:tz-dis-ombre 1.8s ease-in-out forwards}
+@keyframes tz-dis-ombre{from{left:-160px}to{left:100%}}
+
+/* information concurrente — on la lit malgré soi */
+.tz-dis-message{max-width:210px;background:var(--tz-creux);
+  border-left:3px solid var(--tz-ac);border-radius:var(--tz-r-s);
+  padding:8px 11px;font-size:.78rem;line-height:1.35;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);
+  animation:tz-dis-entree .22s ease-out, tz-dis-sortie .4s ease-in 2s forwards}
+.tz-dis-message b{display:block;font-family:var(--tz-titre);font-size:.82rem}
+.tz-dis-message span{color:var(--tz-txt-2)}
+@keyframes tz-dis-entree{from{opacity:0;transform:translateY(-6px)}}
+@keyframes tz-dis-sortie{to{opacity:0}}
+
+/* compte à rebours parasite */
+.tz-dis-compteur{font-family:var(--tz-titre);font-weight:700;font-size:1.6rem;
+  color:var(--tz-ko);opacity:.75;font-variant-numeric:tabular-nums;
+  animation:tz-dis-entree .18s ease-out}
+
+@media(max-width:620px){
+  .tz-dis-message{max-width:150px;font-size:.72rem}
 }

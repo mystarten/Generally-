@@ -183,3 +183,11 @@
   font-family:var(--tz-texte);font-size:.93rem;color:var(--tz-txt);
   max-width:360px;text-align:left}
 .sog-frise-item:disabled{opacity:.35;cursor:default}
+
+/* ----------------------------------------------------------------- indices
+   Un indice ne doit pas avoir l'air d'une correction : il s'empile en
+   discret au-dessus des boutons, et on voit combien il en reste. */
+.sog-indices{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.sog-indice{margin:0;padding:10px 14px;border-radius:var(--tz-r-s);
+  background:var(--tz-ac-pale);color:var(--tz-txt);font-size:.93rem;
+  border-left:3px solid var(--tz-ac)}

@@ -229,6 +229,27 @@
     });
     hote.appendChild(segS);
 
+    /* --- distractions ---
+       Séparées du stress : on peut vouloir du bruit visuel sans pression
+       temporelle, ou l'inverse. Elles ne changent pas le score. */
+    var dCourant = TZ.distractionDe(ep.id);
+    hote.appendChild(TZ.el('span', 'tz-etiquette', 'Distractions'));
+    var segD = TZ.el('div', 'tz-segment');
+    TZ.DISTRACTIONS.forEach(function (d) {
+      var b = TZ.el('button', null, d.nom);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', d.id === dCourant ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        TZ.fixerDistraction(ep.id, d.id); tzPreparer(ep);
+      });
+      segD.appendChild(b);
+    });
+    hote.appendChild(segD);
+    var rd = TZ.el('p', 'tz-vide', TZ.distraction(dCourant).resume
+      + ' Visuel uniquement, et sans effet sur le score.');
+    rd.style.margin = '8px 0 4px';
+    hote.appendChild(rd);
+
     /* --- record sur cette combinaison précise --- */
     var rec = TZ.record(ep.id, courant, TZ.etat.stress);
     var info = TZ.el('p', rec ? null : 'tz-vide',
@@ -274,7 +295,8 @@
     var bandeau = UI.bandeau(TZ.q('#tz-bandeau'));
     TZ.vide(scene);
 
-    var arretPerturbations = TZ.perturbations(scene);
+    var idDistraction = TZ.distractionDe(ep.id);
+    var arretPerturbations = TZ.perturbations(scene, idDistraction);
 
     var ctx = {
       scene: scene,
@@ -290,6 +312,12 @@
           difficulte: brut.difficulte, stress: TZ.etat.stress, niveau: idNiveau
         });
         try { ep.end(); } catch (e) {}
+        /* La distraction n'entre pas dans la clé du record : elle ne change
+           pas le score, et la découper par réglage émietterait l'historique.
+           On la note dans le détail pour qu'elle reste lisible. */
+        if (brut.details && idDistraction !== 'aucune') {
+          brut.details['Distractions'] = TZ.distraction(idDistraction).nom;
+        }
         TZ.enregistrer(ep.id, score, brut.details, idNiveau);
         TZ.son.fin();
         tzBilan(ep, score, brut, suite, idNiveau);
