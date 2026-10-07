@@ -540,6 +540,40 @@ button,input{font:inherit;color:inherit;font-family:var(--police-texte)}
 .salon-joueur .nom{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .salon-joueur .etiq{font-size:.76rem;opacity:.6;font-weight:600}
 .salon-joueur.moi{box-shadow:inset 0 0 0 2px var(--ac)}
+/* réglages du salon : l'hôte règle, les autres lisent */
+.salon-reglages{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.salon-reglages .champ{display:flex;flex-direction:column;gap:5px}
+.salon-reglages .champ > span{font-size:.82rem;opacity:.7;font-weight:600}
+.salon-reglages select{font-family:inherit;font-size:.95rem;padding:9px 11px;
+  border-radius:12px;border:2px solid var(--bord);background:var(--carte);color:var(--txt)}
+.salon-reglages select:focus{outline:none;border-color:var(--ac)}
+.salon-reglages select:disabled{opacity:.55}
+
+/* mode course : le chrono est commun à tous, il remplace l'anneau */
+.course-barre{position:relative;height:10px;border-radius:99px;background:var(--creux);
+  overflow:hidden;margin:0 0 14px}
+.course-barre i{display:block;height:100%;background:var(--ac);width:100%;
+  transition:width .2s linear}
+.course-barre.urgence i{background:var(--ko)}
+.course-barre span{position:absolute;right:8px;top:-22px;font-size:.8rem;font-weight:700;opacity:.65}
+.course-attente{margin-top:16px;padding:16px 18px;border-radius:18px;background:var(--creux)}
+.course-attente h4{margin:0 0 10px;font-family:var(--police-titre);font-size:1rem}
+.course-attente ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.course-attente li{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;
+  align-items:center;font-size:.93rem}
+.course-attente li .ms{opacity:.6;font-variant-numeric:tabular-nums}
+.course-attente li .pts{font-weight:700;color:var(--ok)}
+.course-attente li.rate .pts{color:var(--ko)}
+.course-attente li .att{opacity:.5;font-style:italic}
+.course-final{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.course-final li{display:grid;grid-template-columns:34px 1fr auto auto;gap:12px;align-items:center;
+  background:var(--carte);border-radius:16px;padding:12px 16px;box-shadow:0 2px 0 var(--bord)}
+.course-final li.moi{box-shadow:inset 0 0 0 2px var(--ac),0 2px 0 var(--bord)}
+.course-final li .r{font-family:var(--police-titre);font-weight:700;font-size:1.2rem;opacity:.5}
+.course-final li .n{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.course-final li .b{font-size:.85rem;opacity:.6}
+.course-final li .s{font-family:var(--police-titre);font-weight:700}
+
 .salon-rejoindre{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
 .salon-rejoindre input{font-family:var(--police-titre);font-size:1.3rem;font-weight:700;
   letter-spacing:.16em;text-transform:uppercase;width:9ch;text-align:center}
@@ -1130,8 +1164,13 @@ kbd{
 
     <p class="bandeau-mode" id="bandeau-mode" hidden></p>
     <p class="tour-info" id="tour-info"></p>
+
+    <!-- Mode course : chrono partagé, puis attente des autres joueurs. -->
+    <div id="course-barre" class="course-barre" hidden><i></i><span></span></div>
+
     <h2 class="question" id="texte-question"></h2>
     <div id="zone-reponse"></div>
+    <div id="course-attente" class="course-attente" hidden></div>
     <div id="zone-jokers" class="jokers"></div>
     <div id="zone-buzzers"></div>
 
@@ -1195,6 +1234,55 @@ kbd{
           </div>
         </div>
       </div>
+      <!-- Réglages de la partie. L'hôte les modifie ici, avant de lancer ;
+           les autres joueurs voient le même bloc en lecture seule. -->
+      <div class="section" id="salon-section-reglages">
+        <span class="etiquette">Réglages de la partie</span>
+
+        <div class="salon-reglages" id="salon-reglages-hote" hidden>
+          <label class="champ">
+            <span>Mode</span>
+            <select id="sr-mode">
+              <option value="libre">Libre — chacun à son rythme</option>
+              <option value="course">Course — le plus rapide marque</option>
+            </select>
+          </label>
+          <label class="champ">
+            <span>Catégorie</span>
+            <select id="sr-categorie"></select>
+          </label>
+          <label class="champ">
+            <span>Niveau</span>
+            <select id="sr-niveau">
+              <option value="0">Niveaux mixtes</option>
+              <option value="1">Facile</option>
+              <option value="2">Moyen</option>
+              <option value="3">Expert</option>
+            </select>
+          </label>
+          <label class="champ">
+            <span>Questions</span>
+            <select id="sr-nb">
+              <option value="6">6</option>
+              <option value="12" selected>12</option>
+              <option value="20">20</option>
+            </select>
+          </label>
+          <label class="champ" id="sr-champ-secondes">
+            <span>Temps par question</span>
+            <select id="sr-secondes">
+              <option value="10">10 secondes</option>
+              <option value="15">15 secondes</option>
+              <option value="20" selected>20 secondes</option>
+              <option value="30">30 secondes</option>
+            </select>
+          </label>
+        </div>
+
+        <p class="indice" id="salon-reglages-lecture" hidden></p>
+        <p class="indice" id="salon-reglages-aide"></p>
+      </div>
+
       <div class="section">
         <span class="etiquette" id="salon-titre-joueurs">Joueurs</span>
         <div class="salon-joueurs" id="salon-liste"></div>
@@ -3002,6 +3090,14 @@ function lancerPartie(spec) {
   };
 
   ecran('jeu');
+  /* le mode course masque ces éléments : une partie normale les reprend */
+  $('#ligne-chrono').hidden = false;
+  $('#btn-pause').hidden = false;
+  $('#zone-jokers').hidden = false;
+  $('#tableau-scores').hidden = false;
+  $('#course-barre').hidden = true;
+  $('#course-attente').hidden = true;
+  $('#btn-rejouer').hidden = false;
   majScores();
   vide($('#pastilles'));
   compteARebours(function () {
@@ -4467,6 +4563,111 @@ function couleurDeNom(nom) {
   return TEINTES_SALON[h % TEINTES_SALON.length];
 }
 
+/* =========================================================================
+   RÉGLAGES DU SALON
+   -------------------------------------------------------------------------
+   Ils vivent dans la salle d'attente et appartiennent à l'hôte : lui seul
+   peut les changer, et seulement avant le lancement. Les autres joueurs
+   voient exactement les mêmes valeurs, en lecture seule — sans quoi on
+   découvrirait le mode en pleine partie.
+   ========================================================================= */
+function resumeReglages() {
+  if (!salon) return '';
+  var n = salon.questions ? salon.questions.length : (salon.nbQuestions || NB_SALON);
+  var t = (salon.mode === 'course' ? 'Course' : 'Libre') + '  ·  ' +
+          (NOM_CAT[salon.categorie] || salon.categorie) + '  ·  ' +
+          (salon.niveau ? (NOM_NIVEAU[salon.niveau] || '') : 'Niveaux mixtes') +
+          '  ·  ' + n + ' questions';
+  if (salon.mode === 'course') t += '  ·  ' + (salon.secondes || 20) + ' s par question';
+  return t;
+}
+
+var reglagesPrets = false;
+function preparerReglagesSalon() {
+  if (reglagesPrets) return;
+  reglagesPrets = true;
+  var sel = $('#sr-categorie');
+  var o = document.createElement('option');
+  o.value = 'toutes'; o.textContent = 'Toutes les catégories';
+  sel.appendChild(o);
+  CATEGORIES.forEach(function (c) {
+    var x = document.createElement('option');
+    x.value = c.id; x.textContent = c.nom;
+    sel.appendChild(x);
+  });
+  ['#sr-mode', '#sr-categorie', '#sr-niveau', '#sr-nb', '#sr-secondes'].forEach(function (id) {
+    $(id).addEventListener('change', envoyerReglagesSalon);
+  });
+}
+
+function peindreReglagesSalon() {
+  preparerReglagesSalon();
+  var hote = !!(salon && salon.hote);
+  $('#salon-reglages-hote').hidden = !hote;
+  $('#salon-reglages-lecture').hidden = hote;
+
+  if (hote) {
+    $('#sr-mode').value = salon.mode || 'libre';
+    $('#sr-categorie').value = salon.categorie || 'toutes';
+    $('#sr-niveau').value = String(salon.niveau || 0);
+    $('#sr-nb').value = String(salon.questions ? salon.questions.length : NB_SALON);
+    $('#sr-secondes').value = String(salon.secondes || 20);
+    $('#sr-champ-secondes').hidden = (salon.mode !== 'course');
+    $('#salon-reglages-aide').textContent = salon.mode === 'course'
+      ? 'Course : tout le monde voit la même question en même temps, et le plus rapide à répondre juste marque le plus de points. Le temps est mesuré par le serveur. Seules les questions à choix et les vrai ou faux sont tirées.'
+      : 'Libre : chacun avance à son rythme sur les mêmes questions, le classement se met à jour en direct.';
+  } else {
+    $('#salon-reglages-lecture').textContent = resumeReglages();
+    $('#salon-reglages-aide').textContent = salon && salon.mode === 'course'
+      ? 'Le plus rapide à répondre juste marque le plus de points.'
+      : 'Chacun avance à son rythme sur les mêmes questions.';
+  }
+}
+
+/* L'hôte change un réglage : on retire de nouvelles questions si la catégorie,
+   le niveau ou le nombre ont bougé, puis on pousse le tout au salon. */
+function envoyerReglagesSalon() {
+  if (!salon || !salon.hote || !sb) return;
+  var mode = $('#sr-mode').value;
+  var cat = $('#sr-categorie').value;
+  var niv = parseInt($('#sr-niveau').value, 10) || 0;
+  var nb = parseInt($('#sr-nb').value, 10) || NB_SALON;
+  var secs = parseInt($('#sr-secondes').value, 10) || 20;
+
+  /* En course, on ne tire que des questions à réponse immédiate. Ranger une
+     frise ou placer un point sur la carte demande vingt secondes de travail :
+     chronométrer ça à la seconde n'aurait aucun sens, et le mode ne mesurerait
+     plus la connaissance mais la vitesse de la souris. */
+  var rapide = function (q) { return q.type === 'qcm' || q.type === 'vrai_faux'; };
+  var base = pool(cat, niv);
+  if (mode === 'course') base = base.filter(rapide);
+  if (base.length < nb) {
+    base = pool(cat, 0);
+    if (mode === 'course') base = base.filter(rapide);
+  }
+  if (base.length < nb) {
+    base = pool('toutes', 0);
+    if (mode === 'course') base = base.filter(rapide);
+  }
+  if (base.length < 3) { direSalon('Pas assez de questions dans cette catégorie.', true); return; }
+
+  ignorerHistorique = true;
+  var ids = tirer(base, Math.min(nb, base.length)).map(function (q) { return q.id; });
+  ignorerHistorique = false;
+
+  direSalon('Réglages enregistrés…');
+  sb.rpc('generally_reglages', {
+    p_code: salon.code, p_jeton: jetonLocal(),
+    p_categorie: cat, p_niveau: niv, p_mode: mode,
+    p_nb: ids.length, p_secondes: secs, p_questions: ids
+  }).then(function (r) {
+    if (r.error) throw r.error;
+    salon.mode = mode; salon.categorie = cat; salon.niveau = niv;
+    salon.secondes = secs; salon.questions = ids;
+    peindreSalon();
+  }).catch(function (e) { direSalon(messageErreur(e), true); });
+}
+
 function peindreSalon() {
   var dansSalon = !!salon;
   $('#salon-accueil').hidden = dansSalon;
@@ -4477,10 +4678,8 @@ function peindreSalon() {
   if (!dansSalon) return;
 
   $('#salon-code-affiche').textContent = salon.code;
-  $('#salon-reglages').textContent =
-    (NOM_CAT[salon.categorie] || salon.categorie) + '  ·  ' +
-    (salon.niveau ? (NOM_NIVEAU[salon.niveau] || '') : 'Niveaux mixtes') +
-    '  ·  ' + (salon.questions ? salon.questions.length : NB_SALON) + ' questions';
+  $('#salon-reglages').textContent = resumeReglages();
+  peindreReglagesSalon();
 
   var liste = vide($('#salon-liste'));
   var moi = jetonLocal();
@@ -4532,7 +4731,19 @@ function ecouterSalon() {
         { event: '*', schema: 'public', table: 'generally_salons', filter: 'code=eq.' + code },
         function (charge) {
           var n = charge && charge.new;
-          if (n && n.etat === 'en_cours') demarrerPartieSalon();
+          if (!n) return;
+          if (n.etat === 'en_cours') demarrerPartieSalon();
+          /* en course, le changement de manche est l'événement qui fait
+             basculer tout le monde sur la question suivante en même temps */
+          if (course) courseEtatSalon(n);
+          else if (n.etat === 'attente' && $('#ecran-salon') && !$('#ecran-salon').hidden) {
+            salon.mode = n.mode || 'libre';
+            salon.secondes = n.secondes || 20;
+            salon.categorie = n.categorie;
+            salon.niveau = n.niveau;
+            if (n.questions) salon.questions = n.questions;
+            peindreSalon();
+          }
         })
     .subscribe();
 
@@ -4553,11 +4764,25 @@ function rafraichirSalon() {
       if ($('#ecran-salon') && !$('#ecran-salon').hidden) peindreSalon();
       peindreClassementDirect();
     });
-  sb.from('generally_salons').select('etat,questions').eq('code', code).maybeSingle()
+  sb.from('generally_salons')
+    .select('etat,questions,mode,secondes,manche,manche_debut,categorie,niveau')
+    .eq('code', code).maybeSingle()
     .then(function (r) {
       if (!salon || salon.code !== code || r.error || !r.data) return;
-      if (r.data.questions && !salon.questions) salon.questions = r.data.questions;
-      if (r.data.etat === 'en_cours' && !salon.lance) demarrerPartieSalon();
+      var d = r.data;
+      /* tant qu'on attend, les réglages de l'hôte redescendent à tout le monde */
+      if (d.etat === 'attente') {
+        salon.mode = d.mode || 'libre';
+        salon.secondes = d.secondes || 20;
+        salon.categorie = d.categorie;
+        salon.niveau = d.niveau;
+        if (d.questions) salon.questions = d.questions;
+        if ($('#ecran-salon') && !$('#ecran-salon').hidden) peindreSalon();
+      } else if (d.questions && !salon.questions) {
+        salon.questions = d.questions;
+      }
+      if (d.etat === 'en_cours' && !salon.lance) demarrerPartieSalon();
+      if (salon.mode === 'course' && salon.lance) courseEtatSalon(d);
     });
 }
 
@@ -4587,6 +4812,7 @@ function creerSalon() {
       if (r.error) throw r.error;
       salon = { code: r.data, hote: true, hoteJeton: jetonLocal(),
                 categorie: config.categorie, niveau: config.niveau,
+                mode: 'libre', secondes: 20, manche: -1,
                 questions: ids, joueurs: [], lance: false };
       ecrire('cg.pseudo', nom);
       peindreSalon();
@@ -4609,6 +4835,8 @@ function rejoindreSalon(codeDonne) {
     var d = r.data;
     salon = { code: d.code, hote: !!d.hote, hoteJeton: null,
               categorie: d.categorie, niveau: d.niveau,
+              mode: d.mode || 'libre', secondes: d.secondes || 20,
+              manche: (d.manche == null ? -1 : d.manche),
               questions: d.questions || [], joueurs: [], lance: false };
     ecrire('cg.pseudo', nom);
     peindreSalon();
@@ -4629,6 +4857,7 @@ function lancerSalon() {
 function quitterSalon(silencieux) {
   if (!salon) return;
   var code = salon.code;
+  if (course) courseFinie();
   clearInterval(salon.minuterie);
   if (salon.canal && sb) { try { sb.removeChannel(salon.canal); } catch (e) {} }
   salon = null;
@@ -4646,6 +4875,9 @@ function demarrerPartieSalon() {
   var qs = questionsDepuisIds(salon.questions || []);
   if (qs.length < 3) { direSalon('Questions introuvables dans votre version du jeu.', true); return; }
   var code = salon.code;
+
+  if (salon.mode === 'course') { demarrerCourse(qs); return; }
+
   lancerPartie({
     questions: qs, mode: 'tour', cle: 'salon',
     libelle: 'Salon ' + code, salon: code
@@ -4653,6 +4885,240 @@ function demarrerPartieSalon() {
   $('#classement-direct').hidden = false;
   peindreClassementDirect();
   salon.minuterie = setInterval(rafraichirSalon, 3000);
+}
+
+/* =========================================================================
+   MODE COURSE — tout le monde sur la même question, en même temps
+   -------------------------------------------------------------------------
+   Le moteur habituel (lancerPartie) fait jouer chacun à son rythme : il ne
+   convient pas ici. Ce mode pilote donc l'écran de jeu directement, et
+   « partie » reste nul — les raccourcis clavier et la pause, qui testent
+   tous « partie », se désactivent d'eux-mêmes.
+
+   Rien n'est chronométré par le navigateur : on envoie seulement « juste ou
+   faux », et le serveur date la réponse. La barre de temps affichée n'est
+   qu'un repère visuel, calé sur l'heure de départ renvoyée par le serveur.
+   ========================================================================= */
+var course = null;
+
+function demarrerCourse(qs) {
+  course = {
+    questions: qs,
+    manche: -1,
+    widget: null,
+    repondu: false,
+    decalage: 0,        /* écart entre l'horloge du serveur et la nôtre */
+    minuterie: null,
+    anim: 0
+  };
+  ecran('jeu');
+  $('#ligne-chrono').hidden = true;
+  $('#btn-pause').hidden = true;
+  $('#zone-jokers').hidden = true;
+  $('#tableau-scores').hidden = true;
+  $('#course-barre').hidden = false;
+  $('#classement-direct').hidden = false;
+  vide($('#pastilles'));
+  $('#bandeau-mode').hidden = false;
+  $('#bandeau-mode').textContent = 'Course — le plus rapide à répondre juste marque le plus de points';
+
+  /* on interroge souvent : c'est ce qui fait avancer tout le monde ensemble */
+  course.minuterie = setInterval(courseBattement, 700);
+  rafraichirSalon();
+}
+
+function courseFinie() {
+  if (course) { clearInterval(course.minuterie); cancelAnimationFrame(course.anim); }
+  course = null;
+  $('#ligne-chrono').hidden = false;
+  $('#btn-pause').hidden = false;
+  $('#zone-jokers').hidden = false;
+  $('#tableau-scores').hidden = false;
+  $('#course-barre').hidden = true;
+  $('#course-attente').hidden = true;
+  $('#bandeau-mode').hidden = true;
+  $('#classement-direct').hidden = true;
+}
+
+/* Le salon vient d'être relu : on en tire la manche en cours. */
+function courseEtatSalon(d) {
+  if (!course) return;
+  if (d.etat === 'termine') { courseTerminer(); return; }
+  if (d.manche == null || d.manche < 0) return;
+  if (d.manche >= course.questions.length) { courseTerminer(); return; }
+
+  if (d.manche !== course.manche) {
+    /* L'instant de départ vient du serveur, en UTC absolu. La barre n'est
+       qu'un repère : le score, lui, est daté par le serveur, donc une horloge
+       client décalée ne fausse que l'affichage. */
+    course.debut = d.manche_debut ? Date.parse(d.manche_debut) : Date.now();
+    course.secondes = d.secondes || salon.secondes || 20;
+    coursePoser(d.manche);
+  }
+}
+
+function courseBattement() {
+  if (!course || !salon || !sb) return;
+  rafraichirSalon();
+  if (!$('#course-attente').hidden) courseTableau();
+  /* n'importe quel joueur peut demander l'avance : le serveur ne la fait
+     qu'une fois, et seulement si la manche est close depuis trois secondes */
+  if (course.manche >= 0) {
+    sb.rpc('generally_avancer', { p_code: salon.code, p_manche: course.manche })
+      .then(function () {}, function () {});
+  }
+}
+
+function coursePoser(n) {
+  course.manche = n;
+  course.repondu = false;
+  var q = course.questions[n];
+
+  $('#zone-feedback').hidden = true;
+  $('#course-attente').hidden = true;
+  vide($('#course-attente'));
+  $('#badge-cat').textContent = NOM_CAT[q.categorie] || q.categorie;
+  $('#badge-niveau').textContent = NOM_NIVEAU[q.niveau] || '';
+  $('#progression').textContent = 'Question ' + (n + 1) + ' sur ' + course.questions.length;
+  $('#tour-info').textContent = '';
+
+  course.widget = afficherQuestion(q, function (valeur) {
+    courseRepondre(q, valeur);
+  }, {});
+
+  courseAnimerBarre();
+}
+
+/* La barre de temps : un repère visuel, pas un juge. Le temps qui compte est
+   celui que le serveur calcule à la réception de la réponse. */
+function courseAnimerBarre() {
+  cancelAnimationFrame(course.anim);
+  var limite = (course.secondes || 20) * 1000;
+  var barre = $('#course-barre');
+  var jauge = barre.querySelector('i');
+  var txt = barre.querySelector('span');
+  (function pas() {
+    if (!course) return;
+    var reste = Math.max(0, Math.min(limite, limite - (Date.now() - course.debut)));
+    jauge.style.width = (reste / limite * 100) + '%';
+    txt.textContent = Math.ceil(reste / 1000) + ' s';
+    barre.classList.toggle('urgence', reste < limite * 0.25);
+    /* temps écoulé sans réponse : on envoie un échec, pour que la manche se
+       ferme sans attendre l'expiration côté serveur */
+    if (reste <= 0 && !course.repondu) {
+      courseRepondre(course.questions[course.manche], null);
+      return;
+    }
+    course.anim = requestAnimationFrame(pas);
+  })();
+}
+
+function courseRepondre(q, valeur) {
+  if (!course || course.repondu) return;
+  course.repondu = true;
+  var res = evaluer(q, valeur);
+  /* Les types notés en fraction (distance, frise, ordre…) n'ont pas de
+     « juste » net : au-delà de 60 % on considère la réponse acquise. */
+  var juste = res.fraction >= 0.6;
+
+  if (course.widget && course.widget.figer) course.widget.figer();
+  if (course.widget && course.widget.reveler) course.widget.reveler(valeur);
+
+  sb.rpc('generally_repondre', {
+    p_code: salon.code, p_jeton: jetonLocal(),
+    p_manche: course.manche, p_juste: juste
+  }).then(function (r) {
+    var d = (r && r.data) || {};
+    courseAttendre(q, juste, d.points || 0, d.ms || 0);
+  }, function () {
+    courseAttendre(q, juste, 0, 0);
+  });
+}
+
+/* Après sa réponse : on montre la correction, puis qui a répondu et en
+   combien de temps. C'est là que la course se voit. */
+function courseAttendre(q, juste, points, ms) {
+  var z = vide($('#course-attente'));
+  z.hidden = false;
+  var t = el('h4', null, juste
+    ? 'Juste en ' + (ms / 1000).toFixed(1) + ' s  ·  +' + points + ' points'
+    : 'Raté  ·  ' + texteBonneReponse(q));
+  z.appendChild(t);
+  z.appendChild(el('p', null, 'En attente des autres joueurs…'));
+  courseTableau();
+}
+
+function courseTableau() {
+  if (!course || !salon || !sb) return;
+  sb.from('generally_reponses').select('jeton,juste,ms,points')
+    .eq('salon', salon.code).eq('manche', course.manche)
+    .then(function (r) {
+      if (!course || r.error) return;
+      var z = $('#course-attente');
+      if (z.hidden) return;
+      var par = {};
+      (r.data || []).forEach(function (x) { par[x.jeton] = x; });
+      var ancien = z.querySelector('ol');
+      if (ancien) ancien.remove();
+      var ol = el('ol');
+      (salon.joueurs || []).slice()
+        .sort(function (a, b) {
+          var ra = par[a.jeton], rb = par[b.jeton];
+          if (!ra && !rb) return 0;
+          if (!ra) return 1;
+          if (!rb) return -1;
+          return ra.ms - rb.ms;
+        })
+        .forEach(function (j) {
+          var rep = par[j.jeton];
+          var li = el('li', rep && !rep.juste ? 'rate' : '');
+          li.appendChild(el('span', 'n', j.nom));
+          li.appendChild(el('span', '', ''));
+          if (rep) {
+            li.appendChild(el('span', 'ms', (rep.ms / 1000).toFixed(1) + ' s'));
+            li.appendChild(el('span', 'pts', (rep.points > 0 ? '+' : '') + rep.points));
+          } else {
+            li.appendChild(el('span', 'att', 'répond…'));
+            li.appendChild(el('span', '', ''));
+          }
+          ol.appendChild(li);
+        });
+      z.appendChild(ol);
+    });
+}
+
+function courseTerminer() {
+  if (!course) return;
+  var total = course.questions.length;
+  courseFinie();
+
+  var lot = (salon && salon.joueurs ? salon.joueurs.slice() : [])
+    .sort(function (a, b) { return b.score - a.score; });
+  var moi = jetonLocal();
+  var ma = lot.filter(function (j) { return j.jeton === moi; })[0];
+  var rang = lot.indexOf(ma) + 1;
+
+  ecran('fin');
+  $('#resume-fin').textContent = 'Course du salon ' + (salon ? salon.code : '') +
+    (ma ? '  ·  ' + rang + (rang === 1 ? 'er' : 'e') + ' sur ' + lot.length : '');
+
+  var z = vide($('#classement'));
+  var ol = el('ol', 'course-final');
+  lot.forEach(function (j, i) {
+    var li = el('li', j.jeton === moi ? 'moi' : '');
+    li.appendChild(el('span', 'r', String(i + 1)));
+    li.appendChild(el('span', 'n', j.nom));
+    li.appendChild(el('span', 'b', j.bonnes + ' / ' + total));
+    li.appendChild(el('span', 's', j.score + ' pts'));
+    ol.appendChild(li);
+  });
+  z.appendChild(ol);
+
+  /* ces blocs appartiennent au moteur solo : ils n'ont rien à dire ici */
+  $('#panneau-revue').hidden = true;
+  $('#bloc-duel').hidden = true;
+  $('#bloc-partage').hidden = true;
+  $('#btn-rejouer').hidden = true;
 }
 
 /* la progression est poussée après chaque question, jamais plus vite */
@@ -5496,7 +5962,11 @@ $('#btn-rejouer').addEventListener('click', function () { ecran('accueil'); majA
 $('#btn-accueil').addEventListener('click', function () { ecran('accueil'); majAccueil(); });
 $('#btn-quitter').addEventListener('click', function () {
   dialogue('Quitter la partie ?', 'Les points de cette partie seront perdus et rien ne sera enregistré.',
-    function () { chronoArreter(); partie = null; ecran('accueil'); majAccueil(); }, 'Quitter');
+    function () {
+      chronoArreter();
+      if (course) { courseFinie(); quitterSalon(true); }
+      partie = null; ecran('accueil'); majAccueil();
+    }, 'Quitter');
 });
 $('#btn-pause').addEventListener('click', function () {
   if (!partie || !$('#zone-feedback').hidden) return;   // rien à geler pendant l'explication
