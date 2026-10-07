@@ -1246,7 +1246,8 @@ kbd{
             <span>Mode</span>
             <select id="sr-mode">
               <option value="libre">Libre — chacun à son rythme</option>
-              <option value="course">Course — le plus rapide marque</option>
+              <option value="course">Course — rang et rapidité</option>
+              <option value="duel">Duel — le premier au bon prend tout</option>
             </select>
           </label>
           <label class="champ">
@@ -4576,11 +4577,11 @@ function couleurDeNom(nom) {
 function resumeReglages() {
   if (!salon) return '';
   var n = salon.questions ? salon.questions.length : (salon.nbQuestions || NB_SALON);
-  var t = (salon.mode === 'course' ? 'Course' : 'Libre') + '  ·  ' +
+  var t = (NOM_MODE[salon.mode] || 'Libre') + '  ·  ' +
           (NOM_CAT[salon.categorie] || salon.categorie) + '  ·  ' +
           (salon.niveau ? (NOM_NIVEAU[salon.niveau] || '') : 'Niveaux mixtes') +
           '  ·  ' + n + ' questions';
-  if (salon.mode === 'course') t += '  ·  ' + (salon.secondes || 20) + ' s par question';
+  if (modeChronometre(salon.mode)) t += '  ·  ' + (salon.secondes || 20) + ' s par question';
   return t;
 }
 
@@ -4602,6 +4603,26 @@ function preparerReglagesSalon() {
   });
 }
 
+/* Course et duel se jouent en manches chronometrees par le serveur ; le mode
+   libre, non. Le test est ici, une fois, plutot que repete a chaque usage :
+   ajouter un troisieme mode chronometre un jour ne demandera qu'une ligne. */
+function modeChronometre(mode) { return mode === 'course' || mode === 'duel'; }
+
+/* Le resume d'un mode, pour les bandeaux et les ecrans de reglage. */
+var NOM_MODE = { libre: 'Libre', course: 'Course', duel: 'Duel' };
+
+var AIDE_MODE = {
+  libre: 'Libre : chacun avance à son rythme sur les mêmes questions, le classement se met à jour en direct.',
+  course: 'Course : tout le monde voit la même question en même temps. Les points dépendent de votre RANG parmi les bonnes réponses (1er 100, 2e 70, 3e 50, 4e 35, ensuite 25) et de votre RAPIDITÉ, qui compte double au début et presque plus à la fin : répondre à mi-temps ne rapporte qu’un quart de la prime de vitesse. Une mauvaise réponse ne coûte rien, mais ne rapporte rien. Seules les questions à choix et les vrai ou faux sont tirées.',
+  duel: 'Duel : le PREMIER à répondre juste prend la manche (100 points, plus 50 au maximum selon la rapidité) et la manche se ferme aussitôt. Les suivants ne marquent rien, même avec la bonne réponse. Une MAUVAISE réponse coûte 50 points, et chacun n’a qu’une seule tentative : répondre au hasard se paie. Seules les questions à choix et les vrai ou faux sont tirées.'
+};
+
+var AIDE_COURTE = {
+  libre: 'Chacun avance à son rythme sur les mêmes questions.',
+  course: 'Les points dépendent du rang parmi les bonnes réponses et de la rapidité. Répondre tard ne rapporte presque rien.',
+  duel: 'Le premier à répondre juste prend la manche. Une mauvaise réponse coûte 50 points, et vous n’avez qu’un essai.'
+};
+
 function peindreReglagesSalon() {
   preparerReglagesSalon();
   var hote = !!(salon && salon.hote);
@@ -4614,15 +4635,12 @@ function peindreReglagesSalon() {
     $('#sr-niveau').value = String(salon.niveau || 0);
     $('#sr-nb').value = String(salon.questions ? salon.questions.length : NB_SALON);
     $('#sr-secondes').value = String(salon.secondes || 20);
-    $('#sr-champ-secondes').hidden = (salon.mode !== 'course');
-    $('#salon-reglages-aide').textContent = salon.mode === 'course'
-      ? 'Course : tout le monde voit la même question en même temps, et le plus rapide à répondre juste marque le plus de points. Le temps est mesuré par le serveur. Seules les questions à choix et les vrai ou faux sont tirées.'
-      : 'Libre : chacun avance à son rythme sur les mêmes questions, le classement se met à jour en direct.';
+    $('#sr-champ-secondes').hidden = !modeChronometre(salon.mode);
+    $('#salon-reglages-aide').textContent = AIDE_MODE[salon.mode] || AIDE_MODE.libre;
   } else {
     $('#salon-reglages-lecture').textContent = resumeReglages();
-    $('#salon-reglages-aide').textContent = salon && salon.mode === 'course'
-      ? 'Le plus rapide à répondre juste marque le plus de points.'
-      : 'Chacun avance à son rythme sur les mêmes questions.';
+    $('#salon-reglages-aide').textContent =
+      AIDE_COURTE[(salon && salon.mode) || 'libre'] || AIDE_COURTE.libre;
   }
 }
 
@@ -4642,14 +4660,14 @@ function envoyerReglagesSalon() {
      plus la connaissance mais la vitesse de la souris. */
   var rapide = function (q) { return q.type === 'qcm' || q.type === 'vrai_faux'; };
   var base = pool(cat, niv);
-  if (mode === 'course') base = base.filter(rapide);
+  if (modeChronometre(mode)) base = base.filter(rapide);
   if (base.length < nb) {
     base = pool(cat, 0);
-    if (mode === 'course') base = base.filter(rapide);
+    if (modeChronometre(mode)) base = base.filter(rapide);
   }
   if (base.length < nb) {
     base = pool('toutes', 0);
-    if (mode === 'course') base = base.filter(rapide);
+    if (modeChronometre(mode)) base = base.filter(rapide);
   }
   if (base.length < 3) { direSalon('Pas assez de questions dans cette catégorie.', true); return; }
 
@@ -4787,7 +4805,7 @@ function rafraichirSalon() {
         salon.questions = d.questions;
       }
       if (d.etat === 'en_cours' && !salon.lance) demarrerPartieSalon();
-      if (salon.mode === 'course' && salon.lance) courseEtatSalon(d);
+      if (modeChronometre(salon.mode) && salon.lance) courseEtatSalon(d);
     });
 }
 
@@ -4855,7 +4873,18 @@ function lancerSalon() {
   if (!salon || !salon.hote) return;
   direSalon('Lancement…');
   sb.rpc('generally_demarrer', { p_code: salon.code, p_jeton: jetonLocal() })
-    .then(function (r) { if (r.error) throw r.error; })
+    .then(function (r) {
+      if (r.error) throw r.error;
+      /* generally_demarrer n'ouvre la premiere manche que pour la course :
+         le duel, ajoute apres, y resterait a -1 et la partie ne commencerait
+         jamais. Une fonction compagnon s'en charge — voir le commentaire qui
+         l'accompagne en base pour la raison de ce detour. */
+      if (salon && salon.mode === 'duel') {
+        return sb.rpc('generally_ouvrir_manches',
+                      { p_code: salon.code, p_jeton: jetonLocal() });
+      }
+    })
+    .then(function (r) { if (r && r.error) throw r.error; })
     .catch(function (e) { direSalon(messageErreur(e), true); });
 }
 
@@ -4881,7 +4910,7 @@ function demarrerPartieSalon() {
   if (qs.length < 3) { direSalon('Questions introuvables dans votre version du jeu.', true); return; }
   var code = salon.code;
 
-  if (salon.mode === 'course') { demarrerCourse(qs); return; }
+  if (modeChronometre(salon.mode)) { demarrerCourse(qs); return; }
 
   lancerPartie({
     questions: qs, mode: 'tour', cle: 'salon',
@@ -4925,7 +4954,9 @@ function demarrerCourse(qs) {
   $('#classement-direct').hidden = false;
   vide($('#pastilles'));
   $('#bandeau-mode').hidden = false;
-  $('#bandeau-mode').textContent = 'Course — le plus rapide à répondre juste marque le plus de points';
+  $('#bandeau-mode').textContent = (salon && salon.mode === 'duel')
+    ? 'Duel — le premier au bon prend la manche, une mauvaise réponse coûte 50 points'
+    : 'Course — le rang parmi les bonnes réponses, et la rapidité';
 
   /* on interroge souvent : c'est ce qui fait avancer tout le monde ensemble */
   course.minuterie = setInterval(courseBattement, 700);
@@ -5034,22 +5065,40 @@ function courseRepondre(q, valeur) {
     p_manche: course.manche, p_juste: juste
   }).then(function (r) {
     var d = (r && r.data) || {};
-    courseAttendre(q, juste, d.points || 0, d.ms || 0);
+    courseAttendre(q, juste, d.points || 0, d.ms || 0, d.rang || null);
   }, function () {
-    courseAttendre(q, juste, 0, 0);
+    courseAttendre(q, juste, 0, 0, null);
   });
 }
 
 /* Après sa réponse : on montre la correction, puis qui a répondu et en
    combien de temps. C'est là que la course se voit. */
-function courseAttendre(q, juste, points, ms) {
+function courseAttendre(q, juste, points, ms, rang) {
   var z = vide($('#course-attente'));
   z.hidden = false;
-  var t = el('h4', null, juste
-    ? 'Juste en ' + (ms / 1000).toFixed(1) + ' s  ·  +' + points + ' points'
-    : 'Raté  ·  ' + texteBonneReponse(q));
-  z.appendChild(t);
-  z.appendChild(el('p', null, 'En attente des autres joueurs…'));
+  var duel = salon && salon.mode === 'duel';
+  var secondes = (ms / 1000).toFixed(1) + ' s';
+  var titre;
+
+  if (duel && juste && rang === 1) {
+    titre = 'Pris en ' + secondes + '  ·  +' + points + ' points';
+  } else if (duel && juste) {
+    /* Juste, mais quelqu'un a repondu avant : le dire franchement vaut mieux
+       qu'un « +0 points » que personne ne comprend. */
+    titre = 'Juste, mais trop tard : la manche était déjà prise';
+  } else if (duel) {
+    titre = 'Raté  ·  ' + points + ' points  ·  ' + texteBonneReponse(q);
+  } else if (juste) {
+    titre = (rang ? rang + (rang === 1 ? 'er' : 'e') + ' à répondre juste  ·  ' : '')
+          + secondes + '  ·  +' + points + ' points';
+  } else {
+    titre = 'Raté  ·  ' + texteBonneReponse(q);
+  }
+
+  z.appendChild(el('h4', null, titre));
+  z.appendChild(el('p', null, duel && juste && rang === 1
+    ? 'La manche se ferme.'
+    : 'En attente des autres joueurs…'));
   courseTableau();
 }
 
