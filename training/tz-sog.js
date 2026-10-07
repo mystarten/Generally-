@@ -501,14 +501,22 @@
   /* ================================================== le lecteur de session */
   var session = null;
 
-  function demarrer(mode, filtre, titre) {
+  function demarrer(mode, filtre, titre, surFin) {
     var lot = composer(mode, filtre);
     if (!lot.length) { ecranRienAFaire(mode); return; }
+    lancerLot(lot, titre || 'Session du jour', surFin);
+  }
+
+  /* Le cœur de « demarrer », séparé pour qu'une session puisse aussi être
+     lancée sur un lot DÉJÀ composé — c'est ce dont le multijoueur a besoin :
+     tout le monde doit réviser exactement les mêmes cartes. */
+  function lancerLot(lot, titre, surFin) {
     session = {
-      titre: titre || 'Session du jour',
+      titre: titre,
       file: lot.map(function (c) { return { carte: c, suite: 0 }; }),
       total: lot.length, faits: 0, justes: 0, presque: 0, rates: 0,
       nouvelles: lot.filter(function (c) { return etat(c.id).boite === 0; }).length,
+      surFin: surFin || null,
       chrono: null
     };
     ecran('session');
@@ -909,6 +917,19 @@
     hote.appendChild(el('p', 'sog-sous', restantes
       ? restantes + ' carte(s) encore à revoir aujourd’hui.'
       : 'Plus rien à revoir aujourd’hui. Reviens demain.'));
+
+    /* En défi, c'est le salon qui reprend la main : proposer « nouvelle
+       session » enverrait le joueur réviser seul au milieu d'une partie. */
+    if (session.surFin) {
+      var rappel = session.surFin;
+      var note = session.faits
+        ? Math.round(100 * (session.justes + 0.5 * session.presque) / session.faits) : 0;
+      var bilan = { note: note, justes: session.justes, presque: session.presque,
+                    rates: session.rates, faits: session.faits, total: session.total };
+      ecran('bilan');
+      rappel(bilan, hote);
+      return;
+    }
 
     actions(hote, [
       { texte: 'Nouvelle session', action: function () { demarrer('jour'); } },
@@ -1473,5 +1494,36 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', demarrage);
   } else { demarrage(); }
+
+  /* ========================================================= API multijoueur
+     Le strict nécessaire pour qu'un salon puisse faire réviser les mêmes
+     cartes à tout le monde. Rien d'autre n'est exposé : la révision espacée,
+     le journal et les réglages restent privés et personnels.
+
+     La progression reste individuelle même en défi — réviser à plusieurs ne
+     doit pas fausser ses propres boîtes de révision. */
+  global.TZ_SOG = {
+    nbCartes: function () { return cartes.length; },
+
+    /* Les cartes d'un défi : tirées au hasard, mais sous graine commune, donc
+       identiques chez tous les joueurs. On passe par le melanger du module
+       pour que l'ordre le soit aussi. */
+    lotDefi: function (taille) {
+      return melanger(cartes).slice(0, Math.max(1, Math.min(taille, cartes.length)))
+        .map(function (c) { return c.id; });
+    },
+
+    lancerDefi: function (ids, titre, surFin) {
+      var parIdentifiant = {};
+      cartes.forEach(function (c) { parIdentifiant[c.id] = c; });
+      var lot = (ids || []).map(function (id) { return parIdentifiant[id]; })
+                           .filter(Boolean);
+      if (!lot.length) return false;
+      lancerLot(lot, titre || 'Défi', surFin);
+      return true;
+    },
+
+    accueil: ecranAccueil
+  };
 
 })(window);

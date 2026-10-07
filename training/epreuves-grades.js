@@ -64,7 +64,8 @@
   TZ.epreuves.push({
     id: 'galons',
     nom: 'Lire un insigne',
-    categorie: 'gendarmerie',
+    categorie: 'hierarchie',
+    force: 'gn',
     axe: 'connaissances',
     but: 'Reconnaître un grade de gendarmerie à son insigne de poitrine.',
     comment: 'Un insigne de poitrine s’affiche. Nommez le grade. Les insignes dessinés sont ceux de la gendarmerie départementale.',
@@ -223,7 +224,8 @@
   TZ.epreuves.push({
     id: 'appellations',
     nom: 'Appellations',
-    categorie: 'gendarmerie',
+    categorie: 'hierarchie',
+    force: 'gn',
     axe: 'connaissances',
     but: 'Savoir comment on s’adresse à chaque grade — et quand on dit « mon ».',
     comment: 'Un grade s’affiche. Choisissez l’appellation réglementaire. Attention au « mon » : il ne se met pas partout.',

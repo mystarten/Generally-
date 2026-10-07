@@ -33,6 +33,11 @@
   --tz-attention:#4EA3F5;
   --tz-stress:#E8875A;
   --tz-gendarmerie:#4C6FBF;
+  /* volet metier : une teinte par categorie, et une par force */
+  --tz-police:#2E5FD6;
+  --tz-savoirs:#3E9C8F;
+  --tz-terrain:#C97B4A;
+  --tz-hierarchie:#4C6FBF;
 
   --tz-r-s:14px; --tz-r:22px; --tz-r-l:30px;
   --tz-titre:"Fredoka","Nunito",system-ui,sans-serif;
@@ -430,4 +435,263 @@ canvas.tz-radar{display:block;margin:0 auto;max-width:100%;height:auto}
 
 @media(max-width:620px){
   .tz-dis-message{max-width:150px;font-size:.72rem}
+}
+
+
+/* ============================================================ volet métier
+   Tout ce qui sert aux épreuves « forces de l'ordre » : choix de la force,
+   filtres de thème, quiz, mises en situation, signalement, plaques.
+
+   Bloc autonome, comme celui des grades : supprimer les fichiers
+   training/fdo*.js, training/quizz.js, training/epreuves-savoirs.js,
+   training/epreuves-police.js, training/epreuves-terrain.js,
+   training/grades-police.js et ces règles ne laisse rien d'orphelin. */
+
+/* ------------------------------------------------- choix de la force
+   Premier écran quand rien n'est choisi. Deux cartes, pas un menu
+   déroulant : le choix oriente tout le reste, il mérite d'être vu. */
+.tz-forces{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:14px;margin-top:16px}
+.tz-force-carte{
+  font:inherit;text-align:left;color:var(--tz-txt);cursor:pointer;
+  background:var(--tz-carte);border:2px solid var(--tz-bord);
+  border-radius:var(--tz-r-l);padding:20px 22px;
+  transition:transform .1s,border-color .12s;
+}
+.tz-force-carte:hover{transform:translateY(-3px);border-color:var(--tz-c,var(--tz-ac))}
+.tz-force-carte[aria-pressed="true"]{border-color:var(--tz-c,var(--tz-ac));
+  background:var(--tz-creux)}
+.tz-force-carte b{display:block;font-family:var(--tz-titre);font-size:1.18rem;
+  margin-bottom:5px;color:var(--tz-c,var(--tz-ac))}
+.tz-force-carte span{display:block;color:var(--tz-txt-2);font-size:.9rem;line-height:1.5}
+
+/* la force courante, rappelée en haut de l'accueil, avec de quoi basculer */
+.tz-force-active{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  background:var(--tz-creux);border-radius:var(--tz-r);padding:12px 18px;
+  margin-bottom:18px}
+.tz-force-active b{font-family:var(--tz-titre);font-size:1.02rem;
+  color:var(--tz-c,var(--tz-ac))}
+.tz-force-active .tz-force-note{color:var(--tz-txt-2);font-size:.87rem;flex:1;
+  min-width:160px}
+
+/* --------------------------------------------------- filtres de thème
+   Des puces, parce qu'on en coche plusieurs et qu'on veut voir d'un coup
+   lesquelles sont actives. */
+.tz-puces{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.tz-puce{
+  font:inherit;font-size:.86rem;font-weight:700;color:var(--tz-txt-2);
+  background:var(--tz-creux);border:2px solid transparent;border-radius:99px;
+  padding:7px 14px;cursor:pointer;transition:border-color .12s,color .12s;
+}
+.tz-puce:hover{border-color:var(--tz-bord)}
+.tz-puce[aria-pressed="true"]{border-color:var(--tz-ac);color:var(--tz-txt);
+  background:var(--tz-ac-pale)}
+
+/* --------------------------------------------- deux propositions seulement
+   Vrai / faux : en ligne, et plus larges. Deux cases carrées sur une grille
+   de deux colonnes paraîtraient des cases à cocher. */
+.tz-reponses.tz-reponses-duo{grid-template-columns:repeat(2,minmax(0,1fr));
+  max-width:420px}
+.tz-reponses-duo .tz-reponse{font-family:var(--tz-titre);font-size:1.3rem;
+  padding:20px 14px}
+
+/* -------------------------------------------------- mise en situation
+   Le contexte n'est pas l'énoncé : il se lit avant, et il se voit. */
+.tz-situation{background:var(--tz-creux);border-left:4px solid var(--tz-savoirs);
+  border-radius:var(--tz-r-s);padding:14px 18px;margin-bottom:4px;
+  max-width:62ch;text-align:left}
+.tz-situation p{margin:4px 0 0;font-size:.96rem;line-height:1.55}
+
+/* ---------------------------------------------- explication et source
+   La partie qui fait apprendre. Elle doit être lisible sans être criante :
+   on la lit après avoir répondu, pas pendant. */
+.tz-explication{margin-top:16px;max-width:62ch;text-align:left;
+  background:var(--tz-creux);border-radius:var(--tz-r-s);padding:14px 18px}
+.tz-expli-texte{margin:0;font-size:.93rem;line-height:1.55}
+.tz-expli-source{margin:8px 0 0;font-size:.8rem;color:var(--tz-txt-3);
+  font-style:italic}
+
+/* --------------------------------- aperçu d'une question dans un tutoriel */
+.tz-apercu{background:var(--tz-creux);border-radius:var(--tz-r);padding:16px 18px;
+  margin:10px 0;text-align:left}
+.tz-apercu-contexte{margin:0 0 8px;font-size:.88rem;color:var(--tz-txt-2);
+  border-left:3px solid var(--tz-bord);padding-left:10px}
+.tz-apercu-enonce{margin:0 0 10px;font-weight:700}
+.tz-apercu-choix{display:flex;flex-wrap:wrap;gap:7px}
+.tz-apercu-item{font-size:.84rem;font-weight:700;color:var(--tz-txt-2);
+  background:var(--tz-carte);border:2px solid transparent;border-radius:99px;
+  padding:6px 13px}
+.tz-apercu-item.tz-juste{border-color:var(--tz-ok);color:var(--tz-ok);
+  background:var(--tz-ok-pale)}
+.tz-apercu-expli{margin:11px 0 0;font-size:.87rem;color:var(--tz-txt-2);
+  line-height:1.5}
+.tz-apercu-legende{margin:8px 0 0;font-size:.82rem;color:var(--tz-txt-3)}
+
+/* ------------------------------------------------- mémento des savoirs
+   La banque relue à plat. Une fiche par question : l'énoncé, la réponse en
+   clair, le pourquoi, la source. */
+.tz-fiche-savoir{padding:13px 0;border-top:1px solid var(--tz-bord)}
+.tz-fiche-savoir:first-of-type{border-top:none}
+.tz-fiche-titre{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tz-fiche-titre b{font-size:.98rem;line-height:1.45;flex:1;min-width:200px}
+.tz-fiche-reponse{margin-top:6px;font-weight:700;color:var(--tz-ok)}
+.tz-fiche-expli{margin-top:5px;font-size:.89rem;color:var(--tz-txt-2);
+  line-height:1.5}
+.tz-fiche-source{margin-top:5px;font-size:.79rem;color:var(--tz-txt-3);
+  font-style:italic}
+
+/* le jeton qui dit à quelle force une fiche se rapporte */
+.tz-jeton{flex:0 0 auto;font-size:.7rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.05em;border-radius:99px;padding:3px 9px;
+  background:var(--tz-creux);color:var(--tz-txt-3)}
+.tz-jeton-pn{background:var(--tz-ac-pale);color:var(--tz-police)}
+.tz-jeton-gn{background:var(--tz-ac-pale);color:var(--tz-gendarmerie)}
+
+/* le rang, là où le mémento de gendarmerie montre un insigne */
+.tz-memento-rang{flex:0 0 auto;width:62px;text-align:center;
+  background:var(--tz-creux);border-radius:var(--tz-r-s);padding:9px 0}
+.tz-memento-rang b{display:block;font-family:var(--tz-titre);font-size:1.3rem}
+.tz-memento-rang span{font-size:.72rem;color:var(--tz-txt-3)}
+
+/* ------------------------------------------------- classer la hiérarchie */
+.tz-classement{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:10px;width:100%;max-width:640px;margin-top:4px}
+.tz-carte-grade{
+  font:inherit;font-weight:700;color:var(--tz-txt);text-align:left;cursor:pointer;
+  background:var(--tz-creux);border:2px solid transparent;border-radius:var(--tz-r);
+  padding:14px 16px;display:flex;align-items:center;gap:11px;
+  transition:transform .08s,border-color .12s;
+}
+.tz-carte-grade:hover:not(:disabled){transform:translateY(-2px);border-color:var(--tz-ac)}
+.tz-carte-grade:disabled{cursor:default}
+.tz-carte-grade.tz-juste{border-color:var(--tz-ok);background:var(--tz-ok-pale)}
+.tz-carte-grade.tz-faux{border-color:var(--tz-ko);background:var(--tz-ko-pale)}
+.tz-carte-ordre{flex:0 0 auto;width:26px;height:26px;border-radius:50%;
+  background:var(--tz-carte);color:var(--tz-ok);display:flex;align-items:center;
+  justify-content:center;font-family:var(--tz-titre);font-size:.92rem}
+
+/* --------------------------------------------------------- signalement */
+.tz-figure{display:block;width:auto;max-width:100%;height:auto;
+  background:var(--tz-creux);border-radius:var(--tz-r);padding:8px}
+.tz-signalement-scene{display:flex;gap:22px;justify-content:center;
+  flex-wrap:wrap;margin:6px 0 10px}
+.tz-signalement-bloc{display:flex;flex-direction:column;align-items:center;gap:7px}
+.tz-signalement-no{font-size:.78rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--tz-txt-3)}
+.tz-signalement-texte{margin:0;max-width:34ch;font-size:.86rem;
+  color:var(--tz-txt-2);text-align:center;line-height:1.5}
+.tz-signalement-apercu{display:flex;gap:18px;align-items:flex-start;
+  flex-wrap:wrap;margin:10px 0}
+.tz-signalement-apercu>div{flex:1;min-width:220px}
+.tz-signalement-apercu b{font-family:var(--tz-titre)}
+.tz-signalement-apercu p{margin:4px 0 0;font-size:.9rem;color:var(--tz-txt-2);
+  line-height:1.5}
+
+/* -------------------------------------------------------------- plaques
+   Fond blanc, bande bleue à gauche : la plaque française se reconnaît à sa
+   silhouette, et c'est elle qu'on apprend à lire. */
+.tz-plaque{display:inline-flex;align-items:stretch;border-radius:7px;
+  overflow:hidden;background:#F3F3EE;border:2px solid #23232A;
+  box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.tz-plaque-bande{flex:0 0 auto;width:22px;background:#0B3C8C;color:#F4C020;
+  font-size:.66rem;font-weight:700;display:flex;align-items:flex-end;
+  justify-content:center;padding-bottom:4px}
+.tz-plaque b{font-family:var(--tz-titre);font-size:1.7rem;letter-spacing:.06em;
+  color:#1A1A20;padding:8px 16px;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.tz-plaque-cible{border-color:var(--tz-ac)}
+.tz-plaques-memo{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;
+  margin:8px 0}
+.tz-plaques-flux{display:flex;justify-content:center;margin:26px 0 20px}
+.tz-plaques-flux .tz-plaque b{font-size:2.1rem}
+
+/* ----------------------------------------------------- table de l'alphabet */
+.tz-otan{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));
+  gap:6px;margin:12px 0}
+.tz-otan-case{background:var(--tz-creux);border-radius:var(--tz-r-s);
+  padding:7px 11px;display:flex;align-items:baseline;gap:8px}
+.tz-otan-case b{font-family:var(--tz-titre);font-size:1rem;color:var(--tz-ac)}
+.tz-otan-case span{font-size:.85rem;color:var(--tz-txt-2)}
+
+@media(max-width:620px){
+  .tz-plaque b{font-size:1.35rem;padding:7px 11px}
+  .tz-plaques-flux .tz-plaque b{font-size:1.6rem}
+  .tz-signalement-scene{gap:14px}
+  .tz-classement{grid-template-columns:1fr}
+  .tz-situation,.tz-explication{padding:12px 14px}
+}
+
+
+/* ============================================================= multijoueur
+   Salons à code, salle d'attente, classement. Bloc autonome : supprimer
+   training/salon.js et ces règles ne laisse rien d'orphelin. */
+
+.tz-salon-greffe{display:block;margin-top:18px}
+
+/* saisie du pseudo et du code */
+.tz-salon-entree{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.tz-salon-champ{
+  font:inherit;font-size:.98rem;color:var(--tz-txt);
+  background:var(--tz-creux);border:2px solid transparent;
+  border-radius:var(--tz-r-s);padding:12px 15px;min-width:0;flex:1 1 180px;
+}
+.tz-salon-champ::placeholder{color:var(--tz-txt-3)}
+.tz-salon-champ:focus{outline:none;border-color:var(--tz-ac);background:var(--tz-carte)}
+.tz-salon-code-saisie{font-family:var(--tz-titre);letter-spacing:.18em;
+  text-transform:uppercase;flex:0 1 220px}
+/* Le gabarit se lit à l'empan normal : avec l'interlettrage du code saisi, il
+   débordait du champ et se coupait en plein mot. */
+.tz-salon-code-saisie::placeholder{letter-spacing:.02em;text-transform:none;
+  font-family:var(--tz-texte)}
+
+.tz-salon-etat{margin:10px 0 0;font-size:.9rem;color:var(--tz-txt-2);min-height:1.2em}
+.tz-salon-etat.tz-souci{color:var(--tz-ko);font-weight:700}
+.tz-salon-souci{color:var(--tz-ko);font-size:.9rem;font-weight:700;margin:8px 0 0}
+
+/* le code du salon, fait pour être lu à voix haute */
+.tz-salon-code{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:6px 0 4px}
+.tz-salon-code b{font-family:var(--tz-titre);font-size:2.4rem;letter-spacing:.22em;
+  color:var(--tz-ac)}
+
+/* la salle d'attente */
+.tz-salon-joueurs{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  gap:9px;margin-top:10px}
+.tz-salon-joueur{display:flex;align-items:center;gap:10px;background:var(--tz-creux);
+  border-radius:var(--tz-r-s);padding:9px 13px;border:2px solid transparent}
+.tz-salon-joueur.tz-moi{border-color:var(--tz-ac)}
+.tz-salon-joueur.tz-salon-libre{opacity:.5}
+.tz-salon-avatar{flex:0 0 auto;width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  font-family:var(--tz-titre);font-size:.95rem;background:var(--tz-txt-3)}
+.tz-salon-nom{flex:1;min-width:0;font-weight:700;font-size:.93rem;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tz-salon-badge{flex:0 0 auto;font-size:.68rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.05em;background:var(--tz-ac-pale);color:var(--tz-ac-b);
+  border-radius:99px;padding:3px 8px}
+
+.tz-salon-select{
+  font:inherit;font-size:.98rem;font-weight:700;color:var(--tz-txt);width:100%;
+  background:var(--tz-creux);border:2px solid transparent;border-radius:var(--tz-r-s);
+  padding:12px 15px;margin:8px 0 4px;cursor:pointer;
+}
+.tz-salon-select:focus{outline:none;border-color:var(--tz-ac)}
+
+/* le classement */
+.tz-salon-classement{list-style:none;margin:14px 0 0;padding:0;
+  display:flex;flex-direction:column;gap:8px}
+.tz-salon-classement li{display:flex;align-items:center;gap:12px;
+  background:var(--tz-creux);border-radius:var(--tz-r-s);padding:11px 15px;
+  border:2px solid transparent}
+.tz-salon-classement li.tz-moi{border-color:var(--tz-ac)}
+.tz-salon-classement li.tz-encours{opacity:.62}
+.tz-salon-rang{flex:0 0 auto;width:26px;font-family:var(--tz-titre);font-size:1.1rem;
+  color:var(--tz-txt-3);text-align:center}
+.tz-salon-classement li:first-child .tz-salon-rang{color:var(--tz-ac)}
+.tz-salon-score{flex:0 0 auto;font-family:var(--tz-titre);font-weight:700}
+.tz-salon-classement li.tz-encours .tz-salon-score{font-family:var(--tz-texte);
+  font-size:.85rem;font-weight:400;color:var(--tz-txt-3)}
+
+@media(max-width:620px){
+  .tz-salon-code b{font-size:1.9rem}
+  .tz-salon-joueurs{grid-template-columns:1fr}
 }

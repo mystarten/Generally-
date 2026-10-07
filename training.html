@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zone d’entraînement — Generally</title>
-<meta name="description" content="Espace personnel d’entraînement cognitif : mémoire, attention et gestion du stress. Solo, hors ligne, séparé du quiz.">
+<meta name="description" content="Entraînement police et gendarmerie : savoirs professionnels, signalement, plaques, transmissions, grades, mémoire et attention. Solo ou à plusieurs.">
 <meta name="robots" content="noindex, follow">
 <meta name="theme-color" content="#F5A623">
 <link rel="icon" href="icones/icone-192.png" type="image/png">
@@ -34,9 +34,12 @@
   <!-- ====================================================== ACCUEIL -->
   <section id="tz-ecran-accueil" class="tz-ecran">
     <p class="tz-sous">
-      Espace personnel, en solo. Des épreuves courtes de mémoire, d’attention et
-      de résistance au stress, inspirées des tests de sélection. Rien ici ne
-      touche au quiz de culture générale : scores et historique sont stockés à part.
+      Plateforme d’entraînement pour la police et la gendarmerie nationales.
+      Les savoirs du métier — cadre légal, procédure, déontologie, usage de la
+      force — les gestes d’observation du terrain, la hiérarchie de sa force, et
+      les épreuves cognitives inspirées des tests de sélection. De l’école à la
+      spécialisation, seul ou à plusieurs. Rien ici ne touche au quiz de culture
+      générale : scores et historique sont stockés à part.
     </p>
     <!-- Accès au module Culture SOG. Entièrement séparé : supprimer ce bloc,
          sog.html et les fichiers training/tz-sog* laisse la zone intacte.
@@ -124,16 +127,37 @@
 <script src="data/histoire.js"></script>
 <script src="data/sciences.js"></script>
 
-<!-- Zone d'entraînement -->
+<!-- Zone d'entraînement — l'ordre compte : un module ne doit jamais être
+     chargé avant ce dont il se sert. -->
 <script src="training/moteur.js"></script>
 <script src="training/ui.js"></script>
 <script src="training/carte.js"></script>
+
+<!-- Volet métier « forces de l'ordre » : la banque de savoirs, le vocabulaire
+     commun, la fabrique de quiz, puis les épreuves. Supprimer ce bloc et les
+     fichiers correspondants laisse les épreuves cognitives intactes. -->
+<script src="training/fdo-savoirs.js"></script>
+<script src="training/fdo.js"></script>
+<script src="training/quizz.js"></script>
+
+<!-- Épreuves cognitives -->
 <script src="training/epreuves-memoire.js"></script>
 <script src="training/epreuves-attention.js"></script>
-<!-- Grades de gendarmerie : données + deux épreuves de révision.
-     Supprimer ces deux lignes et les fichiers laisse la zone intacte. -->
+
+<!-- Grades : données des deux forces, puis les épreuves qui s'en servent. -->
 <script src="training/grades.js"></script>
+<script src="training/grades-police.js"></script>
 <script src="training/epreuves-grades.js"></script>
+<script src="training/epreuves-police.js"></script>
+
+<!-- Épreuves métier et de terrain -->
+<script src="training/epreuves-savoirs.js"></script>
+<script src="training/epreuves-terrain.js"></script>
+
+<!-- Multijoueur : salons à code, même protocole que le jeu. Supprimer cette
+     ligne et le fichier laisse toute la zone jouable en solo. -->
+<script src="training/salon.js"></script>
+
 <script src="training/app.js"></script>
 </body>
 </html>

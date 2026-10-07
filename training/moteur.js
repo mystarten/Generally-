@@ -33,6 +33,54 @@
     return a;
   }
 
+  /* ======================================================= tirage reproductible
+     Le multijoueur a besoin que tout le monde joue EXACTEMENT la même chose :
+     mêmes questions, mêmes leurres, même ordre, mêmes positions. Sinon les
+     scores ne se comparent pas, et la course n'a plus de sens.
+
+     Plutôt que d'ajouter une graine à chacune des vingt épreuves — et de
+     l'oublier dans la vingt-et-unième — on remplace Math.random le temps de
+     la manche. Toutes les épreuves en héritent sans être modifiées, y compris
+     celles qui tirent au hasard dans leur propre coin, comme le générateur de
+     questions du module Culture SOG.
+
+     Deux garde-fous, parce que détourner Math.random n'est pas anodin :
+       — la fonction d'origine est gardée et toujours restituée par liberer() ;
+       — semer() est réservé au multijoueur. En solo, rien n'est détourné, et
+         deux parties de suite ne se ressemblent pas.
+
+     Le générateur est un mulberry32 : court, rapide, assez uniforme pour un
+     tirage de questions. Ce n'est pas de la cryptographie, et ça n'a pas à
+     l'être. */
+  var hasardOriginal = Math.random;
+  var graineCourante = null;
+
+  function tzSemer(graine) {
+    var etat = (graine >>> 0) || 1;
+    graineCourante = etat;
+    Math.random = function () {
+      etat = (etat + 0x6D2B79F5) >>> 0;
+      var t = etat;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function tzLiberer() {
+    Math.random = hasardOriginal;
+    graineCourante = null;
+  }
+
+  function tzSeme() { return graineCourante != null; }
+
+  /* Une graine à partager. On passe par l'original : si l'on tirait la graine
+     avec un Math.random déjà semé, deux salons créés d'affilée porteraient la
+     même, et la deuxième partie répéterait la première. */
+  function tzNouvelleGraine() {
+    return Math.floor(hasardOriginal() * 0x7FFFFFFF) || 1;
+  }
+
   /* ============================================================== stockage
      Un seul point d'entrée, et un seul préfixe. Si un jour il faut tout
      effacer, il suffit de balayer les clés qui commencent par PREFIXE. */
@@ -484,6 +532,8 @@
     calculerScore: tzCalculerScore, noteVitesse: tzNoteVitesse,
     enregistrer: tzEnregistrer, record: tzRecord, indiceResistance: tzIndiceResistance,
     perturbations: tzLancerPerturbations, chrono: tzChrono,
+    semer: tzSemer, liberer: tzLiberer, seme: tzSeme,
+    nouvelleGraine: tzNouvelleGraine,
     DISTRACTIONS: TZ_DISTRACTIONS, distraction: tzDistraction,
     distractionDe: tzDistractionDe, fixerDistraction: tzFixerDistraction,
     distracteur: tzDeclencherDistracteur, interruption: tzDeclencherInterruption,

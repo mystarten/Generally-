@@ -12,11 +12,48 @@
   'use strict';
   var TZ = global.TZ, UI = TZ.ui;
 
+  /* Les catégories, dans l'ordre où elles apparaissent à l'accueil. Le métier
+     d'abord, le cognitif ensuite : c'est ce qu'on vient chercher. */
   var CATEGORIES = [
-    { id: 'memoire',     nom: 'Mémoire',     couleur: 'var(--tz-memoire)' },
-    { id: 'attention',   nom: 'Attention',   couleur: 'var(--tz-attention)' },
-    { id: 'gendarmerie', nom: 'Gendarmerie', couleur: 'var(--tz-gendarmerie)' }
+    { id: 'savoirs',    nom: 'Savoirs métier',         couleur: 'var(--tz-savoirs)',
+      resume: 'Cadre légal, procédure, déontologie, usage de la force, '
+            + 'organisation, sécurité routière, secourisme.' },
+    { id: 'terrain',    nom: 'Terrain et observation', couleur: 'var(--tz-terrain)',
+      resume: 'Relever un signalement, lire une plaque, transmettre juste.' },
+    { id: 'hierarchie', nom: 'Hiérarchie et grades',   couleur: 'var(--tz-hierarchie)',
+      resume: 'Reconnaître, nommer et classer les grades de sa force.' },
+    { id: 'memoire',    nom: 'Mémoire',                couleur: 'var(--tz-memoire)',
+      resume: 'Les épreuves cognitives de mémoire, inspirées des tests de sélection.' },
+    { id: 'attention',  nom: 'Attention',              couleur: 'var(--tz-attention)',
+      resume: 'Vigilance, inhibition, vitesse de décision sous contrainte.' }
   ];
+
+  /* Les épreuves du parcours courant. Une épreuve marquée « pn » ou « gn »
+     n'est pas désactivée pour l'autre force : elle est ABSENTE. Montrer
+     grisée la hiérarchie de l'autre maison n'apprendrait rien et chargerait
+     l'écran. */
+  function tzEpreuvesVisibles() {
+    var force = TZ.fdo ? TZ.fdo.force() : null;
+    return TZ.epreuves.filter(function (e) {
+      if (!e.force || e.force === 'commun') return true;
+      return e.force === force;
+    });
+  }
+
+  /* Le libellé d'un niveau pour une épreuve donnée. Les épreuves métier
+     parlent de paliers de carrière — « École », « Terrain » — là où les
+     épreuves cognitives parlent de difficulté. Un seul réglage, deux
+     vocabulaires, parce que « expert » ne veut rien dire sur une
+     connaissance professionnelle. */
+  function tzResumeNiveau(ep, idNiveau) {
+    if (ep && ep.etiquettes && TZ.fdo) return TZ.fdo.palier(idNiveau).resume;
+    return TZ.niveau(idNiveau).resume;
+  }
+
+  function tzNomNiveau(ep, idNiveau) {
+    if (ep && ep.etiquettes && ep.etiquettes[idNiveau]) return ep.etiquettes[idNiveau];
+    return TZ.niveau(idNiveau).nom;
+  }
 
   var AXES = [
     { id: 'memoireVisuelle', nom: 'Mémoire visuelle' },
@@ -41,43 +78,45 @@
     global.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /* ========================================================== accueil */
+  /* ========================================================== accueil
+     Trois temps, dans cet ordre :
+       1. si aucune force n'est choisie, on ne montre QUE ce choix. Il oriente
+          les grades, les unités et une partie des questions : le poser plus
+          tard obligerait à tout repeindre ;
+       2. le parcours courant, rappelé avec de quoi basculer ;
+       3. les catégories d'épreuves, les mémentos, la session, les réglages. */
   function tzPeindreAccueil() {
     var hote = TZ.vide(TZ.q('#tz-categories'));
+    if (TZ.fdo && !TZ.fdo.force()) { tzChoisirForce(hote); return; }
+    tzBandeauForce(hote);
 
     CATEGORIES.forEach(function (cat) {
-      var lot = TZ.epreuves.filter(function (e) { return e.categorie === cat.id; });
+      var lot = tzEpreuvesVisibles().filter(function (e) {
+        return e.categorie === cat.id;
+      });
       if (!lot.length) return;
       var bloc = TZ.el('section', 'tz-panneau');
       bloc.appendChild(TZ.el('span', 'tz-etiquette', cat.nom));
+      if (cat.resume) bloc.appendChild(TZ.el('p', 'tz-vide', cat.resume));
+      /* Le filtre de thème ne vaut que pour les savoirs : c'est la seule
+         catégorie adossée à la banque. */
+      if (cat.id === 'savoirs' && TZ.fdo) tzFiltresThemes(bloc);
       var grille = TZ.el('div', 'tz-grille');
       lot.forEach(function (ep) { grille.appendChild(tzFiche(ep, cat.couleur)); });
       bloc.appendChild(grille);
       hote.appendChild(bloc);
     });
 
-    /* mémento des grades — révision pure, sans chrono ni score.
-       Le test sur TZ.grades permet de supprimer le module sans rien casser. */
-    if (TZ.grades) {
-      var mem = TZ.el('section', 'tz-panneau');
-      mem.appendChild(TZ.el('span', 'tz-etiquette', 'Mémento'));
-      mem.appendChild(TZ.el('p', null,
-        'Tous les grades de la gendarmerie dans l’ordre, avec leur galon, '
-        + 'leur appellation et la règle du « mon ». À relire avant de se tester.'));
-      UI.actions(mem, [
-        { texte: 'Ouvrir le mémento des grades', action: function () {
-            TZ.grades.memento(TZ.q('#tz-memento'));
-            tzEcran('memento');
-          } }
-      ]);
-      hote.appendChild(mem);
-    }
+    tzMementos(hote);
+    /* Le multijoueur est un module à part : absent, l'accueil ne change pas. */
+    if (TZ.salon) TZ.salon.panneau(hote, tzPeindreAccueil);
 
     /* session complète */
     var bloc = TZ.el('section', 'tz-panneau');
     bloc.appendChild(TZ.el('span', 'tz-etiquette', 'Session complète'));
     bloc.appendChild(TZ.el('p', null,
-      'Cinq épreuves tirées au hasard, difficulté et stress croissants, bilan à la fin.'));
+      'Cinq épreuves tirées au hasard dans votre parcours, difficulté et stress '
+      + 'croissants, bilan à la fin.'));
     UI.actions(bloc, [
       { texte: 'Lancer une session', action: function () { tzDemarrerSession(); } },
       { texte: 'Ma progression', fantome: true, action: function () { tzPeindreProgression(); } }
@@ -107,6 +146,134 @@
     hote.appendChild(reg);
   }
 
+  /* ---------------------------------------------------- choix de la force */
+  function tzChoisirForce(hote) {
+    var bloc = TZ.el('section', 'tz-panneau');
+    bloc.appendChild(TZ.el('span', 'tz-etiquette', 'Votre parcours'));
+    var h = TZ.el('h2', null, 'Police ou gendarmerie ?');
+    h.style.cssText = 'font-family:var(--tz-titre);margin:0 0 6px';
+    bloc.appendChild(h);
+    bloc.appendChild(TZ.el('p', null,
+      'Les deux forces partagent un socle large — même code de procédure pénale, '
+      + 'même code de déontologie depuis 2014, mêmes règles d’usage des armes depuis '
+      + '2017. Mais elles ne se superposent pas : grades, unités, statut et compétence '
+      + 'territoriale diffèrent. Choisissez votre parcours ; vous pourrez changer à tout moment.'));
+
+    var grille = TZ.el('div', 'tz-forces');
+    TZ.fdo.FORCES.forEach(function (f) {
+      var b = TZ.el('button', 'tz-force-carte');
+      b.type = 'button';
+      b.style.setProperty('--tz-c', f.couleur);
+      b.setAttribute('aria-pressed', 'false');
+      b.appendChild(TZ.el('b', null, f.nom));
+      b.appendChild(TZ.el('span', null, f.resume));
+      b.addEventListener('click', function () {
+        TZ.fdo.fixerForce(f.id);
+        tzPeindreAccueil();
+      });
+      grille.appendChild(b);
+    });
+    bloc.appendChild(grille);
+    hote.appendChild(bloc);
+
+    var note = TZ.el('section', 'tz-panneau');
+    note.appendChild(TZ.el('span', 'tz-etiquette', 'Les épreuves cognitives'));
+    note.appendChild(TZ.el('p', 'tz-vide',
+      'Mémoire, attention, résistance au stress : elles ne dépendent d’aucune force '
+      + 'et restent disponibles dans les deux parcours.'));
+    hote.appendChild(note);
+  }
+
+  function tzBandeauForce(hote) {
+    var f = TZ.fdo.laForce(TZ.fdo.force());
+    var autre = TZ.fdo.FORCES.filter(function (x) { return x.id !== f.id; })[0];
+    var bande = TZ.el('div', 'tz-force-active');
+    bande.style.setProperty('--tz-c', f.couleur);
+    bande.appendChild(TZ.el('b', null, f.nom));
+    bande.appendChild(TZ.el('span', 'tz-force-note',
+      TZ.fdo.compte({ force: f.id }) + ' fiches de savoirs pour ce parcours, '
+      + 'socle commun compris.'));
+    var b = TZ.el('button', 'tz-btn tz-fantome tz-mini', 'Passer en ' + autre.court);
+    b.type = 'button';
+    b.addEventListener('click', function () {
+      TZ.fdo.fixerForce(autre.id);
+      tzPeindreAccueil();
+    });
+    bande.appendChild(b);
+    hote.appendChild(bande);
+  }
+
+  /* ------------------------------------------------- filtres de thème
+     Tout coché revient à ne rien filtrer : c'est le seul état qui garantisse
+     qu'on ne se retrouve jamais avec un bassin vide. */
+  function tzFiltresThemes(hote) {
+    var choisis = TZ.fdo.themesChoisis();
+    var puces = TZ.el('div', 'tz-puces');
+
+    var tous = TZ.el('button', 'tz-puce', 'Tous les thèmes');
+    tous.type = 'button';
+    tous.setAttribute('aria-pressed', choisis.length ? 'false' : 'true');
+    tous.addEventListener('click', function () { TZ.fdo.tousThemes(); tzPeindreAccueil(); });
+    puces.appendChild(tous);
+
+    TZ.fdo.THEMES.forEach(function (t) {
+      var n = TZ.fdo.compte({ force: TZ.fdo.force(), themes: [t.id] });
+      if (!n) return;
+      var b = TZ.el('button', 'tz-puce', t.nom + ' · ' + n);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', choisis.indexOf(t.id) >= 0 ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        TZ.fdo.basculerTheme(t.id); tzPeindreAccueil();
+      });
+      puces.appendChild(b);
+    });
+    hote.appendChild(puces);
+
+    if (choisis.length) {
+      hote.appendChild(TZ.el('p', 'tz-vide',
+        choisis.length + ' thème(s) retenu(s) pour les quiz. '
+        + 'Si un thème ne contient pas assez de questions, l’épreuve élargit d’elle-même.'));
+    }
+  }
+
+  /* ------------------------------------------------------------ mémentos
+     Les écrans de révision, groupés : c'est ce qu'on ouvre AVANT de se
+     tester, et il faut pouvoir y aller sans chercher. Chaque bouton est
+     conditionné à la présence de son module, pour qu'en supprimer un ne
+     casse rien. */
+  function tzMementos(hote) {
+    var force = TZ.fdo ? TZ.fdo.force() : null;
+    var boutons = [];
+
+    if (TZ.fdo) {
+      boutons.push({ texte: 'Mémento métier', action: function () {
+        TZ.fdo.memento(TZ.q('#tz-memento'), force);
+        tzEcran('memento');
+      } });
+    }
+    if (force === 'gn' && TZ.grades) {
+      boutons.push({ texte: 'Grades de la gendarmerie', fantome: true, action: function () {
+        TZ.grades.memento(TZ.q('#tz-memento'));
+        tzEcran('memento');
+      } });
+    }
+    if (force === 'pn' && TZ.gradesPolice) {
+      boutons.push({ texte: 'Grades de la police', fantome: true, action: function () {
+        TZ.gradesPolice.memento(TZ.q('#tz-memento'));
+        tzEcran('memento');
+      } });
+    }
+    if (!boutons.length) return;
+
+    var bloc = TZ.el('section', 'tz-panneau');
+    bloc.appendChild(TZ.el('span', 'tz-etiquette', 'Mémentos'));
+    bloc.appendChild(TZ.el('p', null,
+      'Les fiches à plat, avec leur source : la réponse y est donnée d’emblée. '
+      + 'C’est le support de révision — à relire avant de se tester.'));
+    UI.actions(bloc, boutons);
+    hote.appendChild(bloc);
+  }
+
   function tzFiche(ep, couleur) {
     var dispo = !ep.requiert || ep.requiert !== 'carte' || TZ.carte.preparer();
     var f = TZ.el('button', 'tz-fiche');
@@ -117,7 +284,7 @@
     f.appendChild(TZ.el('b', null, ep.nom));
     f.appendChild(TZ.el('span', 'tz-but', ep.but));
     var record = TZ.record(ep.id);
-    var niv = TZ.niveau(TZ.niveauDe(ep.id));
+    var niv = { nom: tzNomNiveau(ep, TZ.niveauDe(ep.id)) };
     var r = TZ.el('span', 'tz-record' + (record ? '' : ' tz-vide'),
       dispo ? (record ? 'Meilleur : ' + record + ' / 100  ·  ' + niv.nom
                       : 'Jamais tenté  ·  ' + niv.nom)
@@ -204,14 +371,14 @@
     hote.appendChild(TZ.el('span', 'tz-etiquette', 'Difficulté'));
     var segN = TZ.el('div', 'tz-segment');
     TZ.NIVEAUX.forEach(function (n) {
-      var b = TZ.el('button', null, n.nom);
+      var b = TZ.el('button', null, tzNomNiveau(ep, n.id));
       b.type = 'button';
       b.setAttribute('aria-pressed', n.id === courant ? 'true' : 'false');
       b.addEventListener('click', function () { TZ.fixerNiveau(ep.id, n.id); tzPreparer(ep); });
       segN.appendChild(b);
     });
     hote.appendChild(segN);
-    var resume = TZ.el('p', 'tz-vide', TZ.niveau(courant).resume);
+    var resume = TZ.el('p', 'tz-vide', tzResumeNiveau(ep, courant));
     resume.style.margin = '8px 0 4px';
     hote.appendChild(resume);
 
@@ -253,7 +420,7 @@
     /* --- record sur cette combinaison précise --- */
     var rec = TZ.record(ep.id, courant, TZ.etat.stress);
     var info = TZ.el('p', rec ? null : 'tz-vide',
-      rec ? 'Votre meilleur score en ' + TZ.niveau(courant).nom + ' · ' +
+      rec ? 'Votre meilleur score en ' + tzNomNiveau(ep, courant) + ' · ' +
             TZ.STRESS[TZ.etat.stress].nom + ' : ' + rec + ' / 100'
           : 'Jamais tenté à ce réglage.');
     info.style.marginTop = '14px';
@@ -287,7 +454,7 @@
 
     TZ.q('#tz-titre-epreuve').textContent = ep.nom;
     TZ.q('#tz-stress-epreuve').textContent =
-      TZ.niveau(idNiveau).nom + ' · ' + TZ.STRESS[TZ.etat.stress].nom +
+      tzNomNiveau(ep, idNiveau) + ' · ' + TZ.STRESS[TZ.etat.stress].nom +
       (suite ? ' · épreuve ' + suite.rang + ' sur ' + suite.total : '');
     TZ.q('#tz-comment').textContent = ep.comment;
 
@@ -298,6 +465,11 @@
     var idDistraction = TZ.distractionDe(ep.id);
     var arretPerturbations = TZ.perturbations(scene, idDistraction);
 
+    /* En défi, tout le monde joue la même chose : on sème le tirage avant
+       que l'épreuve ne s'initialise, puisque c'est init() qui tire. */
+    var enDefi = !!(suite && suite.defi);
+    if (enDefi) TZ.semer(suite.defi.graine);
+
     var ctx = {
       scene: scene,
       bandeau: bandeau,
@@ -306,6 +478,10 @@
       terminer: function () {
         arretPerturbations();
         TZ.toutArreter();
+        /* On rend Math.random au plus tôt : le calcul du score et le bilan
+           n'ont aucune raison d'être déterministes, et laisser le détournement
+           en place déborderait sur l'épreuve suivante. */
+        if (enDefi) TZ.liberer();
         var brut = ep.getScore();
         var score = TZ.calculerScore({
           precision: brut.precision, vitesse: brut.vitesse,
@@ -328,6 +504,7 @@
       ep.init(ctx);
       ep.start();
     } catch (e) {
+      if (enDefi) TZ.liberer();
       arretPerturbations();
       TZ.vide(scene);
       UI.message(scene, 'Cette épreuve n’a pas pu démarrer.', 'ko');
@@ -349,7 +526,7 @@
     var hote = TZ.vide(TZ.q('#tz-resultat'));
 
     hote.appendChild(TZ.el('span', 'tz-etiquette',
-      ep.nom + ' · ' + TZ.niveau(idNiveau).nom + ' · ' + TZ.STRESS[TZ.etat.stress].nom));
+      ep.nom + ' · ' + tzNomNiveau(ep, idNiveau) + ' · ' + TZ.STRESS[TZ.etat.stress].nom));
     var grand = TZ.el('div', 'tz-score-grand', String(score));
     var sup = TZ.el('sup', null, ' / 100');
     grand.appendChild(sup);
@@ -386,27 +563,36 @@
       var inf = TZ.niveauPrecedent(idNiveau);
       if (score >= SEUIL_MONTER && sup) {
         var p = TZ.el('div', 'tz-message tz-ok');
-        p.textContent = 'Ce niveau vous est acquis. Passer en ' + sup.nom + ' ?';
+        p.textContent = 'Ce niveau vous est acquis. Passer en '
+          + tzNomNiveau(ep, sup.id) + ' ?';
         p.style.margin = '18px auto 4px';
         hote.appendChild(p);
         UI.actions(hote, [
-          { texte: 'Passer en ' + sup.nom, action: function () {
+          { texte: 'Passer en ' + tzNomNiveau(ep, sup.id), action: function () {
               TZ.fixerNiveau(ep.id, sup.id); tzLancer(ep); } },
-          { texte: 'Rester en ' + TZ.niveau(idNiveau).nom, fantome: true,
+          { texte: 'Rester en ' + tzNomNiveau(ep, idNiveau), fantome: true,
             action: function () { tzLancer(ep); } }
         ]);
       } else if (score < SEUIL_DESCENDRE && inf) {
         var q = TZ.el('div', 'tz-message tz-neutre');
-        q.textContent = 'Réglage trop exigeant pour l’instant. Essayer en ' + inf.nom + ' ?';
+        q.textContent = 'Réglage trop exigeant pour l’instant. Essayer en '
+          + tzNomNiveau(ep, inf.id) + ' ?';
         q.style.margin = '18px auto 4px';
         hote.appendChild(q);
         UI.actions(hote, [
-          { texte: 'Essayer en ' + inf.nom, action: function () {
+          { texte: 'Essayer en ' + tzNomNiveau(ep, inf.id), action: function () {
               TZ.fixerNiveau(ep.id, inf.id); tzLancer(ep); } },
-          { texte: 'Réessayer en ' + TZ.niveau(idNiveau).nom, fantome: true,
+          { texte: 'Réessayer en ' + tzNomNiveau(ep, idNiveau), fantome: true,
             action: function () { tzLancer(ep); } }
         ]);
       }
+    }
+
+    /* En défi, c'est le salon qui reprend la main : « rejouer » enverrait le
+       joueur refaire l'épreuve seul au milieu d'une partie. */
+    if (suite && suite.defi) {
+      suite.defi.surFin(score, brut, hote);
+      return;
     }
 
     if (suite && suite.rang < suite.total) {
@@ -430,7 +616,9 @@
   var sessionEnCours = null;
 
   function tzDemarrerSession() {
-    var dispo = TZ.epreuves.filter(function (e) {
+    /* Les épreuves du parcours seulement : une session ne doit pas tirer la
+       hiérarchie de l'autre force. */
+    var dispo = tzEpreuvesVisibles().filter(function (e) {
       return !e.requiert || e.requiert !== 'carte' || TZ.carte.preparer();
     });
     if (dispo.length < 3) { global.alert('Pas assez d’épreuves disponibles.'); return; }
@@ -732,6 +920,39 @@
     tzDemarrer();
   }
 
-  TZ.app = { ecran: tzEcran, accueil: tzPeindreAccueil, progression: tzPeindreProgression };
+  /* Lancer une épreuve dans les conditions d'un salon : réglages imposés par
+     l'hôte, tirage semé, et la main rendue au salon à la fin. Le stress du
+     joueur est restitué ensuite — un défi ne doit pas modifier ses réglages. */
+  function tzLancerDefi(idEpreuve, opts, surFin) {
+    var ep = TZ.epreuves.filter(function (e) { return e.id === idEpreuve; })[0];
+    if (!ep) return false;
+    var stressAvant = TZ.etat.stress;
+    TZ.etat.stress = opts.stress || 'calme';
+    tzLancer(ep, {
+      rang: 1, total: 1, niveau: opts.niveau || 'standard',
+      defi: {
+        graine: opts.graine,
+        surFin: function (score, brut, hote) {
+          TZ.etat.stress = stressAvant;
+          surFin(score, brut, hote, ep);
+        }
+      }
+    });
+    return true;
+  }
+
+  /* Le libellé d'un niveau, pour que le salon annonce « École » et non
+     « Découverte » sur une épreuve métier. */
+  function tzLibelleNiveau(idEpreuve, idNiveau) {
+    var ep = TZ.epreuves.filter(function (e) { return e.id === idEpreuve; })[0];
+    return tzNomNiveau(ep, idNiveau);
+  }
+
+  TZ.app = {
+    ecran: tzEcran, accueil: tzPeindreAccueil, progression: tzPeindreProgression,
+    epreuvesVisibles: tzEpreuvesVisibles,
+    lancerDefi: tzLancerDefi, libelleNiveau: tzLibelleNiveau,
+    CATEGORIES: CATEGORIES
+  };
 
 })(window);
