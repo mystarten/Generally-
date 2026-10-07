@@ -9,8 +9,15 @@
 
    À chaque publication, incrémenter VERSION : les anciens caches sont alors
    supprimés à l'activation.
+
+   Ce n'est pas une formalité. Les fichiers de training/ ne sont pas
+   préchargés, mais ils tombent dans le cache dès la première visite, et ils
+   en ressortent EN PRIORITÉ. Publier une nouvelle zone d'entraînement sans
+   incrémenter ici sert donc un mélange : la page neuve, et les anciens
+   scripts — ce qui est pire qu'une version entièrement ancienne, parce que
+   les deux moitiés ne s'accordent pas.
    ============================================================================= */
-const VERSION = 'generally-v5';
+const VERSION = 'generally-v6';
 
 const COQUILLE = [
   './',
