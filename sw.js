@@ -17,7 +17,7 @@
    scripts — ce qui est pire qu'une version entièrement ancienne, parce que
    les deux moitiés ne s'accordent pas.
    ============================================================================= */
-const VERSION = 'generally-v10';
+const VERSION = 'generally-v11';
 
 /* Ce qui est telecharge des l'installation, pour que le site fonctionne sans
    reseau meme sur une page jamais ouverte.
@@ -51,6 +51,7 @@ const COQUILLE = [
   './training/salon.js',
   './training/app.js',
   './training/tz-sog-data.js',
+  './training/tz-sog-valider.js',
   './training/tz-sog.js',
   './lib/d3.min.js',
   './lib/topojson-client.min.js',

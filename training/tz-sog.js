@@ -7,16 +7,36 @@
    radar. Supprimer tz-sog.js, tz-sog.css, tz-sog-data.js et sog.html laisse
    le jeu et la Zone d'entraînement intacts.
 
-   Il ne dépend pas non plus de training/moteur.js : ses quelques outils sont
-   redéfinis ici, pour que le module tienne debout tout seul.
+   Il ne dépend pas de training/moteur.js, ni d'aucun fichier du jeu. Il a en
+   revanche besoin de deux fichiers à lui, chargés avant lui :
 
-   Les cartes viennent de tz-sog-data.js, lui-même produit par
-   scripts/build-sog-data.js à partir de culture-sog.md.
+       tz-sog-data.js      les cartes, produites depuis culture-sog.md
+       tz-sog-valider.js   les fiches de validation et leur notation
+
+   Les outils de comparaison de texte viennent du second : la saisie du milieu
+   de l'échelle et la fiche écrite du haut doivent juger avec exactement la
+   même indulgence sur les accents et les fautes de frappe, sinon une même
+   réponse serait acceptée à un étage et refusée à l'autre.
    ============================================================================= */
 (function (global) {
   'use strict';
 
   var DATA = global.TZ_SOG_DATA;
+  var V = global.TZ_SOG_VALIDER;
+
+  /* Sans le module de validation, rien ne marche : la moitié des outils de
+     comparaison vient de lui. On le dit à l'écran plutôt que de laisser la
+     page mourir sur une erreur de console que personne ne lira. */
+  if (!V) {
+    document.addEventListener('DOMContentLoaded', function () {
+      var h = document.querySelector('#sog-accueil');
+      if (h) {
+        h.textContent = 'training/tz-sog-valider.js n’est pas chargé. ' +
+          'Vérifie l’ordre des balises <script> dans sog.html.';
+      }
+    });
+    return;
+  }
 
   /* ========================================================= petits outils */
   function el(balise, classe, texte) {
@@ -35,14 +55,10 @@
     }
     return a;
   }
-  function sansAccents(s) {
-    return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '');
-  }
-  function normaliser(s) {
-    return sansAccents(String(s || '').toLowerCase())
-      .replace(/[«»"'’“”.,;:!?()\[\]…—–\-]/g, ' ')
-      .replace(/\s+/g, ' ').trim();
-  }
+  /* Empruntés à tz-sog-valider.js : voir l'en-tête du fichier. */
+  var sansAccents = V.sansAccents;
+  var normaliser = V.normaliser;
+  var reponseJuste = V.reponseJuste;
 
   /* Date du jour en heure locale. toISOString donnerait la date UTC, ce qui
      décale les révisions d'un jour une partie de la soirée. */
@@ -95,10 +111,38 @@
   var reglages = Object.assign({}, REGLAGES_PAR_DEFAUT, lire('reglages', {}));
   var progres = lire('progres', {});
 
+  /* ------------------------------------- reprise des boîtes auto-évaluées
+     Avant la fiche écrite, les boîtes 4 et 5 s'atteignaient en révélant la
+     réponse et en se notant « je savais ». Les afficher aujourd'hui comme
+     « validées » serait mentir sur ce qui est su : on les ramène une fois en
+     boîte 3, prêtes pour la fiche.
+
+     Rien n'est perdu — ni les erreurs, ni les réussites, ni le nombre de
+     passages : il reste à les écrire une fois pour de bon. L'opération n'a
+     lieu qu'une seule fois, et le nombre de cartes concernées est annoncé sur
+     l'accueil tant qu'on ne l'a pas lu. */
+  (function reprendreAnciennesBoites() {
+    if (lire('reprise-fiches', false)) return;
+    var n = 0;
+    Object.keys(progres).forEach(function (id) {
+      var e = progres[id];
+      if (!e || typeof e.fiches === 'number') return;   /* déjà au nouveau format */
+      e.fiches = 0;
+      if (e.boite >= 4) { e.boite = 3; n++; }
+    });
+    ecrire('progres', progres);
+    ecrire('reprise-fiches', true);
+    if (n) ecrire('reprise-combien', n);
+  })();
+
   /* Une régénération des données peut faire disparaître des cartes : on garde
      leur progression de côté sans la lire, plutôt que de la jeter. */
   function etat(id) {
-    return progres[id] || { boite: 0, du: null, erreurs: 0, reussites: 0, vues: 0, dernier: null };
+    /* « fiches » compte les restitutions écrites complètes réussies. Une
+       carte validée en a au moins une ; deux, et elle a été reprouvée des
+       jours plus tard, ce qui n'est plus de la mémoire courte. */
+    return progres[id] || { boite: 0, du: null, erreurs: 0, reussites: 0,
+                            vues: 0, fiches: 0, dernier: null };
   }
   function poserEtat(id, e) { progres[id] = e; ecrire('progres', progres); }
 
@@ -122,8 +166,28 @@
       return e.boite > 0 && e.boite <= 2 && e.erreurs >= 2;
     });
   }
-  function solides() {
-    return cartes.filter(function (c) { return etat(c.id).boite >= 4; });
+  /* Le haut de l'échelle, en trois états — et « validée » ne se décrète plus
+     soi-même : il faut avoir écrit la fiche en entier, deux fois, à quatre
+     jours d'intervalle au moins (les boîtes 3 et 4 reviennent à 4 et 8 jours).
+
+     L'ancien compteur appelait « solide » toute carte en boîte 4 ou 5, celles
+     qu'on s'était notées soi-même. Le compte est plus bas depuis, et c'est
+     tout l'intérêt : il dit ce qu'on sait écrire. */
+  function validees() {
+    return cartes.filter(function (c) { return etat(c.id).boite >= 5; });
+  }
+  function confirmees() {
+    return cartes.filter(function (c) {
+      var e = etat(c.id);
+      return e.boite >= 5 && (e.fiches || 0) >= 2;
+    });
+  }
+  /* Prêtes pour l'épreuve écrite : la fiche leur est posée. */
+  function aValider() {
+    return cartes.filter(function (c) {
+      var b = etat(c.id).boite;
+      return b >= 3 && b < 5;
+    });
   }
 
   /* -------------------------------------------------------------- journal */
@@ -132,7 +196,7 @@
     var j = journal(), d = jour();
     var e = j[d] || { repondues: 0, maitrisees: 0 };
     e.repondues += repondues;
-    e.maitrisees = solides().length;
+    e.maitrisees = validees().length;
     j[d] = e;
     /* on ne garde que 120 jours : le graphique en montre 30 */
     var cles = Object.keys(j).sort();
@@ -187,35 +251,53 @@
      Le format de réponse dépend de la maîtrise (la boîte), le contenu dépend
      du type de carte. Une question n'affiche jamais rien qui ne vienne du
      document. */
-  /* L'échelle est ce qui empêche d'avancer en devinant. Un QCM ne mène qu'à
-     la boîte 2 ; à partir de là il faut écrire la réponse, et plus haut la
-     restituer sans rien à l'écran. Une carte jamais vue n'est pas interrogée
-     du tout : on la lit d'abord, puis elle revient dans la séance. */
+  /* L'échelle est ce qui empêche d'avancer en devinant.
+
+         boîte 0   on lit la carte, on ne l'interroge pas
+         boîte 1   QCM : reconnaître
+         boîte 2   saisie : écrire la réponse
+         boîte 3   fiche écrite : tout restituer — c'est la validation
+         boîte 4   fiche écrite de nouveau, huit jours plus tard
+         boîte 5   validée ; recontrôlée à vingt jours par la même fiche
+
+     Le haut de l'échelle se jouait avant en auto-évaluation : on révélait la
+     réponse et on se notait « je savais ». Ça ne prouvait rien, et ça faisait
+     grimper des cartes qu'on n'aurait pas su écrire. Depuis la boîte 3, c'est
+     la fiche de tz-sog-valider.js qui décide, et elle ne laisse rien passer
+     en silence : elle dit champ par champ ce qui manquait. */
   function format(boite) {
     if (!boite) return 'decouverte';
     if (boite === 1) return 'qcm';
-    if (boite <= 3) return 'saisie';
-    return 'libre';
+    if (boite === 2) return 'saisie';
+    return 'fiche';
   }
 
-  function questionPlacement(carte, boite) {
+  function questionPlacement(carte, production) {
     var bonne = carte.tags[Math.floor(Math.random() * carte.tags.length)];
     var normBonnes = carte.tags.map(normaliser);
 
     function enonceDe(c) { return c.contenu.valeur || c.contenu.citation || c.contenu.question; }
 
-    /* À partir de la boîte 3, on ne choisit plus : on produit. C'est ce que
-       demande une copie — trouver soi-même la référence qui sert le sujet —
-       et aucune des réponses n'est soufflée. */
-    if (boite >= 3) {
-      var memeTag = cartes.filter(function (c) {
-        return c.tags.some(function (t) { return normaliser(t) === normaliser(bonne); });
-      });
-      if (memeTag.length >= 2) {
+    /* En mode Placement, on ne choisit plus : on produit. C'est ce que demande
+       une copie — trouver soi-même la référence qui sert le sujet — et aucune
+       des réponses n'est soufflée. Ce mode ne touche pas aux boîtes : il
+       travaille l'emploi des références, pas leur restitution. */
+    if (production) {
+      /* On ne garde pas le sujet tiré plus haut : il faut un sujet que
+         plusieurs références portent, sinon la question n'a qu'une réponse
+         possible et ce n'est plus un exercice de placement. On essaie donc
+         tous les sujets de la carte avant de renoncer. */
+      var sujets = melanger(carte.tags);
+      for (var s = 0; s < sujets.length; s++) {
+        var sujet = sujets[s];
+        var memeTag = cartes.filter(function (c) {
+          return c.tags.some(function (t) { return normaliser(t) === normaliser(sujet); });
+        });
+        if (memeTag.length < 2) continue;
         return {
           genre: 'placementLibre', format: 'production',
           masquerCarte: true,
-          enonce: 'Cite une référence que tu placerais dans un sujet « ' + bonne + ' »',
+          enonce: 'Cite une référence que tu placerais dans un sujet « ' + sujet + ' »',
           consigne: 'Une date, une citation, une notion ou un chiffre. Écris-la de mémoire.',
           acceptees: memeTag,
           bonne: enonceDe(carte),
@@ -223,8 +305,8 @@
         };
       }
       /* Pas assez de matière pour produire : on renonce au placement plutôt
-         que de retomber sur un QCM. Au-delà de la boîte 2, rien ne doit se
-         jouer sur quatre cases. */
+         que de retomber sur un QCM. Le mode Placement demande de trouver, pas
+         de reconnaître. */
       return null;
     }
 
@@ -365,13 +447,13 @@
     return liste;
   }
 
-  function questionCarte(carte, boite) {
+  function questionCarte(carte, boite, formatImpose) {
     var c = carte.contenu;
 
     /* Une carte jamais vue ne se devine pas : on la montre, puis elle revient
        dans la séance sous forme de question. Interroger d'abord, c'était
        demander de choisir au hasard entre quatre inconnues. */
-    if (!boite) {
+    if (!boite && !formatImpose) {
       return {
         genre: 'decouverte', format: 'decouverte',
         enonce: c.question,
@@ -379,21 +461,47 @@
       };
     }
 
-    /* une référence sur quatre se joue sur son emploi, pas sur son contenu */
-    if (carte.tags.length >= 2 && Math.random() < 0.25) {
-      var p = questionPlacement(carte, boite);
-      if (p) return p;
-    }
-    /* Une citation attribuée se vérifie régulièrement : c'est le piège. Mais
-       seulement jusqu'à la boîte 2 — c'est une question à deux cases, donc une
-       pièce à pile ou face, et ça n'a pas sa place plus haut. */
-    if (boite <= 2 && carte.attribuee && carte.type === 'citation' && Math.random() < 0.34) {
-      var at = questionAttribuee(carte);
-      if (at) return at;
+    var f = formatImpose || format(boite);
+
+    /* Les détours — placer la référence dans un sujet, démasquer une formule
+       attribuée — ne valent qu'en bas de l'échelle. Une question de placement
+       se joue sur quatre cases et une formule attribuée sur deux : en haut de
+       l'échelle, elles laisseraient monter une carte qu'on n'a jamais écrite.
+       À partir de la boîte 3, c'est la carte elle-même, et elle entière.
+
+       En défi non plus, où le format est imposé : tout le monde doit lire le
+       même énoncé. Seul l'ordre des propositions diffère, et c'est tant
+       mieux. */
+    if (!formatImpose && (f === 'qcm' || f === 'saisie')) {
+      if (carte.tags.length >= 2 && Math.random() < 0.25) {
+        var p = questionPlacement(carte, false);
+        if (p) return p;
+      }
+      if (carte.attribuee && carte.type === 'citation' && Math.random() < 0.34) {
+        var at = questionAttribuee(carte);
+        if (at) return at;
+      }
     }
 
-    var f = format(boite);
-    var inverse = carte.type === 'date' && c.inverse && Math.random() < 0.4;
+    /* ------------------------------------------------- la fiche, boîtes 3 à 5 */
+    if (f === 'fiche') {
+      var fi = V.fiche(carte);
+      if (fi && fi.champs.length) {
+        return {
+          genre: 'fiche', format: 'fiche', fiche: fi,
+          enonce: fi.enonce, support: fi.support, consigne: fi.consigne,
+          bonne: c.reponse
+        };
+      }
+      /* Aucune carte n'est censée tomber ici : scripts/verifier-sog-valider.js
+         vérifie que les 328 produisent une fiche. Si le document change et
+         qu'une carte devient invalidable, on redescend d'un étage plutôt que
+         de la bloquer tout en haut de l'échelle. */
+      f = 'saisie';
+    }
+
+    var inverse = !formatImpose && (carte.type === 'date' || carte.type === 'penseur') &&
+                  c.inverse && Math.random() < 0.4;
     var enonce = inverse ? c.inverse.question : c.question;
     var bonne = inverse ? c.inverse.reponse : c.reponse;
 
@@ -432,40 +540,49 @@
              aide: carte.volatile ? 'Ordre de grandeur, à vérifier dans l’actu.' : null };
   }
 
-  /* Comparaison indulgente : la casse, les accents et une faute de frappe ne
-     doivent pas faire perdre une carte qu'on connaît. */
-  function distance(a, b) {
-    var m = a.length, n = b.length, d = [], i, j;
-    for (i = 0; i <= m; i++) d[i] = [i];
-    for (j = 0; j <= n; j++) d[0][j] = j;
-    for (i = 1; i <= m; i++) for (j = 1; j <= n; j++) {
-      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1,
-                         d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-    }
-    return d[m][n];
-  }
-  function reponseJuste(saisie, attendue) {
-    var a = normaliser(saisie), b = normaliser(attendue);
-    if (!a) return false;
-    if (a === b) return true;
-    /* Une réponse qui porte une année se juge sur l'année, et sur rien
-       d'autre : tolérer un caractère d'écart ferait passer 1892 pour 1792. */
-    var an = String(attendue).match(/\b(1[5-9]\d{2}|20\d{2})\b/);
-    if (an) return new RegExp('(^|\\D)' + an[1] + '(\\D|$)').test(saisie);
-
-    /* Les réponses très courtes se jugent à l'identique, pour la même raison. */
-    if (b.length <= 6) return false;
-
-    if (b.length > 12 && a.indexOf(b) >= 0) return true;
-    return distance(a, b) <= Math.max(1, Math.floor(b.length / 8));
-  }
-
   /* ============================================== composition d'une session */
   function composer(mode, filtre) {
     var taille = reglages.taille;
     var d = jour();
 
     if (mode === 'faibles') return melanger(faibles()).slice(0, taille);
+
+    /* « Valider » : les cartes prêtes pour l'épreuve écrite, celles qui sont
+       en boîte 3 ou 4. Pas de tirage au sort ici — c'est une file d'attente,
+       on prend d'abord ce que le calendrier réclame, puis le plus bas étage,
+       parce qu'une carte en boîte 3 a plus besoin d'être validée qu'une
+       carte en boîte 4 qui attend son contrôle. */
+    if (mode === 'valider') {
+      var prets = cartes.filter(function (c) {
+        if (filtre && c.type !== filtre) return false;
+        var b = etat(c.id).boite;
+        return b >= 3 && b < 5;
+      });
+      prets.sort(function (a, b) {
+        var ea = etat(a.id), eb = etat(b.id);
+        var da = (ea.du && ea.du <= d) ? 0 : 1, db = (eb.du && eb.du <= d) ? 0 : 1;
+        if (da !== db) return da - db;
+        return (ea.boite || 0) - (eb.boite || 0);
+      });
+      return prets.slice(0, taille);
+    }
+
+    /* « Placement » : l'exercice de la copie, trouver soi-même la référence
+       qui sert le sujet. Il faut au moins deux sujets attachés à la carte
+       pour qu'il y ait quelque chose à chercher. */
+    if (mode === 'placement') {
+      var combien = {};
+      cartes.forEach(function (c) {
+        c.tags.forEach(function (t) {
+          var k = normaliser(t);
+          if (k) combien[k] = (combien[k] || 0) + 1;
+        });
+      });
+      return melanger(cartes.filter(function (c) {
+        return c.tags.some(function (t) { return combien[normaliser(t)] >= 2; });
+      })).slice(0, taille);
+    }
+
     if (mode === 'theme')   return melanger(cartes.filter(function (c) { return c.theme === filtre; })).slice(0, taille);
     if (mode === 'type')    return melanger(cartes.filter(function (c) {
                                return filtre === 'attribuee' ? c.attribuee : c.type === filtre; })).slice(0, taille);
@@ -504,18 +621,29 @@
   function demarrer(mode, filtre, titre, surFin) {
     var lot = composer(mode, filtre);
     if (!lot.length) { ecranRienAFaire(mode); return; }
-    lancerLot(lot, titre || 'Session du jour', surFin);
+    lancerLot(lot, titre || 'Session du jour', surFin,
+              mode === 'placement' ? { placement: true } : null);
   }
 
   /* Le cœur de « demarrer », séparé pour qu'une session puisse aussi être
      lancée sur un lot DÉJÀ composé — c'est ce dont le multijoueur a besoin :
      tout le monde doit réviser exactement les mêmes cartes. */
-  function lancerLot(lot, titre, surFin) {
+  function lancerLot(lot, titre, surFin, opts) {
+    opts = opts || {};
     session = {
       titre: titre,
-      file: lot.map(function (c) { return { carte: c, suite: 0 }; }),
+      file: lot.map(function (c) {
+        return { carte: c, suite: 0, horsBoite: !!opts.placement };
+      }),
       total: lot.length, faits: 0, justes: 0, presque: 0, rates: 0,
-      nouvelles: lot.filter(function (c) { return etat(c.id).boite === 0; }).length,
+      fiches: 0, validees: 0,
+      /* Un défi ne consomme pas le quota de nouvelles cartes du jour : il ne
+         les fait pas découvrir, il les met en jeu. */
+      nouvelles: opts.defi ? 0
+        : lot.filter(function (c) { return etat(c.id).boite === 0; }).length,
+      defi: !!opts.defi,
+      placement: !!opts.placement,
+      formatImpose: opts.format || null,
       surFin: surFin || null,
       chrono: null
     };
@@ -535,7 +663,9 @@
     /* boîte 0 assumée : une carte jamais vue passe par la découverte, elle
        n'est pas traitée comme si elle était déjà en boîte 1. */
     var boite = e.boite || 0;
-    var qst = item.forcerQuestion || questionCarte(carte, boite);
+    var qst = item.forcerQuestion ||
+      (session.placement ? questionPlacement(carte, true) : null) ||
+      questionCarte(carte, boite, session.formatImpose);
     item.forcerQuestion = null;
 
     var hote = vide(q('#sog-scene'));
@@ -629,6 +759,62 @@
       session.clavier = null;
     }
 
+    /* ----------------------------------------------- fiche de validation
+       Deux à quatre champs, tous écrits de mémoire : le contenu, l'auteur,
+       l'œuvre, l'année. Rien n'est soufflé, aucun indice n'est proposé — c'est
+       l'épreuve, pas l'entraînement. La correction qui suit dit champ par
+       champ ce qui était juste et ce qui manquait. */
+    if (qst.format === 'fiche') {
+      zone.appendChild(el('p', 'sog-consigne', qst.consigne ||
+        'Écris la fiche de mémoire. Tous les champs comptent.'));
+
+      var entrees = [];
+      qst.fiche.champs.forEach(function (ch) {
+        var bloc = el('div', 'sog-champ');
+        var etiq = el('label', 'sog-champ-nom', ch.label);
+        bloc.appendChild(etiq);
+        var entree;
+        if (ch.court) {
+          entree = el('input', 'sog-saisie sog-court');
+          entree.type = 'text';
+          entree.setAttribute('autocomplete', 'off');
+        } else {
+          entree = el('textarea', 'sog-note');
+          entree.rows = 2;
+        }
+        entree.id = 'sog-ch-' + ch.cle;
+        etiq.setAttribute('for', entree.id);
+        bloc.appendChild(entree);
+        if (ch.aide) bloc.appendChild(el('span', 'sog-champ-aide', ch.aide));
+        zone.appendChild(bloc);
+        entrees.push({ cle: ch.cle, noeud: entree });
+      });
+
+      var validerFiche = el('button', 'sog-btn', 'Valider la fiche');
+      validerFiche.type = 'button';
+      validerFiche.addEventListener('click', function () {
+        var reponses = {};
+        entrees.forEach(function (e) { reponses[e.cle] = e.noeud.value; });
+        qst.correction = V.corriger(qst.fiche, reponses);
+        conclure(qst.correction.verdict, reponses);
+      });
+      zone.appendChild(validerFiche);
+
+      /* Entrée passe au champ suivant, et valide depuis le dernier : on
+         remplit une fiche au clavier sans quitter les touches. */
+      entrees.forEach(function (e, k) {
+        e.noeud.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' || ev.shiftKey) return;
+          if (e.noeud.tagName === 'TEXTAREA' && !ev.ctrlKey && !ev.metaKey) return;
+          ev.preventDefault();
+          if (k + 1 < entrees.length) entrees[k + 1].noeud.focus();
+          else validerFiche.click();
+        });
+      });
+      setTimeout(function () { if (entrees[0]) entrees[0].noeud.focus(); }, 30);
+      session.clavier = null;
+    }
+
     /* --------------------------------------------------- production libre
        On ne choisit pas une référence, on en produit une. Toute carte du
        document portant ce sujet est acceptée : c'est l'exercice de la copie. */
@@ -685,7 +871,7 @@
        il reviendrait à barrer des cases. */
     var rangee = el('div', 'sog-rangee');
 
-    if (qst.format !== 'qcm') {
+    if (qst.format !== 'qcm' && qst.format !== 'fiche') {
       var paliers = indices(carte, qst);
       item.indicesPris = 0;
       /* La boîte se place avant la rangée de boutons : on l'ajoute donc
@@ -712,8 +898,11 @@
     rangee.appendChild(sais);
     hote.appendChild(rangee);
 
-    /* ------------------------------------------------------- chrono 15 s */
-    if (reglages.chrono) {
+    /* ------------------------------------------------------- chrono 15 s
+       Jamais sur une fiche : remplir quatre champs de mémoire n'est pas un
+       exercice de vitesse, et un chrono y transformerait la validation en
+       loterie. Le réglage le dit. */
+    if (reglages.chrono && qst.format !== 'fiche') {
       var jauge = el('div', 'sog-chrono');
       var barreChrono = el('i');
       jauge.appendChild(barreChrono);
@@ -747,6 +936,64 @@
   function reponseAffichee(carte, qst) {
     var c = carte.contenu;
     var b = el('div', 'sog-correction');
+
+    /* ------------------------------------------- correction d'une fiche
+       Champ par champ : ce qui a été écrit, ce qu'il fallait, et pourquoi.
+       Une note sans explication n'apprend rien ; sur les définitions, on
+       montre même quels mots-clés manquaient. */
+    if (qst.genre === 'fiche') {
+      var lignes = qst.correction ? qst.correction.champs
+        : qst.fiche.champs.map(function (ch) {
+            return { label: ch.label, saisie: '', verdict: 'ignore',
+                     attendu: V.texteAttendu(ch), detail: null,
+                     trouves: null, manquants: null };
+          });
+
+      var table = el('div', 'sog-corr');
+      lignes.forEach(function (l) {
+        var r = el('div', 'sog-corr-ligne sog-corr-' + l.verdict);
+        r.appendChild(el('span', 'sog-corr-label', l.label));
+        var droite = el('div', 'sog-corr-val');
+        if (l.verdict === 'juste' && !l.detail) {
+          droite.appendChild(el('span', 'sog-corr-ok', l.attendu));
+        } else {
+          droite.appendChild(el('span', 'sog-corr-bonne', l.attendu));
+          if (normaliser(l.saisie)) {
+            droite.appendChild(el('span', 'sog-corr-ecrit', 'tu as écrit : ' + l.saisie));
+          } else if (l.verdict !== 'ignore') {
+            droite.appendChild(el('span', 'sog-corr-ecrit', 'laissé vide'));
+          }
+        }
+        if (l.detail) droite.appendChild(el('span', 'sog-corr-detail', l.detail));
+        if (l.manquants && l.manquants.length) {
+          droite.appendChild(el('span', 'sog-corr-detail',
+            'mots-clés oubliés : ' + l.manquants.join(', ')));
+        }
+        r.appendChild(droite);
+        table.appendChild(r);
+      });
+      b.appendChild(table);
+
+      /* La référence rédigée, prête à recopier. C'est l'objet de tout ce
+         travail : une ligne qui tient dans une copie. */
+      if (qst.fiche.modele) {
+        var copie = el('div', 'sog-copie');
+        copie.appendChild(el('span', 'sog-etiquette', 'Pour ta copie'));
+        copie.appendChild(el('p', 'sog-copie-txt', qst.fiche.modele));
+        b.appendChild(copie);
+      }
+      if (carte.attribuee && c.auteurCourt) {
+        b.appendChild(el('p', 'sog-avertit',
+          'Formule attribuée : écris « selon une formule attribuée à ' + c.auteurCourt + ' ».'));
+      }
+      if (carte.volatile) {
+        b.appendChild(el('p', 'sog-avertit', 'Ordre de grandeur, à vérifier dans l’actu.'));
+      }
+      if (carte.tags.length) {
+        b.appendChild(el('p', 'sog-tags', 'À placer dans : ' + carte.tags.join(', ')));
+      }
+      return b;
+    }
 
     /* Production libre : la réponse n'est pas « la » carte mais l'une des
        références du document qui portent ce sujet. On montre celle qui a été
@@ -794,15 +1041,35 @@
 
   /* --------------------------------------- application du verdict Leitner */
   function appliquer(item, qst, verdict, donnee) {
-    var carte = item.carte, e = etat(carte.id);
+    var carte = item.carte;
+
+    /* Deux situations ne doivent rien écrire dans les boîtes :
+
+         — le défi, parce que réviser à plusieurs ne doit pas fausser son
+           propre calendrier : le salon impose la même question à tout le
+           monde, sans égard pour l'étage où chacun en est ;
+         — le mode Placement, qui travaille l'emploi d'une référence et non sa
+           restitution. Une carte ne doit pas pouvoir monter sans avoir été
+           écrite.
+
+       La séance continue de compter les réponses dans les deux cas : c'est le
+       calendrier de révision qu'on protège, pas le décompte de la séance. */
+    var enregistre = !session.defi && !item.horsBoite;
+    /* etat() rend l'objet stocké lui-même quand la carte a déjà une
+       progression : le modifier suffirait à la salir, même sans écrire. On
+       travaille donc sur une copie quand rien ne doit être retenu. */
+    var e = etat(carte.id);
+    if (!enregistre) e = Object.assign({}, e);
 
     /* La découverte n'est pas une réponse : on a seulement lu la carte. Elle
        ne change pas de boîte et ne compte dans aucun total ; elle repart dans
        la file pour être posée plus loin, en question. */
     if (verdict === 'decouverte') {
-      e.vues++;
-      e.dernier = jour();
-      poserEtat(carte.id, e);
+      if (enregistre) {
+        e.vues++;
+        e.dernier = jour();
+        poserEtat(carte.id, e);
+      }
       item.indicesPris = 0;
       item.forcerQuestion = questionCarte(carte, 1);
       replacer(item);
@@ -827,13 +1094,22 @@
       item.suite = 0;
     }
 
+    /* Une fiche réussie se compte à part : c'est la preuve écrite. Deux
+       fiches, et la carte a été restituée à plusieurs jours d'intervalle. */
+    if (enregistre && premiere && verdict === 'juste' && qst.genre === 'fiche') {
+      e.fiches = (e.fiches || 0) + 1;
+      session.fiches++;
+    }
+
+    var avant = e.boite || 0;
     if (premiere) {
       if (verdict === 'juste') e.boite = Math.min(5, (e.boite || 0) + 1);
       else if (verdict === 'presque') e.boite = Math.max(1, e.boite || 1);
       else e.boite = 1;
       e.du = jourPlus(INTERVALLE[e.boite] || 1);
     }
-    poserEtat(carte.id, e);
+    if (enregistre && avant < 5 && e.boite >= 5) session.validees++;
+    if (enregistre) poserEtat(carte.id, e);
 
     session.faits++;
     if (verdict === 'juste') session.justes++;
@@ -859,6 +1135,26 @@
     session.file.splice(ou, 0, item);
   }
 
+  /* L'état d'une carte en une phrase : l'étage, ce qu'il reste à faire pour
+     la valider, et la date du prochain passage. */
+  function etatEnMots(e) {
+    var b = e.boite || 0;
+    var jours = e.du ? ecart(jour(), e.du) : 0;
+    var quand = jours <= 0 ? 'revue aujourd’hui'
+              : jours === 1 ? 'revue demain'
+              : 'revue dans ' + jours + ' jours';
+    if (b >= 5) {
+      return 'Validée' + ((e.fiches || 0) >= 2 ? ' et confirmée' : '') +
+             ' · contrôle : ' + quand;
+    }
+    if (b >= 3) {
+      var reste = 5 - b;
+      return 'Boîte ' + b + ' sur 5 · ' + reste + ' fiche' + (reste > 1 ? 's' : '') +
+             ' juste' + (reste > 1 ? 's' : '') + ' et elle est validée · ' + quand;
+    }
+    return 'Boîte ' + b + ' sur 5 · ' + quand;
+  }
+
   function montrerCorrection(item, qst, verdict) {
     var carte = item.carte;
     var hote = q('#sog-scene');
@@ -867,8 +1163,23 @@
     if (r) r.remove();
 
     var etiquettes = { juste: 'Juste', presque: 'Presque', rate: 'Raté', ignore: 'Réponse' };
-    var bandeau = el('div', 'sog-verdict sog-v-' + verdict, etiquettes[verdict] || 'Réponse');
+    var titre = etiquettes[verdict] || 'Réponse';
+    var e = etat(carte.id);
+    if (qst.genre === 'fiche') {
+      titre = verdict === 'juste' ? (e.boite >= 5 ? 'Carte validée' : 'Fiche juste')
+            : verdict === 'presque' ? 'Fiche incomplète'
+            : 'Fiche à revoir';
+    }
+    var bandeau = el('div', 'sog-verdict sog-v-' + verdict, titre);
     zone.appendChild(bandeau);
+
+    /* Où en est cette carte, et quand elle revient. Sans cette ligne, on ne
+       sait jamais ce qu'une bonne réponse vient de changer. */
+    zone.appendChild(el('p', 'sog-etat-carte',
+      session.defi ? 'Défi : ta progression personnelle n’est pas modifiée.'
+      : item.horsBoite ? 'Mode Placement : les boîtes ne bougent pas, c’est l’emploi des références qu’on travaille.'
+      : etatEnMots(e)));
+
     zone.appendChild(reponseAffichee(carte, qst));
 
     var suite = el('button', 'sog-btn sog-suite', session.file.length ? 'Suivante' : 'Terminer');
@@ -913,6 +1224,26 @@
     });
     hote.appendChild(g);
 
+    /* Ce qui a été prouvé par écrit dans cette séance. C'est le seul chiffre
+       qui dit quelque chose : le reste mesure l'activité, pas le savoir. */
+    if (session.fiches || session.validees) {
+      hote.appendChild(el('p', 'sog-bilan-fiches',
+        session.fiches + ' fiche' + (session.fiches > 1 ? 's' : '') + ' écrite' +
+        (session.fiches > 1 ? 's' : '') + ' juste' + (session.fiches > 1 ? 's' : '') +
+        (session.validees
+          ? ' · ' + session.validees + ' carte' + (session.validees > 1 ? 's' : '') +
+            ' validée' + (session.validees > 1 ? 's' : '')
+          : '')));
+    }
+    if (session.defi) {
+      hote.appendChild(el('p', 'sog-sous',
+        'Défi : les scores se comparent dans le salon, ta progression personnelle n’a pas bougé.'));
+    }
+    if (session.placement) {
+      hote.appendChild(el('p', 'sog-sous',
+        'Mode Placement : rien n’a bougé dans les boîtes, c’est l’emploi des références qui a été travaillé.'));
+    }
+
     var restantes = dues().length;
     hote.appendChild(el('p', 'sog-sous', restantes
       ? restantes + ' carte(s) encore à revoir aujourd’hui.'
@@ -933,7 +1264,7 @@
 
     actions(hote, [
       { texte: 'Nouvelle session', action: function () { demarrer('jour'); } },
-      { texte: 'Mon arsenal', fantome: true, action: ecranArsenal },
+      { texte: 'Ma progression', fantome: true, action: ecranArsenal },
       { texte: 'Retour', fantome: true, action: ecranAccueil }
     ]);
     ecran('bilan');
@@ -944,6 +1275,11 @@
     hote.appendChild(el('h2', null, 'Rien à réviser'));
     hote.appendChild(el('p', 'sog-sous', mode === 'faibles'
       ? 'Aucune carte en boîte 1 ou 2 avec au moins deux erreurs. C’est bon signe.'
+      : mode === 'valider'
+      ? 'Aucune carte n’est prête pour la fiche écrite. Une carte y arrive quand ' +
+        'elle a passé le QCM puis la saisie : fais d’abord une session du jour.'
+      : mode === 'placement'
+      ? 'Aucune carte ne porte assez de sujets pour cet exercice.'
       : 'Aucune carte n’est due aujourd’hui et le quota de nouvelles cartes est atteint.'));
     actions(hote, [
       { texte: 'Révision libre', action: function () { demarrer('libre', null, 'Révision libre'); } },
@@ -979,6 +1315,29 @@
     var hote = vide(q('#sog-accueil'));
 
     var d = dues().length, n = nouvelles().length, f = faibles().length;
+    var pretes = aValider().length;
+
+    /* L'avis de reprise : il explique une seule fois pourquoi des cartes
+       sont redescendues d'un étage le jour de la mise à jour. */
+    var repris = lire('reprise-combien', 0);
+    if (repris) {
+      var avis = el('div', 'sog-avis');
+      avis.appendChild(el('p', null,
+        repris + ' carte' + (repris > 1 ? 's' : '') + ' étai' + (repris > 1 ? 'ent' : 't') +
+        ' montée' + (repris > 1 ? 's' : '') + ' en boîte 4 ou 5 à l’auto-évaluation, ' +
+        'quand il suffisait de se noter « je savais ». ' +
+        'Elle' + (repris > 1 ? 's sont redescendues' : ' est redescendue') +
+        ' en boîte 3, prête' + (repris > 1 ? 's' : '') + ' pour la fiche écrite. ' +
+        'Rien n’est perdu : il reste à l’écrire une fois pour qu’elle compte comme validée.'));
+      var vu = el('button', 'sog-btn sog-fantome sog-mini', 'J’ai compris');
+      vu.type = 'button';
+      vu.addEventListener('click', function () {
+        ecrire('reprise-combien', 0);
+        ecranAccueil();
+      });
+      avis.appendChild(vu);
+      hote.appendChild(avis);
+    }
 
     var tete = el('div', 'sog-bloc-principal');
     tete.appendChild(el('span', 'sog-etiquette', 'Recommandé'));
@@ -987,6 +1346,24 @@
       d + ' à revoir · ' + f + ' point(s) faible(s) · ' + n + ' jamais vue(s)'));
     actions(tete, [{ texte: 'Commencer', action: function () { demarrer('jour'); } }]);
     hote.appendChild(tete);
+
+    /* Le bloc de validation ne s'affiche que quand il y a quelque chose à
+       valider : proposer une épreuve vide le premier jour ne dirait rien. */
+    if (pretes) {
+      var bv = el('div', 'sog-bloc-valider');
+      bv.appendChild(el('span', 'sog-etiquette', 'Validation écrite'));
+      bv.appendChild(el('h2', null, pretes + ' carte' + (pretes > 1 ? 's' : '') +
+                                    ' prête' + (pretes > 1 ? 's' : '') + ' pour la fiche'));
+      bv.appendChild(el('p', 'sog-sous',
+        'Tout écrire de mémoire : la date, l’auteur, l’œuvre, la définition. ' +
+        'Deux fiches justes à plusieurs jours d’écart, et la carte est validée.'));
+      actions(bv, [
+        { texte: 'Passer les fiches', action: function () {
+            demarrer('valider', null, 'Validation écrite'); } },
+        { texte: 'Ma progression', fantome: true, action: ecranArsenal }
+      ]);
+      hote.appendChild(bv);
+    }
 
     /* réglages de session */
     var reg = el('div', 'sog-reglages');
@@ -997,7 +1374,7 @@
     reg.appendChild(segment('Nouvelles par jour', [4, 8, 15], reglages.nouvellesMax, function (v) {
       reglages.nouvellesMax = v; ecrire('reglages', reglages);
     }));
-    reg.appendChild(segment('Chrono 15 s', ['Non', 'Oui'], reglages.chrono ? 'Oui' : 'Non', function (v) {
+    reg.appendChild(segment('Chrono 15 s (hors fiches)', ['Non', 'Oui'], reglages.chrono ? 'Oui' : 'Non', function (v) {
       reglages.chrono = (v === 'Oui'); ecrire('reglages', reglages);
     }));
     hote.appendChild(reg);
@@ -1005,13 +1382,15 @@
     /* les autres modes */
     var modes = el('div', 'sog-modes');
     [
+      ['Ma progression', 'paliers par catégorie', ecranArsenal],
       ['Points faibles', f + ' carte(s)', function () { demarrer('faibles', null, 'Points faibles'); }],
+      ['Par catégorie', 'dates, citations, auteurs…', choisirType],
       ['Par thème', '12 thèmes', choisirTheme],
-      ['Par type', 'dates, citations…', choisirType],
+      ['Placement', 'trouver la référence d’un sujet',
+        function () { demarrer('placement', null, 'Placement'); }],
       ['Frise chronologique', 'remettre dans l’ordre', ecranFrise],
       ['Mode Sujet', '3 minutes de brouillon', ecranSujet],
-      ['Fiches', 'lecture et recherche', ecranFiches],
-      ['Mon arsenal', 'ma progression', ecranArsenal],
+      ['Mes fiches', 'lecture et recherche', ecranFiches],
       ['Méthode', 'les règles du document', ecranMethode]
     ].forEach(function (m) {
       var b = el('button', 'sog-carte');
@@ -1087,33 +1466,44 @@
   function choisirTheme() {
     listeChoix('Par thème', themes().map(function (t) {
       var n = cartes.filter(function (c) { return c.theme === t; }).length;
-      var s = solides().filter(function (c) { return c.theme === t; }).length;
+      var s = validees().filter(function (c) { return c.theme === t; }).length;
       return [t, n + ' cartes · ' + s + ' solides', t];
     }), function (t) { demarrer('theme', t, t); });
   }
 
+  /* Les catégories viennent du module de validation : une seule liste pour
+     l'écran de progression et pour le choix d'une session. */
   function choisirType() {
-    var types = [['date', 'Dates'], ['citation', 'Citations'], ['notion', 'Notions'],
-                 ['chiffre', 'Chiffres'], ['repere', 'Repères'], ['attribuee', 'Citations attribuées']];
-    listeChoix('Par type', types.map(function (t) {
-      var n = cartes.filter(function (c) {
-        return t[0] === 'attribuee' ? c.attribuee : c.type === t[0];
-      }).length;
-      return [t[1], n + ' cartes', t[0]];
-    }), function (t) { demarrer('type', t, 'Par type'); });
+    var entrees = V.CATEGORIES.map(function (cat) {
+      var n = cartesDe(cat.type).length;
+      var v = cartesDe(cat.type).filter(function (c) { return etat(c.id).boite >= 5; }).length;
+      return [cat.nom, v + ' validée(s) sur ' + n, cat.type];
+    });
+    entrees.push(['Citations attribuées',
+                  cartes.filter(function (c) { return c.attribuee; }).length + ' cartes',
+                  'attribuee']);
+    listeChoix('Par catégorie', entrees, function (t) {
+      demarrer('type', t, 'Par catégorie');
+    });
   }
 
-  /* ------------------------------------------------------- Mon arsenal */
+  function cartesDe(type) {
+    return cartes.filter(function (c) { return c.type === type; });
+  }
+
+  /* ----------------------------------------------------- Ma progression */
   function ecranArsenal() {
     var hote = vide(q('#sog-arsenal'));
-    hote.appendChild(el('h2', null, 'Mon arsenal'));
+    hote.appendChild(el('h2', null, 'Ma progression'));
     hote.appendChild(el('p', 'sog-sous',
-      'Le document conseille 5 à 8 références solides par thème. Une référence est ' +
-      'solide quand elle est en boîte 4 ou 5.'));
+      'Une carte est validée quand tu as écrit sa fiche entière, juste, deux fois ' +
+      'à plusieurs jours d’écart : la date, l’auteur, l’œuvre, la définition. ' +
+      'C’est le seul compteur qui dise ce que tu sauras poser dans une copie.'));
 
     var s = el('div', 'sog-grille-chiffres');
-    [[dues().length, 'à revoir aujourd’hui'], [nouvelles().length, 'jamais vues'],
-     [solides().length, 'maîtrisées'], [serie(), 'jours d’affilée']].forEach(function (p) {
+    [[dues().length, 'à revoir aujourd’hui'], [aValider().length, 'prêtes pour la fiche'],
+     [validees().length, 'validées'], [confirmees().length, 'confirmées'],
+     [serie(), 'jours d’affilée']].forEach(function (p) {
       var c = el('div', 'sog-chiffre');
       c.appendChild(el('b', null, String(p[0])));
       c.appendChild(el('span', null, p[1]));
@@ -1121,32 +1511,25 @@
     });
     hote.appendChild(s);
 
-    /* jauges par thème */
-    var bloc = el('div', 'sog-jauges');
-    bloc.appendChild(el('span', 'sog-etiquette', 'Références solides par thème — objectif 8'));
-    themes().forEach(function (t) {
-      var n = solides().filter(function (c) { return c.theme === t; }).length;
-      var l = el('div', 'sog-jauge');
-      l.appendChild(el('span', 'sog-jauge-nom', t));
-      var p = el('div', 'sog-jauge-piste');
-      var i = el('i');
-      i.style.width = Math.min(100, n / 8 * 100) + '%';
-      if (n >= 8) i.className = 'sog-plein';
-      p.appendChild(i);
-      l.appendChild(p);
-      l.appendChild(el('span', 'sog-jauge-val', n + ' / 8'));
-      bloc.appendChild(l);
-    });
-    hote.appendChild(bloc);
+    peindreCategories(hote);
+    peindreGrille(hote);
 
     /* courbe 30 jours */
     var cadre = el('div', 'sog-courbe');
-    cadre.appendChild(el('span', 'sog-etiquette', 'Cartes maîtrisées, 30 derniers jours'));
+    cadre.appendChild(el('span', 'sog-etiquette', 'Cartes validées, 30 derniers jours'));
     var toile = el('canvas');
     toile.width = 900; toile.height = 220;
     cadre.appendChild(toile);
     hote.appendChild(cadre);
     dessinerCourbe(toile);
+    /* Le compteur a changé de sens : avant la fiche écrite, il comptait les
+       cartes des boîtes 4 et 5, celles qu'on s'était notées soi-même. Une
+       courbe qui baisse à la date de cette mise à jour n'est pas une
+       régression, c'est le même savoir mesuré plus sévèrement. */
+    cadre.appendChild(el('p', 'sog-sous',
+      'Avant la validation écrite, ce compteur incluait les cartes auto-évaluées. ' +
+      'Une marche descendante sur la courbe vient de ce changement de mesure, ' +
+      'pas d’un oubli.'));
 
     /* les plus ratées */
     var pires = cartes.slice()
@@ -1171,6 +1554,125 @@
       { texte: 'Retour', fantome: true, action: ecranAccueil }
     ]);
     ecran('arsenal');
+  }
+
+  /* ------------------------------------------- les paliers par catégorie
+     Une ligne par famille de références : où on en est, ce qu'il faut savoir
+     écrire pour valider, et de combien de cartes on est loin du palier
+     suivant. Le compte brut est toujours à côté du nom du palier : un palier
+     qui cacherait son chiffre ne servirait qu'à se faire plaisir. */
+  function peindreCategories(hote) {
+    var bloc = el('div', 'sog-cats');
+    bloc.appendChild(el('span', 'sog-etiquette', 'Paliers par catégorie'));
+
+    V.CATEGORIES.forEach(function (cat) {
+      var lot = cartesDe(cat.type);
+      if (!lot.length) return;
+      var v = 0, pretes = 0, route = 0;
+      lot.forEach(function (c) {
+        var b = etat(c.id).boite || 0;
+        if (b >= 5) v++;
+        else if (b >= 3) pretes++;
+        else if (b >= 1) route++;
+      });
+      var p = V.palier(v, lot.length);
+
+      var ligne = el('div', 'sog-cat');
+      var tete = el('div', 'sog-cat-tete');
+      tete.appendChild(el('b', null, cat.nom));
+      tete.appendChild(el('span', 'sog-cat-palier',
+        'Palier ' + p.rang + '/' + p.haut + ' · ' + p.nom));
+      ligne.appendChild(tete);
+      ligne.appendChild(el('p', 'sog-cat-quoi', 'À écrire de mémoire : ' + cat.ecrire + '.'));
+
+      /* Une piste en trois parts : validé, prêt pour la fiche, commencé. */
+      var piste = el('div', 'sog-cat-piste');
+      [['sog-part-valide', v], ['sog-part-prete', pretes], ['sog-part-route', route]]
+        .forEach(function (part) {
+          if (!part[1]) return;
+          var i = el('i', part[0]);
+          i.style.width = (part[1] / lot.length * 100) + '%';
+          piste.appendChild(i);
+        });
+      ligne.appendChild(piste);
+
+      ligne.appendChild(el('p', 'sog-cat-chiffres',
+        v + ' validée(s) · ' + pretes + ' prête(s) pour la fiche · ' +
+        lot.length + ' en tout' +
+        (p.suivant ? ' · encore ' + p.suivant.manque + ' pour « ' + p.suivant.nom + ' »'
+                   : ' · rien ne manque')));
+
+      var boutons = [];
+      if (pretes) {
+        boutons.push({ texte: 'Valider', action: function () {
+          demarrer('valider', cat.type, 'Validation · ' + cat.nom);
+        } });
+      }
+      boutons.push({ texte: 'Réviser', fantome: !!pretes, action: function () {
+        demarrer('type', cat.type, cat.nom);
+      } });
+      actions(ligne, boutons);
+      bloc.appendChild(ligne);
+    });
+    hote.appendChild(bloc);
+  }
+
+  /* ------------------------------------- la grille thème × catégorie
+     C'est la réponse à « qu'est-ce que je sais vraiment ? ». Une case vide
+     dans une colonne dit exactement quoi travailler ensuite. La dernière
+     colonne reprend l'objectif du document : 5 à 8 références solides par
+     thème. */
+  function peindreGrille(hote) {
+    var bloc = el('div', 'sog-grille-themes');
+    bloc.appendChild(el('span', 'sog-etiquette', 'Validées par thème et par catégorie'));
+    bloc.appendChild(el('p', 'sog-sous',
+      'Chaque case : validées sur total. Le document conseille 5 à 8 références ' +
+      'solides par thème — c’est la dernière colonne.'));
+
+    var cadre = el('div', 'sog-table-cadre');
+    var table = el('table', 'sog-table');
+    var thead = el('thead');
+    var hr = el('tr');
+    hr.appendChild(el('th', 'sog-th-theme', 'Thème'));
+    V.CATEGORIES.forEach(function (cat) { hr.appendChild(el('th', null, cat.court)); });
+    hr.appendChild(el('th', 'sog-th-obj', 'Objectif'));
+    thead.appendChild(hr);
+    table.appendChild(thead);
+
+    var tbody = el('tbody');
+    themes().forEach(function (t) {
+      var duTheme = cartes.filter(function (c) { return c.theme === t; });
+      var tr = el('tr');
+      tr.appendChild(el('th', 'sog-th-theme', t));
+      V.CATEGORIES.forEach(function (cat) {
+        var lot = duTheme.filter(function (c) { return c.type === cat.type; });
+        var v = lot.filter(function (c) { return (etat(c.id).boite || 0) >= 5; }).length;
+        var td = el('td');
+        if (!lot.length) {
+          td.className = 'sog-c-vide';
+          td.textContent = '—';
+          td.setAttribute('aria-label', 'aucune carte');
+        } else {
+          td.className = v === lot.length ? 'sog-c-plein' : v ? 'sog-c-part' : 'sog-c-zero';
+          td.appendChild(el('b', null, String(v)));
+          td.appendChild(el('span', null, '/' + lot.length));
+          td.setAttribute('aria-label', v + ' validée(s) sur ' + lot.length +
+                                        ' — ' + cat.nom + ', ' + t);
+        }
+        tr.appendChild(td);
+      });
+      var vTheme = duTheme.filter(function (c) { return (etat(c.id).boite || 0) >= 5; }).length;
+      var objectif = Math.min(8, duTheme.length);
+      var tdo = el('td', vTheme >= objectif ? 'sog-c-plein' : vTheme ? 'sog-c-part' : 'sog-c-zero');
+      tdo.appendChild(el('b', null, String(vTheme)));
+      tdo.appendChild(el('span', null, '/' + objectif));
+      tr.appendChild(tdo);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    cadre.appendChild(table);
+    bloc.appendChild(cadre);
+    hote.appendChild(bloc);
   }
 
   function dessinerCourbe(toile) {
@@ -1500,8 +2002,10 @@
      cartes à tout le monde. Rien d'autre n'est exposé : la révision espacée,
      le journal et les réglages restent privés et personnels.
 
-     La progression reste individuelle même en défi — réviser à plusieurs ne
-     doit pas fausser ses propres boîtes de révision. */
+     Un défi ne touche à aucune boîte, désormais pour de bon : il impose la
+     même question à tout le monde, donc un format qui ne tient pas compte de
+     l'étage où chacun en est. Le compter serait faire monter ou tomber des
+     cartes sur un exercice qui n'était pas le leur. */
   global.TZ_SOG = {
     nbCartes: function () { return cartes.length; },
 
@@ -1519,7 +2023,12 @@
       var lot = (ids || []).map(function (id) { return parIdentifiant[id]; })
                            .filter(Boolean);
       if (!lot.length) return false;
-      lancerLot(lot, titre || 'Défi', surFin);
+      /* Tout le monde la même question, et rien d'écrit dans les boîtes.
+         Sans format imposé, le salon aurait posé un QCM à l'un, une fiche de
+         quatre champs à l'autre et une simple lecture au troisième, selon
+         l'étage où chacun en est : ce n'est pas une course comparable. Le QCM
+         est le format d'une course ; la validation, elle, se joue en solo. */
+      lancerLot(lot, titre || 'Défi', surFin, { defi: true, format: 'qcm' });
       return true;
     },
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Culture SOG — Zone d’entraînement</title>
-<meta name="description" content="Révision espacée des dates, citations, notions et chiffres de culture générale pour le concours de sous-officier de gendarmerie. Solo, hors ligne.">
+<meta name="description" content="Révision espacée et validation écrite des dates, citations, auteurs, notions et chiffres de culture générale pour le concours de sous-officier de gendarmerie. Solo, hors ligne.">
 <meta name="robots" content="noindex, follow">
 <meta name="theme-color" content="#F5A623">
 <link rel="icon" href="icones/icone-192.png" type="image/png">
@@ -33,9 +33,10 @@
   Culture SOG — page autonome du module de révision.
 
   Elle ne charge que trois choses propres au module :
-      training/tz-sog-data.js   les cartes, produites depuis culture-sog.md
-      training/tz-sog.js        le moteur (boîtes de Leitner, sessions, écrans)
-      training/tz-sog.css       l'habillage
+      training/tz-sog-data.js     les cartes, produites depuis culture-sog.md
+      training/tz-sog-valider.js  les fiches de validation et leur notation
+      training/tz-sog.js          le moteur (boîtes de Leitner, sessions, écrans)
+      training/tz-sog.css         l'habillage
 
   training/style.css n'est lu que pour les jetons de couleur et de typographie,
   afin de rester dans l'identité de la Zone d'entraînement.
@@ -56,8 +57,10 @@
   <!-- ====================================================== ACCUEIL -->
   <section id="sog-ecran-accueil" class="sog-ecran">
     <p class="sog-sous">
-      Révision espacée des dates, citations, notions et chiffres du document
-      « Culture générale SOG ». Les cartes que tu rates reviennent plus souvent.
+      Dates, citations, auteurs, notions et chiffres du document « Culture
+      générale SOG ». Les cartes que tu rates reviennent plus souvent, et une
+      carte n’est validée que le jour où tu sais écrire sa fiche de mémoire :
+      la date, l’auteur, l’œuvre, la définition.
       Rien ici ne touche au quiz ni aux épreuves cognitives.
     </p>
     <div id="sog-accueil"></div>
@@ -123,6 +126,8 @@
 </div>
 
 <script src="training/tz-sog-data.js"></script>
+<!-- Avant le moteur : il lui emprunte ses outils de comparaison de texte. -->
+<script src="training/tz-sog-valider.js"></script>
 <script src="training/tz-sog.js"></script>
 <!-- Multijoueur : salons à code, même protocole que le jeu. Supprimer cette
      ligne laisse la page strictement solo. -->

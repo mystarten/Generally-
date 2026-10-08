@@ -102,6 +102,102 @@ function auteurAttribue(cellule) {
   return m ? m[1].trim() : null;
 }
 
+/* ------------------------------------------- l'auteur, l'œuvre et l'année
+   Le document écrit ses sources d'une seule façon : « Nom, Œuvre (année) »,
+   l'œuvre et l'année étant facultatives. On en tire trois champs séparés,
+   parce que la fiche de validation demande l'auteur ET l'année ET l'œuvre,
+   et qu'on ne peut pas demander un champ qu'on n'a pas isolé.
+
+   La règle d'or du script vaut ici aussi : rien n'est deviné. Un segment qui
+   ne ressemble pas à ce qu'il devrait être reste vide, et la fiche ne le
+   demande alors pas. Une fiche courte vaut mieux qu'une fiche fausse. */
+const RE_PREFIXE_ATTRIBUEE = /^(?:(?:phrase|formule|citation)\s+)?attribu[ée]e?\s+à\s+/i;
+/* Mots qui trahissent une parenthèse de commentaire plutôt que de datation :
+   « (version populaire d'une phrase de 1755) » parle d'une autre phrase que
+   celle de la carte — son année n'est pas celle de la citation. */
+const RE_GLOSE = /\b(?:version|variante|variantes|r[ée]sum[ée]|reprise|reprises|formule|loi|phrase|d'une|sans source)\b/i;
+
+function anneesDe(texte) {
+  const vues = [];
+  String(texte || '').replace(/\b(1[2-9]\d{2}|20\d{2})\b/g, function (m, a) {
+    const n = parseInt(a, 10);
+    if (vues.indexOf(n) < 0) vues.push(n);
+    return m;
+  });
+  return vues;
+}
+
+/* Un nom d'auteur : court, sans ponctuation de phrase, et capitalisé. */
+function nomPlausible(s) {
+  if (!s || s.length < 3 || s.length > 40) return false;
+  if (/[:;«»]/.test(s)) return false;
+  if (s.split(/\s+/).length > 5) return false;
+  return /^[A-ZÀ-ÖØ-Þ]/.test(s);
+}
+/* Un titre d'œuvre porte une majuscule dans le document ; un segment qui
+   commence en minuscule est un contexte (« discours d'investiture », « appel
+   du 18 juin 1940 »), pas un titre. On ne le demandera donc pas. */
+function oeuvrePlausible(s) {
+  if (!s || s.length < 2 || s.length > 70) return false;
+  if (/[:;]/.test(s)) return false;
+  if (/^\d{4}$/.test(s)) return true;              /* « 1984 », d'Orwell */
+  return /^[A-ZÀ-ÖØ-Þ]/.test(s);
+}
+
+function analyserSource(brut, auteurCourt) {
+  const t = String(brut || '').trim();
+  const src = { brut: t, nom: null, oeuvre: null, annee: null, annees: [], periode: null };
+  if (!t) return src;
+
+  /* Les années se prennent hors parenthèses, et dans les parenthèses qui
+     datent au lieu de commenter. */
+  let horsPar = t, periode = null;
+  t.replace(/\(([^)]{1,60})\)/g, function (tout, dedans) {
+    horsPar = horsPar.replace(tout, ' ');
+    const a = anneesDe(dedans);
+    if (a.length && !RE_GLOSE.test(dedans)) src.annees = src.annees.concat(a);
+    else if (!a.length && !periode && dedans.length <= 40 && !RE_GLOSE.test(dedans)) periode = dedans.trim();
+    return tout;
+  });
+  src.periode = periode;
+  anneesDe(horsPar).forEach(function (a) { if (src.annees.indexOf(a) < 0) src.annees.push(a); });
+  src.annees.sort(function (x, y) { return x - y; });
+  src.annee = src.annees.length ? src.annees[0] : null;
+
+  /* le nom : tout ce qui précède la première virgule ou parenthèse */
+  let tete = t.replace(RE_PREFIXE_ATTRIBUEE, '');
+  const coupe = tete.search(/[,(]/);
+  if (coupe >= 0) tete = tete.slice(0, coupe);
+  tete = tete.replace(/[.\s]+$/, '').trim();
+  if (auteurCourt) src.nom = auteurCourt;          /* déjà isolé par la ligne */
+  else if (nomPlausible(tete)) src.nom = tete;
+
+  /* l'œuvre : entre la première virgule et la parenthèse ou la fin */
+  const vir = t.indexOf(',');
+  if (vir >= 0) {
+    let reste = t.slice(vir + 1);
+    const p = reste.indexOf('(');
+    if (p >= 0) reste = reste.slice(0, p);
+    reste = reste.replace(/[.,;]\s*$/, '').trim();
+    if (oeuvrePlausible(reste)) src.oeuvre = reste;
+  }
+
+  /* « George Orwell, 1984 (1949) » : le titre est un nombre à quatre chiffres,
+     et il s'était glissé parmi les années acceptées. Accepter 1984 comme date
+     de la citation, c'est valider une réponse fausse. */
+  if (src.oeuvre && /^\d{4}$/.test(src.oeuvre)) {
+    const titre = parseInt(src.oeuvre, 10);
+    src.annees = src.annees.filter(function (a) { return a !== titre; });
+    src.annee = src.annees.length ? src.annees[0] : null;
+  }
+
+  /* L'année telle qu'on l'écrit dans une copie : « 1748 », « 1835-1840 ». */
+  src.anneeTexte = src.annees.length === 0 ? null
+    : src.annees.length === 2 ? src.annees.join('-')
+    : src.annees.join(' / ');
+  return src;
+}
+
 /* Un trou dans une phrase : on retire le mot le plus long, qui est aussi le
    plus porteur de sens. Le mot vient de la phrase, rien n'est inventé. */
 function creuser(phrase) {
@@ -227,7 +323,7 @@ function traiterRang(entete, cellules) {
   if (e0 === 'date' && /evenement/.test(normaliser(entete[1]))) return carteDate(a, b, tags);
 
   /* Penseur | Idée clé... | À placer dans */
-  if (e0 === 'penseur') return carteNotion(a, b, tags, 'Idée clé de : ');
+  if (e0 === 'penseur') return cartePenseur(a, b, tags);
 
   /* Domaine | Chiffre (ordre de grandeur) | À placer dans */
   if (e0 === 'domaine' && /chiffre/.test(normaliser(entete[1]))) return carteChiffre(a, b, tags);
@@ -291,6 +387,8 @@ function carteCitation(citation, source, tags, contexte) {
       citation: texte,
       auteur: source,
       auteurCourt: auteur,
+      /* les trois champs que la fiche de validation demandera séparément */
+      source: analyserSource(source, auteur),
       trou: creuser(texte)
     },
     tags, attribuee, volatile: false, priorite: prioriteCourante
@@ -309,6 +407,38 @@ function carteNotion(terme, definition, tags, amorce) {
       valeur: definition
     },
     tags, attribuee: RE_ATTRIBUEE.test(definition), volatile: false, priorite: prioriteCourante
+  });
+}
+
+/* Les penseurs : « Montesquieu, De l'esprit des lois (1748) | idée clé ».
+   C'était une notion comme une autre ; c'est devenu un type à part, parce que
+   dans une copie un penseur se cite avec son œuvre et sa date, et que c'est
+   exactement ce que la fiche de validation réclame.
+
+   L'identifiant garde la graine « notion » : le type change, pas la carte, et
+   la progression déjà acquise sur ces dix-sept cartes survit au changement. */
+function cartePenseur(penseur, idee, tags) {
+  if (!penseur || !idee) { douter(penseur + ' | ' + idee, 'Penseur sans nom ou sans idée :'); return; }
+  const src = analyserSource(penseur, null);
+  /* La question ne nomme que l'auteur : afficher « Montesquieu, De l'esprit
+     des lois (1748) » donnerait l'œuvre et l'année que la fiche demande. */
+  const appel = src.nom || penseur;
+  pousser({
+    id: identifiant('notion', penseur, idee),
+    type: 'penseur', theme, section,
+    contenu: {
+      question: 'Quelle est l’idée clé de ' + appel + ' ?',
+      reponse: idee,
+      cle: penseur,
+      valeur: idee,
+      source: src,
+      /* l'autre sens, celui d'une copie : on a l'idée, il faut le nom */
+      inverse: src.nom
+        ? { question: 'Quel penseur défend cette idée : ' + idee, reponse: src.nom }
+        : null,
+      annee: src.annee
+    },
+    tags, attribuee: RE_ATTRIBUEE.test(idee), volatile: false, priorite: prioriteCourante
   });
 }
 
@@ -456,6 +586,34 @@ melange.slice(0, 10).forEach((c, k) => {
   if (c.tags.length) console.log('    À placer dans : ' + c.tags.join(', '));
   console.log('');
 });
+
+/* ------------------------------------------- l'audit des sources découpées
+   La fiche de validation demande l'auteur, l'œuvre et l'année ; elle ne peut
+   demander que ce qui a été isolé. Ce tableau est là pour être relu à l'œil :
+   une ligne où le nom ou l'œuvre est faux se corrige dans culture-sog.md,
+   pas dans le code. « — » signifie « non isolé, donc non demandé ». */
+if (process.argv.indexOf('--sources') >= 0) {
+  console.log('\nSources découpées (auteur · œuvre · année)\n');
+  cartes.filter(c => c.contenu.source).forEach((c, k) => {
+    const s = c.contenu.source;
+    console.log(' ' + String(k + 1).padStart(3) + '. ' + s.brut);
+    console.log('      nom    : ' + (s.nom || '—'));
+    console.log('      œuvre  : ' + (s.oeuvre || '—'));
+    console.log('      année  : ' + (s.annees.length ? s.annees.join(' / ') : '—') +
+                (s.periode ? '   (période : ' + s.periode + ')' : ''));
+  });
+}
+const avecSource = cartes.filter(c => c.contenu.source);
+const sansNom = avecSource.filter(c => !c.contenu.source.nom);
+console.log('\n' + avecSource.length + ' cartes à source (citations et penseurs) : ' +
+            avecSource.filter(c => c.contenu.source.nom).length + ' avec auteur isolé, ' +
+            avecSource.filter(c => c.contenu.source.oeuvre).length + ' avec œuvre, ' +
+            avecSource.filter(c => c.contenu.source.annee).length + ' avec année.');
+if (sansNom.length) {
+  console.log('Sans auteur isolé (la fiche demandera la source entière) :');
+  sansNom.forEach(c => console.log('   ' + c.contenu.source.brut));
+}
+console.log('Relis le découpage avec : node scripts/build-sog-data.js --sources');
 
 console.log(doutes.length
   ? doutes.length + ' ligne(s) à vérifier : voir sog-a-verifier.txt'

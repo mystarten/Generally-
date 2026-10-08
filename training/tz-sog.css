@@ -134,14 +134,11 @@
 .sog-chiffre b{display:block;font-family:var(--tz-titre);font-size:2rem;line-height:1.1}
 .sog-chiffre span{font-size:.82rem;color:var(--tz-txt-2)}
 
-.sog-jauges,.sog-courbe,.sog-liste,.sog-bloc{background:var(--tz-creux);
+/* Les jauges par thème ont laissé la place à la grille thème x categorie :
+   elle dit la meme chose par categorie, ce que les jauges ne savaient pas
+   faire. Leurs regles sont parties avec elles. */
+.sog-cats,.sog-grille-themes,.sog-courbe,.sog-liste,.sog-bloc{background:var(--tz-creux);
   border-radius:var(--tz-r);padding:18px 20px;margin-bottom:16px}
-.sog-jauge{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-.sog-jauge-nom{flex:0 0 220px;font-size:.9rem}
-.sog-jauge-piste{flex:1;height:9px;background:var(--tz-bord);border-radius:99px;overflow:hidden}
-.sog-jauge-piste i{display:block;height:100%;background:var(--tz-ac);border-radius:99px}
-.sog-jauge-piste i.sog-plein{background:var(--tz-ok)}
-.sog-jauge-val{flex:0 0 52px;text-align:right;font-size:.85rem;color:var(--tz-txt-2)}
 .sog-courbe canvas{width:100%;height:auto;display:block}
 
 .sog-ligne{display:flex;gap:10px;align-items:center;padding:8px 0;
@@ -191,3 +188,95 @@
 .sog-indice{margin:0;padding:10px 14px;border-radius:var(--tz-r-s);
   background:var(--tz-ac-pale);color:var(--tz-txt);font-size:.93rem;
   border-left:3px solid var(--tz-ac)}
+
+/* ======================================================= validation écrite
+   La fiche est le seul endroit du module où l'on écrit plusieurs choses à la
+   suite. Elle doit se lire comme un formulaire d'examen : un champ par ligne,
+   son intitulé au-dessus, rien autour. */
+.sog-bloc-valider{background:var(--tz-carte);border-radius:var(--tz-r-l);
+  padding:26px;margin-bottom:18px;box-shadow:0 2px 0 var(--tz-bord);
+  border-left:4px solid var(--tz-savoirs)}
+.sog-bloc-valider h2{font-size:1.45rem}
+
+.sog-champ{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.sog-champ-nom{font-size:.88rem;font-weight:700;color:var(--tz-txt-2)}
+.sog-champ-aide{font-size:.8rem;color:var(--tz-txt-3)}
+.sog-saisie.sog-court{max-width:340px}
+
+/* ------------------------------------------------- correction de la fiche
+   Vert, orange, rouge par champ : on voit d'un coup d'œil ce qui est acquis
+   et ce qui manquait, sans lire. Le trait de gauche porte la couleur, le fond
+   reste calme — quatre blocs pleins de couleur seraient illisibles. */
+.sog-corr{display:flex;flex-direction:column;gap:9px;margin-bottom:14px}
+.sog-corr-ligne{display:flex;gap:14px;align-items:baseline;
+  background:var(--tz-creux);border-radius:var(--tz-r-s);
+  padding:11px 14px;border-left:3px solid var(--tz-bord)}
+.sog-corr-juste{border-left-color:var(--tz-ok);background:var(--tz-ok-pale)}
+.sog-corr-presque{border-left-color:var(--tz-ac);background:var(--tz-ac-pale)}
+.sog-corr-rate{border-left-color:var(--tz-ko);background:var(--tz-ko-pale)}
+.sog-corr-label{flex:0 0 150px;font-size:.84rem;font-weight:700;color:var(--tz-txt-2)}
+.sog-corr-val{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
+.sog-corr-ok,.sog-corr-bonne{font-size:.98rem;overflow-wrap:break-word}
+.sog-corr-bonne{font-weight:700}
+.sog-corr-ecrit{font-size:.85rem;color:var(--tz-txt-2);font-style:italic}
+.sog-corr-detail{font-size:.84rem;color:var(--tz-txt-2)}
+
+/* La ligne à recopier dans une copie : c'est le produit fini, elle se
+   distingue du reste de la correction. */
+.sog-copie{background:var(--tz-ac-pale);border-radius:var(--tz-r-s);
+  padding:13px 16px;margin-top:12px}
+.sog-copie .sog-etiquette{margin-bottom:5px}
+.sog-copie-txt{margin:0;font-size:1rem;line-height:1.5}
+
+.sog-etat-carte{margin:0 0 12px;font-size:.85rem;color:var(--tz-txt-2)}
+.sog-bilan-fiches{margin:0 0 10px;font-weight:700;color:var(--tz-savoirs)}
+
+/* ====================================================== paliers et grille */
+.sog-cat{background:var(--tz-carte);border-radius:var(--tz-r);
+  padding:15px 18px;margin-bottom:11px;box-shadow:0 1px 0 var(--tz-bord)}
+.sog-cat-tete{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.sog-cat-tete b{font-family:var(--tz-titre);font-size:1.08rem}
+.sog-cat-palier{margin-left:auto;font-size:.82rem;font-weight:700;
+  color:var(--tz-savoirs);white-space:nowrap}
+.sog-cat-quoi{margin:4px 0 10px;font-size:.85rem;color:var(--tz-txt-2)}
+.sog-cat-piste{display:flex;height:10px;background:var(--tz-bord);
+  border-radius:99px;overflow:hidden}
+.sog-cat-piste i{display:block;height:100%}
+.sog-part-valide{background:var(--tz-ok)}
+.sog-part-prete{background:var(--tz-ac)}
+.sog-part-route{background:var(--tz-txt-3)}
+.sog-cat-chiffres{margin:8px 0 0;font-size:.85rem;color:var(--tz-txt-2)}
+.sog-cat .sog-rangee{margin-top:11px}
+.sog-cat .sog-btn{font-size:.88rem;padding:9px 17px}
+
+/* La grille déborde sur un téléphone : elle défile horizontalement plutôt
+   que de rapetisser jusqu'à l'illisible. La colonne de thèmes reste visible,
+   sinon on ne sait plus quelle ligne on lit. */
+.sog-table-cadre{overflow-x:auto;margin-top:12px;
+  -webkit-overflow-scrolling:touch}
+.sog-table{border-collapse:collapse;font-size:.85rem;min-width:100%}
+.sog-table th,.sog-table td{padding:7px 9px;text-align:center;
+  border-bottom:1px solid var(--tz-bord);white-space:nowrap}
+.sog-table thead th{font-size:.74rem;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--tz-txt-3);font-weight:700}
+.sog-table .sog-th-theme{text-align:left;position:sticky;left:0;
+  background:var(--tz-creux);font-weight:600;color:var(--tz-txt);
+  min-width:118px;max-width:180px;white-space:normal}
+.sog-table .sog-th-obj{color:var(--tz-savoirs)}
+.sog-table td b{font-family:var(--tz-titre);font-size:1rem}
+.sog-table td span{color:var(--tz-txt-3);font-size:.78rem}
+.sog-c-vide{color:var(--tz-txt-3)}
+.sog-c-zero b{color:var(--tz-txt-3)}
+.sog-c-part b{color:var(--tz-ac-b)}
+.sog-c-plein b{color:var(--tz-ok)}
+
+@media (max-width:620px){
+  .sog-corr-ligne{flex-direction:column;gap:4px}
+  .sog-corr-label{flex:none}
+  .sog-cat-palier{margin-left:0}
+}
+
+/* L'avis de reprise, affiché une fois : il doit se voir sans alarmer. */
+.sog-avis{background:var(--tz-ac-pale);border-left:4px solid var(--tz-ac);
+  border-radius:var(--tz-r-s);padding:15px 18px;margin-bottom:18px}
+.sog-avis p{margin:0 0 10px;font-size:.92rem;line-height:1.5}

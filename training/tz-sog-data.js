@@ -11,7 +11,7 @@
    ============================================================================= */
 window.TZ_SOG_DATA = {
  "source": "culture-sog.md",
- "genere": "2026-10-06",
+ "genere": "2026-10-08",
  "methode": {
   "regles": [
    "Une référence sert un argument, jamais l'inverse. Ne cite pas Montesquieu pour montrer que tu le connais : cite-le parce qu'il prouve ce que tu dis.",
@@ -2158,14 +2158,28 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "68bf1e7a30",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Aristote (IVᵉ s. av. J.-C.) ?",
+    "question": "Quelle est l’idée clé de Aristote ?",
     "reponse": "« L'homme est un animal politique » : il ne s'accomplit qu'en société",
     "cle": "Aristote (IVᵉ s. av. J.-C.)",
-    "valeur": "« L'homme est un animal politique » : il ne s'accomplit qu'en société"
+    "valeur": "« L'homme est un animal politique » : il ne s'accomplit qu'en société",
+    "source": {
+     "brut": "Aristote (IVᵉ s. av. J.-C.)",
+     "nom": "Aristote",
+     "oeuvre": null,
+     "annee": null,
+     "annees": [],
+     "periode": "IVᵉ s. av. J.-C.",
+     "anneeTexte": null
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : « L'homme est un animal politique » : il ne s'accomplit qu'en société",
+     "reponse": "Aristote"
+    },
+    "annee": null
    },
    "tags": [
     "Engagement",
@@ -2179,14 +2193,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "b456239f90",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Hobbes, Léviathan (1651) ?",
+    "question": "Quelle est l’idée clé de Hobbes ?",
     "reponse": "Sans État, c'est « la guerre de chacun contre chacun » ; les hommes acceptent un pouvoir fort pour leur sécurité. On lui associe « L'homme est un loup pour l'homme » (formule reprise de l'auteur latin Plaute)",
     "cle": "Hobbes, Léviathan (1651)",
-    "valeur": "Sans État, c'est « la guerre de chacun contre chacun » ; les hommes acceptent un pouvoir fort pour leur sécurité. On lui associe « L'homme est un loup pour l'homme » (formule reprise de l'auteur latin Plaute)"
+    "valeur": "Sans État, c'est « la guerre de chacun contre chacun » ; les hommes acceptent un pouvoir fort pour leur sécurité. On lui associe « L'homme est un loup pour l'homme » (formule reprise de l'auteur latin Plaute)",
+    "source": {
+     "brut": "Hobbes, Léviathan (1651)",
+     "nom": "Hobbes",
+     "oeuvre": "Léviathan",
+     "annee": 1651,
+     "annees": [
+      1651
+     ],
+     "periode": null,
+     "anneeTexte": "1651"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : Sans État, c'est « la guerre de chacun contre chacun » ; les hommes acceptent un pouvoir fort pour leur sécurité. On lui associe « L'homme est un loup pour l'homme » (formule reprise de l'auteur latin Plaute)",
+     "reponse": "Hobbes"
+    },
+    "annee": 1651
    },
    "tags": [
     "Sécurité",
@@ -2199,14 +2229,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "fc0c63cdd2",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Locke (1690) ?",
+    "question": "Quelle est l’idée clé de Locke ?",
     "reponse": "L'État existe pour protéger les droits naturels : la vie, la liberté, la propriété",
     "cle": "Locke (1690)",
-    "valeur": "L'État existe pour protéger les droits naturels : la vie, la liberté, la propriété"
+    "valeur": "L'État existe pour protéger les droits naturels : la vie, la liberté, la propriété",
+    "source": {
+     "brut": "Locke (1690)",
+     "nom": "Locke",
+     "oeuvre": null,
+     "annee": 1690,
+     "annees": [
+      1690
+     ],
+     "periode": null,
+     "anneeTexte": "1690"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : L'État existe pour protéger les droits naturels : la vie, la liberté, la propriété",
+     "reponse": "Locke"
+    },
+    "annee": 1690
    },
    "tags": [
     "Libertés",
@@ -2219,14 +2265,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "af2ee6df28",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Montesquieu, De l'esprit des lois (1748) ?",
+    "question": "Quelle est l’idée clé de Montesquieu ?",
     "reponse": "« Pour qu'on ne puisse abuser du pouvoir, il faut que, par la disposition des choses, le pouvoir arrête le pouvoir. » La séparation des pouvoirs",
     "cle": "Montesquieu, De l'esprit des lois (1748)",
-    "valeur": "« Pour qu'on ne puisse abuser du pouvoir, il faut que, par la disposition des choses, le pouvoir arrête le pouvoir. » La séparation des pouvoirs"
+    "valeur": "« Pour qu'on ne puisse abuser du pouvoir, il faut que, par la disposition des choses, le pouvoir arrête le pouvoir. » La séparation des pouvoirs",
+    "source": {
+     "brut": "Montesquieu, De l'esprit des lois (1748)",
+     "nom": "Montesquieu",
+     "oeuvre": "De l'esprit des lois",
+     "annee": 1748,
+     "annees": [
+      1748
+     ],
+     "periode": null,
+     "anneeTexte": "1748"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : « Pour qu'on ne puisse abuser du pouvoir, il faut que, par la disposition des choses, le pouvoir arrête le pouvoir. » La séparation des pouvoirs",
+     "reponse": "Montesquieu"
+    },
+    "annee": 1748
    },
    "tags": [
     "Démocratie",
@@ -2240,14 +2302,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "79add11f4d",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Rousseau, Du contrat social (1762) ?",
+    "question": "Quelle est l’idée clé de Rousseau ?",
     "reponse": "« L'homme est né libre, et partout il est dans les fers. » Et : « L'obéissance à la loi qu'on s'est prescrite est liberté. »",
     "cle": "Rousseau, Du contrat social (1762)",
-    "valeur": "« L'homme est né libre, et partout il est dans les fers. » Et : « L'obéissance à la loi qu'on s'est prescrite est liberté. »"
+    "valeur": "« L'homme est né libre, et partout il est dans les fers. » Et : « L'obéissance à la loi qu'on s'est prescrite est liberté. »",
+    "source": {
+     "brut": "Rousseau, Du contrat social (1762)",
+     "nom": "Rousseau",
+     "oeuvre": "Du contrat social",
+     "annee": 1762,
+     "annees": [
+      1762
+     ],
+     "periode": null,
+     "anneeTexte": "1762"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : « L'homme est né libre, et partout il est dans les fers. » Et : « L'obéissance à la loi qu'on s'est prescrite est liberté. »",
+     "reponse": "Rousseau"
+    },
+    "annee": 1762
    },
    "tags": [
     "Liberté",
@@ -2261,14 +2339,28 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "1999743d7c",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Voltaire ?",
+    "question": "Quelle est l’idée clé de Voltaire ?",
     "reponse": "Combat pour la tolérance (Traité sur la tolérance, 1763, après l'affaire Calas). Attention : « Je ne suis pas d'accord avec ce que vous dites, mais je me battrai… » est une phrase attribuée, écrite en réalité par sa biographe Evelyn Beatrice Hall en 1906",
     "cle": "Voltaire",
-    "valeur": "Combat pour la tolérance (Traité sur la tolérance, 1763, après l'affaire Calas). Attention : « Je ne suis pas d'accord avec ce que vous dites, mais je me battrai… » est une phrase attribuée, écrite en réalité par sa biographe Evelyn Beatrice Hall en 1906"
+    "valeur": "Combat pour la tolérance (Traité sur la tolérance, 1763, après l'affaire Calas). Attention : « Je ne suis pas d'accord avec ce que vous dites, mais je me battrai… » est une phrase attribuée, écrite en réalité par sa biographe Evelyn Beatrice Hall en 1906",
+    "source": {
+     "brut": "Voltaire",
+     "nom": "Voltaire",
+     "oeuvre": null,
+     "annee": null,
+     "annees": [],
+     "periode": null,
+     "anneeTexte": null
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : Combat pour la tolérance (Traité sur la tolérance, 1763, après l'affaire Calas). Attention : « Je ne suis pas d'accord avec ce que vous dites, mais je me battrai… » est une phrase attribuée, écrite en réalité par sa biographe Evelyn Beatrice Hall en 1906",
+     "reponse": "Voltaire"
+    },
+    "annee": null
    },
    "tags": [
     "Tolérance",
@@ -2281,14 +2373,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "b3b765dc08",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Kant, Qu'est-ce que les Lumières ? (1784) ?",
+    "question": "Quelle est l’idée clé de Kant ?",
     "reponse": "« Sapere aude ! Aie le courage de te servir de ton propre entendement. »",
     "cle": "Kant, Qu'est-ce que les Lumières ? (1784)",
-    "valeur": "« Sapere aude ! Aie le courage de te servir de ton propre entendement. »"
+    "valeur": "« Sapere aude ! Aie le courage de te servir de ton propre entendement. »",
+    "source": {
+     "brut": "Kant, Qu'est-ce que les Lumières ? (1784)",
+     "nom": "Kant",
+     "oeuvre": "Qu'est-ce que les Lumières ?",
+     "annee": 1784,
+     "annees": [
+      1784
+     ],
+     "periode": null,
+     "anneeTexte": "1784"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : « Sapere aude ! Aie le courage de te servir de ton propre entendement. »",
+     "reponse": "Kant"
+    },
+    "annee": 1784
    },
    "tags": [
     "Éducation",
@@ -2302,14 +2410,31 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "0e2c577d41",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Tocqueville, De la démocratie en Amérique (1835-1840) ?",
+    "question": "Quelle est l’idée clé de Tocqueville ?",
     "reponse": "Met en garde contre la « tyrannie de la majorité » et l'individualisme qui détourne les citoyens de la vie publique",
     "cle": "Tocqueville, De la démocratie en Amérique (1835-1840)",
-    "valeur": "Met en garde contre la « tyrannie de la majorité » et l'individualisme qui détourne les citoyens de la vie publique"
+    "valeur": "Met en garde contre la « tyrannie de la majorité » et l'individualisme qui détourne les citoyens de la vie publique",
+    "source": {
+     "brut": "Tocqueville, De la démocratie en Amérique (1835-1840)",
+     "nom": "Tocqueville",
+     "oeuvre": "De la démocratie en Amérique",
+     "annee": 1835,
+     "annees": [
+      1835,
+      1840
+     ],
+     "periode": null,
+     "anneeTexte": "1835-1840"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : Met en garde contre la « tyrannie de la majorité » et l'individualisme qui détourne les citoyens de la vie publique",
+     "reponse": "Tocqueville"
+    },
+    "annee": 1835
    },
    "tags": [
     "Démocratie",
@@ -2323,14 +2448,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "acad288334",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Renan, Qu'est-ce qu'une nation ? (1882) ?",
+    "question": "Quelle est l’idée clé de Renan ?",
     "reponse": "La nation est « un plébiscite de tous les jours » : une volonté de vivre ensemble, pas une race ou une langue",
     "cle": "Renan, Qu'est-ce qu'une nation ? (1882)",
-    "valeur": "La nation est « un plébiscite de tous les jours » : une volonté de vivre ensemble, pas une race ou une langue"
+    "valeur": "La nation est « un plébiscite de tous les jours » : une volonté de vivre ensemble, pas une race ou une langue",
+    "source": {
+     "brut": "Renan, Qu'est-ce qu'une nation ? (1882)",
+     "nom": "Renan",
+     "oeuvre": "Qu'est-ce qu'une nation ?",
+     "annee": 1882,
+     "annees": [
+      1882
+     ],
+     "periode": null,
+     "anneeTexte": "1882"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : La nation est « un plébiscite de tous les jours » : une volonté de vivre ensemble, pas une race ou une langue",
+     "reponse": "Renan"
+    },
+    "annee": 1882
    },
    "tags": [
     "Nation",
@@ -2344,14 +2485,28 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "715ef7eb8d",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Durkheim (fin XIXᵉ s.) ?",
+    "question": "Quelle est l’idée clé de Durkheim ?",
     "reponse": "L'anomie : quand les règles sociales s'affaiblissent, les individus perdent leurs repères",
     "cle": "Durkheim (fin XIXᵉ s.)",
-    "valeur": "L'anomie : quand les règles sociales s'affaiblissent, les individus perdent leurs repères"
+    "valeur": "L'anomie : quand les règles sociales s'affaiblissent, les individus perdent leurs repères",
+    "source": {
+     "brut": "Durkheim (fin XIXᵉ s.)",
+     "nom": "Durkheim",
+     "oeuvre": null,
+     "annee": null,
+     "annees": [],
+     "periode": "fin XIXᵉ s.",
+     "anneeTexte": null
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : L'anomie : quand les règles sociales s'affaiblissent, les individus perdent leurs repères",
+     "reponse": "Durkheim"
+    },
+    "annee": null
    },
    "tags": [
     "Crise de l'autorité",
@@ -2364,14 +2519,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "65b02b277c",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Max Weber, Le Savant et le Politique (1919) ?",
+    "question": "Quelle est l’idée clé de Max Weber ?",
     "reponse": "L'État a le « monopole de la violence physique légitime »",
     "cle": "Max Weber, Le Savant et le Politique (1919)",
-    "valeur": "L'État a le « monopole de la violence physique légitime »"
+    "valeur": "L'État a le « monopole de la violence physique légitime »",
+    "source": {
+     "brut": "Max Weber, Le Savant et le Politique (1919)",
+     "nom": "Max Weber",
+     "oeuvre": "Le Savant et le Politique",
+     "annee": 1919,
+     "annees": [
+      1919
+     ],
+     "periode": null,
+     "anneeTexte": "1919"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : L'État a le « monopole de la violence physique légitime »",
+     "reponse": "Max Weber"
+    },
+    "annee": 1919
    },
    "tags": [
     "Sécurité",
@@ -2384,14 +2555,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "4b1c9fc893",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Hannah Arendt, Eichmann à Jérusalem (1963) ?",
+    "question": "Quelle est l’idée clé de Hannah Arendt ?",
     "reponse": "La « banalité du mal » : de grands crimes peuvent être commis par des gens ordinaires qui obéissent sans penser",
     "cle": "Hannah Arendt, Eichmann à Jérusalem (1963)",
-    "valeur": "La « banalité du mal » : de grands crimes peuvent être commis par des gens ordinaires qui obéissent sans penser"
+    "valeur": "La « banalité du mal » : de grands crimes peuvent être commis par des gens ordinaires qui obéissent sans penser",
+    "source": {
+     "brut": "Hannah Arendt, Eichmann à Jérusalem (1963)",
+     "nom": "Hannah Arendt",
+     "oeuvre": "Eichmann à Jérusalem",
+     "annee": 1963,
+     "annees": [
+      1963
+     ],
+     "periode": null,
+     "anneeTexte": "1963"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : La « banalité du mal » : de grands crimes peuvent être commis par des gens ordinaires qui obéissent sans penser",
+     "reponse": "Hannah Arendt"
+    },
+    "annee": 1963
    },
    "tags": [
     "Obéissance",
@@ -2405,14 +2592,28 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "441a145632",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Camus ?",
+    "question": "Quelle est l’idée clé de Camus ?",
     "reponse": "« Mal nommer les choses, c'est ajouter au malheur du monde » (1944)",
     "cle": "Camus",
-    "valeur": "« Mal nommer les choses, c'est ajouter au malheur du monde » (1944)"
+    "valeur": "« Mal nommer les choses, c'est ajouter au malheur du monde » (1944)",
+    "source": {
+     "brut": "Camus",
+     "nom": "Camus",
+     "oeuvre": null,
+     "annee": null,
+     "annees": [],
+     "periode": null,
+     "anneeTexte": null
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : « Mal nommer les choses, c'est ajouter au malheur du monde » (1944)",
+     "reponse": "Camus"
+    },
+    "annee": null
    },
    "tags": [
     "Désinformation",
@@ -2425,14 +2626,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "0a7e81e508",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Libertés et philosophie politique",
    "section": "Libertés, démocratie et philosophie politique",
    "contenu": {
-    "question": "Idée clé de : Hans Jonas, Le Principe responsabilité (1979) ?",
+    "question": "Quelle est l’idée clé de Hans Jonas ?",
     "reponse": "Notre puissance technique nous oblige à penser aux générations futures",
     "cle": "Hans Jonas, Le Principe responsabilité (1979)",
-    "valeur": "Notre puissance technique nous oblige à penser aux générations futures"
+    "valeur": "Notre puissance technique nous oblige à penser aux générations futures",
+    "source": {
+     "brut": "Hans Jonas, Le Principe responsabilité (1979)",
+     "nom": "Hans Jonas",
+     "oeuvre": "Le Principe responsabilité",
+     "annee": 1979,
+     "annees": [
+      1979
+     ],
+     "periode": null,
+     "anneeTexte": "1979"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : Notre puissance technique nous oblige à penser aux générations futures",
+     "reponse": "Hans Jonas"
+    },
+    "annee": 1979
    },
    "tags": [
     "Écologie",
@@ -3003,6 +3220,17 @@ window.TZ_SOG_DATA = {
     "citation": "Le message, c'est le médium.",
     "auteur": "Marshall McLuhan (1964)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Marshall McLuhan (1964)",
+     "nom": "Marshall McLuhan",
+     "oeuvre": null,
+     "annee": 1964,
+     "annees": [
+      1964
+     ],
+     "periode": null,
+     "anneeTexte": "1964"
+    },
     "trou": {
      "texte": "Le ______, c'est le médium.",
      "manquant": "message"
@@ -3040,6 +3268,17 @@ window.TZ_SOG_DATA = {
     "citation": "Science sans conscience n'est que ruine de l'âme.",
     "auteur": "Rabelais, Pantagruel (1532)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Rabelais, Pantagruel (1532)",
+     "nom": "Rabelais",
+     "oeuvre": "Pantagruel",
+     "annee": 1532,
+     "annees": [
+      1532
+     ],
+     "periode": null,
+     "anneeTexte": "1532"
+    },
     "trou": {
      "texte": "Science sans ______ n'est que ruine de l'âme.",
      "manquant": "conscience"
@@ -3579,6 +3818,17 @@ window.TZ_SOG_DATA = {
     "citation": "Notre maison brûle et nous regardons ailleurs.",
     "auteur": "Jacques Chirac (2002)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Jacques Chirac (2002)",
+     "nom": "Jacques Chirac",
+     "oeuvre": null,
+     "annee": 2002,
+     "annees": [
+      2002
+     ],
+     "periode": null,
+     "anneeTexte": "2002"
+    },
     "trou": {
      "texte": "Notre maison brûle et nous ______ ailleurs.",
      "manquant": "regardons"
@@ -3616,6 +3866,15 @@ window.TZ_SOG_DATA = {
     "citation": "Nous n'héritons pas de la terre de nos ancêtres, nous l'empruntons à nos enfants.",
     "auteur": "Phrase attribuée à Saint-Exupéry, sans source vérifiée : écris « selon une formule célèbre »",
     "auteurCourt": "Saint-Exupéry",
+    "source": {
+     "brut": "Phrase attribuée à Saint-Exupéry, sans source vérifiée : écris « selon une formule célèbre »",
+     "nom": "Saint-Exupéry",
+     "oeuvre": null,
+     "annee": null,
+     "annees": [],
+     "periode": null,
+     "anneeTexte": null
+    },
     "trou": {
      "texte": "Nous n'héritons pas de la terre de nos ancêtres, nous ______ à nos enfants.",
      "manquant": "l'empruntons"
@@ -3637,6 +3896,15 @@ window.TZ_SOG_DATA = {
     "citation": "Rien ne se perd, rien ne se crée, tout se transforme",
     "auteur": "Lavoisier",
     "auteurCourt": "Lavoisier",
+    "source": {
+     "brut": "Lavoisier",
+     "nom": "Lavoisier",
+     "oeuvre": null,
+     "annee": null,
+     "annees": [],
+     "periode": null,
+     "anneeTexte": null
+    },
     "trou": {
      "texte": "Rien ne se perd, rien ne se crée, tout se ______",
      "manquant": "transforme"
@@ -3649,14 +3917,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "e9e06e798c",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Économie, travail, protection sociale",
    "section": "Les penseurs",
    "contenu": {
-    "question": "Idée clé de : Adam Smith, La Richesse des nations (1776) ?",
+    "question": "Quelle est l’idée clé de Adam Smith ?",
     "reponse": "La « main invisible » : la poursuite des intérêts individuels sert l'intérêt général ; la division du travail augmente la productivité",
     "cle": "Adam Smith, La Richesse des nations (1776)",
-    "valeur": "La « main invisible » : la poursuite des intérêts individuels sert l'intérêt général ; la division du travail augmente la productivité"
+    "valeur": "La « main invisible » : la poursuite des intérêts individuels sert l'intérêt général ; la division du travail augmente la productivité",
+    "source": {
+     "brut": "Adam Smith, La Richesse des nations (1776)",
+     "nom": "Adam Smith",
+     "oeuvre": "La Richesse des nations",
+     "annee": 1776,
+     "annees": [
+      1776
+     ],
+     "periode": null,
+     "anneeTexte": "1776"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : La « main invisible » : la poursuite des intérêts individuels sert l'intérêt général ; la division du travail augmente la productivité",
+     "reponse": "Adam Smith"
+    },
+    "annee": 1776
    },
    "tags": [
     "Marché",
@@ -3669,14 +3953,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "8e5af1a4f9",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Économie, travail, protection sociale",
    "section": "Les penseurs",
    "contenu": {
-    "question": "Idée clé de : Karl Marx, Le Capital (1867) ?",
+    "question": "Quelle est l’idée clé de Karl Marx ?",
     "reponse": "Critique l'exploitation des ouvriers par le capital et la lutte des classes",
     "cle": "Karl Marx, Le Capital (1867)",
-    "valeur": "Critique l'exploitation des ouvriers par le capital et la lutte des classes"
+    "valeur": "Critique l'exploitation des ouvriers par le capital et la lutte des classes",
+    "source": {
+     "brut": "Karl Marx, Le Capital (1867)",
+     "nom": "Karl Marx",
+     "oeuvre": "Le Capital",
+     "annee": 1867,
+     "annees": [
+      1867
+     ],
+     "periode": null,
+     "anneeTexte": "1867"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : Critique l'exploitation des ouvriers par le capital et la lutte des classes",
+     "reponse": "Karl Marx"
+    },
+    "annee": 1867
    },
    "tags": [
     "Inégalités",
@@ -3689,14 +3989,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "36df4a8dc7",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Économie, travail, protection sociale",
    "section": "Les penseurs",
    "contenu": {
-    "question": "Idée clé de : Keynes, Théorie générale (1936) ?",
+    "question": "Quelle est l’idée clé de Keynes ?",
     "reponse": "L'État doit soutenir l'économie en période de crise (relance par la dépense publique)",
     "cle": "Keynes, Théorie générale (1936)",
-    "valeur": "L'État doit soutenir l'économie en période de crise (relance par la dépense publique)"
+    "valeur": "L'État doit soutenir l'économie en période de crise (relance par la dépense publique)",
+    "source": {
+     "brut": "Keynes, Théorie générale (1936)",
+     "nom": "Keynes",
+     "oeuvre": "Théorie générale",
+     "annee": 1936,
+     "annees": [
+      1936
+     ],
+     "periode": null,
+     "anneeTexte": "1936"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : L'État doit soutenir l'économie en période de crise (relance par la dépense publique)",
+     "reponse": "Keynes"
+    },
+    "annee": 1936
    },
    "tags": [
     "Crise",
@@ -3709,14 +4025,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "698a4ce992",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Économie, travail, protection sociale",
    "section": "Les penseurs",
    "contenu": {
-    "question": "Idée clé de : Schumpeter (1942) ?",
+    "question": "Quelle est l’idée clé de Schumpeter ?",
     "reponse": "La « destruction créatrice » : l'innovation détruit des activités et en crée d'autres",
     "cle": "Schumpeter (1942)",
-    "valeur": "La « destruction créatrice » : l'innovation détruit des activités et en crée d'autres"
+    "valeur": "La « destruction créatrice » : l'innovation détruit des activités et en crée d'autres",
+    "source": {
+     "brut": "Schumpeter (1942)",
+     "nom": "Schumpeter",
+     "oeuvre": null,
+     "annee": 1942,
+     "annees": [
+      1942
+     ],
+     "periode": null,
+     "anneeTexte": "1942"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : La « destruction créatrice » : l'innovation détruit des activités et en crée d'autres",
+     "reponse": "Schumpeter"
+    },
+    "annee": 1942
    },
    "tags": [
     "Robotisation",
@@ -3730,14 +4062,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "d3b596db35",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Économie, travail, protection sociale",
    "section": "Les penseurs",
    "contenu": {
-    "question": "Idée clé de : Alfred Sauvy (1980) ?",
+    "question": "Quelle est l’idée clé de Alfred Sauvy ?",
     "reponse": "La « théorie du déversement » : les emplois détruits par les machines se reportent vers d'autres secteurs",
     "cle": "Alfred Sauvy (1980)",
-    "valeur": "La « théorie du déversement » : les emplois détruits par les machines se reportent vers d'autres secteurs"
+    "valeur": "La « théorie du déversement » : les emplois détruits par les machines se reportent vers d'autres secteurs",
+    "source": {
+     "brut": "Alfred Sauvy (1980)",
+     "nom": "Alfred Sauvy",
+     "oeuvre": null,
+     "annee": 1980,
+     "annees": [
+      1980
+     ],
+     "periode": null,
+     "anneeTexte": "1980"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : La « théorie du déversement » : les emplois détruits par les machines se reportent vers d'autres secteurs",
+     "reponse": "Alfred Sauvy"
+    },
+    "annee": 1980
    },
    "tags": [
     "Robotisation",
@@ -3749,14 +4097,30 @@ window.TZ_SOG_DATA = {
   },
   {
    "id": "653fdeba53",
-   "type": "notion",
+   "type": "penseur",
    "theme": "Économie, travail, protection sociale",
    "section": "Les penseurs",
    "contenu": {
-    "question": "Idée clé de : Thomas Piketty, Le Capital au XXIᵉ siècle (2013) ?",
+    "question": "Quelle est l’idée clé de Thomas Piketty ?",
     "reponse": "Les inégalités de patrimoine se creusent quand le capital rapporte plus que la croissance",
     "cle": "Thomas Piketty, Le Capital au XXIᵉ siècle (2013)",
-    "valeur": "Les inégalités de patrimoine se creusent quand le capital rapporte plus que la croissance"
+    "valeur": "Les inégalités de patrimoine se creusent quand le capital rapporte plus que la croissance",
+    "source": {
+     "brut": "Thomas Piketty, Le Capital au XXIᵉ siècle (2013)",
+     "nom": "Thomas Piketty",
+     "oeuvre": "Le Capital au XXIᵉ siècle",
+     "annee": 2013,
+     "annees": [
+      2013
+     ],
+     "periode": null,
+     "anneeTexte": "2013"
+    },
+    "inverse": {
+     "question": "Quel penseur défend cette idée : Les inégalités de patrimoine se creusent quand le capital rapporte plus que la croissance",
+     "reponse": "Thomas Piketty"
+    },
+    "annee": 2013
    },
    "tags": [
     "Inégalités",
@@ -6159,6 +6523,15 @@ window.TZ_SOG_DATA = {
     "citation": "Inventer le navire, c'est inventer le naufrage.",
     "auteur": "Paul Virilio (formule connue sous plusieurs variantes)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Paul Virilio (formule connue sous plusieurs variantes)",
+     "nom": "Paul Virilio",
+     "oeuvre": null,
+     "annee": null,
+     "annees": [],
+     "periode": null,
+     "anneeTexte": null
+    },
     "trou": {
      "texte": "Inventer le navire, c'est inventer le ______.",
      "manquant": "naufrage"
@@ -6182,6 +6555,17 @@ window.TZ_SOG_DATA = {
     "citation": "Big Brother vous regarde.",
     "auteur": "George Orwell, 1984 (1949)",
     "auteurCourt": null,
+    "source": {
+     "brut": "George Orwell, 1984 (1949)",
+     "nom": "George Orwell",
+     "oeuvre": "1984",
+     "annee": 1949,
+     "annees": [
+      1949
+     ],
+     "periode": null,
+     "anneeTexte": "1949"
+    },
     "trou": {
      "texte": "Big Brother vous ______.",
      "manquant": "regarde"
@@ -6207,6 +6591,17 @@ window.TZ_SOG_DATA = {
     "citation": "Sapere aude ! Aie le courage de te servir de ton propre entendement.",
     "auteur": "Kant, Qu'est-ce que les Lumières ? (1784)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Kant, Qu'est-ce que les Lumières ? (1784)",
+     "nom": "Kant",
+     "oeuvre": "Qu'est-ce que les Lumières ?",
+     "annee": 1784,
+     "annees": [
+      1784
+     ],
+     "periode": null,
+     "anneeTexte": "1784"
+    },
     "trou": {
      "texte": "Sapere aude ! Aie le courage de te servir de ton propre ______.",
      "manquant": "entendement"
@@ -6232,6 +6627,17 @@ window.TZ_SOG_DATA = {
     "citation": "La liberté consiste à pouvoir faire tout ce qui ne nuit pas à autrui.",
     "auteur": "DDHC, art. 4 (1789)",
     "auteurCourt": null,
+    "source": {
+     "brut": "DDHC, art. 4 (1789)",
+     "nom": "DDHC",
+     "oeuvre": null,
+     "annee": 1789,
+     "annees": [
+      1789
+     ],
+     "periode": null,
+     "anneeTexte": "1789"
+    },
     "trou": {
      "texte": "La liberté ______ à pouvoir faire tout ce qui ne nuit pas à autrui.",
      "manquant": "consiste"
@@ -6256,6 +6662,17 @@ window.TZ_SOG_DATA = {
     "citation": "Il faut que, par la disposition des choses, le pouvoir arrête le pouvoir.",
     "auteur": "Montesquieu, De l'esprit des lois (1748)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Montesquieu, De l'esprit des lois (1748)",
+     "nom": "Montesquieu",
+     "oeuvre": "De l'esprit des lois",
+     "annee": 1748,
+     "annees": [
+      1748
+     ],
+     "periode": null,
+     "anneeTexte": "1748"
+    },
     "trou": {
      "texte": "Il faut que, par la ______ des choses, le pouvoir arrête le pouvoir.",
      "manquant": "disposition"
@@ -6281,6 +6698,17 @@ window.TZ_SOG_DATA = {
     "citation": "L'homme est né libre, et partout il est dans les fers.",
     "auteur": "Rousseau, Du contrat social (1762)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Rousseau, Du contrat social (1762)",
+     "nom": "Rousseau",
+     "oeuvre": "Du contrat social",
+     "annee": 1762,
+     "annees": [
+      1762
+     ],
+     "periode": null,
+     "anneeTexte": "1762"
+    },
     "trou": {
      "texte": "L'homme est né libre, et ______ il est dans les fers.",
      "manquant": "partout"
@@ -6306,6 +6734,17 @@ window.TZ_SOG_DATA = {
     "citation": "L'obéissance à la loi qu'on s'est prescrite est liberté.",
     "auteur": "Rousseau, Du contrat social (1762)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Rousseau, Du contrat social (1762)",
+     "nom": "Rousseau",
+     "oeuvre": "Du contrat social",
+     "annee": 1762,
+     "annees": [
+      1762
+     ],
+     "periode": null,
+     "anneeTexte": "1762"
+    },
     "trou": {
      "texte": "______ à la loi qu'on s'est prescrite est liberté.",
      "manquant": "L'obéissance"
@@ -6331,6 +6770,17 @@ window.TZ_SOG_DATA = {
     "citation": "Gouvernement du peuple, par le peuple, pour le peuple",
     "auteur": "Abraham Lincoln (1863), repris à l'art. 2 de la Constitution",
     "auteurCourt": null,
+    "source": {
+     "brut": "Abraham Lincoln (1863), repris à l'art. 2 de la Constitution",
+     "nom": "Abraham Lincoln",
+     "oeuvre": null,
+     "annee": 1863,
+     "annees": [
+      1863
+     ],
+     "periode": null,
+     "anneeTexte": "1863"
+    },
     "trou": {
      "texte": "______ du peuple, par le peuple, pour le peuple",
      "manquant": "Gouvernement"
@@ -6355,6 +6805,17 @@ window.TZ_SOG_DATA = {
     "citation": "La démocratie est le pire des régimes, à l'exception de tous les autres.",
     "auteur": "Winston Churchill (1947), qui la présentait comme une phrase déjà dite",
     "auteurCourt": null,
+    "source": {
+     "brut": "Winston Churchill (1947), qui la présentait comme une phrase déjà dite",
+     "nom": "Winston Churchill",
+     "oeuvre": null,
+     "annee": 1947,
+     "annees": [
+      1947
+     ],
+     "periode": null,
+     "anneeTexte": "1947"
+    },
     "trou": {
      "texte": "La démocratie est le pire des régimes, à ______ de tous les autres.",
      "manquant": "l'exception"
@@ -6379,6 +6840,15 @@ window.TZ_SOG_DATA = {
     "citation": "Un peuple prêt à sacrifier un peu de liberté pour un peu de sécurité ne mérite ni l'une ni l'autre, et finit par perdre les deux.",
     "auteur": "Attribuée à Benjamin Franklin (version populaire d'une phrase de 1755)",
     "auteurCourt": "Benjamin Franklin",
+    "source": {
+     "brut": "Attribuée à Benjamin Franklin (version populaire d'une phrase de 1755)",
+     "nom": "Benjamin Franklin",
+     "oeuvre": null,
+     "annee": null,
+     "annees": [],
+     "periode": null,
+     "anneeTexte": null
+    },
     "trou": {
      "texte": "Un peuple prêt à ______ un peu de liberté pour un peu de sécurité ne mérite ni l'une ni l'autre, et finit par perdre les deux.",
      "manquant": "sacrifier"
@@ -6402,6 +6872,17 @@ window.TZ_SOG_DATA = {
     "citation": "La justice sans la force est impuissante ; la force sans la justice est tyrannique.",
     "auteur": "Pascal, Pensées (1670)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Pascal, Pensées (1670)",
+     "nom": "Pascal",
+     "oeuvre": "Pensées",
+     "annee": 1670,
+     "annees": [
+      1670
+     ],
+     "periode": null,
+     "anneeTexte": "1670"
+    },
     "trou": {
      "texte": "La justice sans la force est ______ ; la force sans la justice est tyrannique.",
      "manquant": "impuissante"
@@ -6427,6 +6908,17 @@ window.TZ_SOG_DATA = {
     "citation": "L'État détient « le monopole de la violence physique légitime ».",
     "auteur": "Max Weber, Le Savant et le Politique (1919)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Max Weber, Le Savant et le Politique (1919)",
+     "nom": "Max Weber",
+     "oeuvre": "Le Savant et le Politique",
+     "annee": 1919,
+     "annees": [
+      1919
+     ],
+     "periode": null,
+     "anneeTexte": "1919"
+    },
     "trou": {
      "texte": "L'État détient « le monopole de la violence physique ______ ».",
      "manquant": "légitime"
@@ -6452,6 +6944,17 @@ window.TZ_SOG_DATA = {
     "citation": "La garantie des droits de l'homme et du citoyen nécessite une force publique.",
     "auteur": "DDHC, art. 12 (1789)",
     "auteurCourt": null,
+    "source": {
+     "brut": "DDHC, art. 12 (1789)",
+     "nom": "DDHC",
+     "oeuvre": null,
+     "annee": 1789,
+     "annees": [
+      1789
+     ],
+     "periode": null,
+     "anneeTexte": "1789"
+    },
     "trou": {
      "texte": "La garantie des droits de l'homme et du citoyen ______ une force publique.",
      "manquant": "nécessite"
@@ -6477,6 +6980,15 @@ window.TZ_SOG_DATA = {
     "citation": "L'homme est un loup pour l'homme.",
     "auteur": "Plaute, reprise par Hobbes",
     "auteurCourt": null,
+    "source": {
+     "brut": "Plaute, reprise par Hobbes",
+     "nom": "Plaute",
+     "oeuvre": null,
+     "annee": null,
+     "annees": [],
+     "periode": null,
+     "anneeTexte": null
+    },
     "trou": {
      "texte": "L'homme est un loup pour ______.",
      "manquant": "l'homme"
@@ -6502,6 +7014,17 @@ window.TZ_SOG_DATA = {
     "citation": "La « banalité du mal »",
     "auteur": "Hannah Arendt (1963)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Hannah Arendt (1963)",
+     "nom": "Hannah Arendt",
+     "oeuvre": null,
+     "annee": 1963,
+     "annees": [
+      1963
+     ],
+     "periode": null,
+     "anneeTexte": "1963"
+    },
     "trou": {
      "texte": "La « ______ du mal »",
      "manquant": "banalité"
@@ -6527,6 +7050,17 @@ window.TZ_SOG_DATA = {
     "citation": "Le courage, c'est de chercher la vérité et de la dire.",
     "auteur": "Jean Jaurès, Discours à la jeunesse (Albi, 1903)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Jean Jaurès, Discours à la jeunesse (Albi, 1903)",
+     "nom": "Jean Jaurès",
+     "oeuvre": "Discours à la jeunesse",
+     "annee": 1903,
+     "annees": [
+      1903
+     ],
+     "periode": null,
+     "anneeTexte": "1903"
+    },
     "trou": {
      "texte": "Le courage, c'est de ______ la vérité et de la dire.",
      "manquant": "chercher"
@@ -6552,6 +7086,17 @@ window.TZ_SOG_DATA = {
     "citation": "La flamme de la résistance française ne doit pas s'éteindre et ne s'éteindra pas.",
     "auteur": "Général de Gaulle, appel du 18 juin 1940",
     "auteurCourt": null,
+    "source": {
+     "brut": "Général de Gaulle, appel du 18 juin 1940",
+     "nom": "Général de Gaulle",
+     "oeuvre": null,
+     "annee": 1940,
+     "annees": [
+      1940
+     ],
+     "periode": null,
+     "anneeTexte": "1940"
+    },
     "trou": {
      "texte": "La flamme de la résistance française ne doit pas s'éteindre et ne ______ pas.",
      "manquant": "s'éteindra"
@@ -6576,6 +7121,17 @@ window.TZ_SOG_DATA = {
     "citation": "Ne demandez pas ce que votre pays peut faire pour vous, demandez ce que vous pouvez faire pour votre pays.",
     "auteur": "John F. Kennedy, discours d'investiture (1961)",
     "auteurCourt": null,
+    "source": {
+     "brut": "John F. Kennedy, discours d'investiture (1961)",
+     "nom": "John F. Kennedy",
+     "oeuvre": null,
+     "annee": 1961,
+     "annees": [
+      1961
+     ],
+     "periode": null,
+     "anneeTexte": "1961"
+    },
     "trou": {
      "texte": "Ne ______ pas ce que votre pays peut faire pour vous, demandez ce que vous pouvez faire pour votre pays.",
      "manquant": "demandez"
@@ -6601,6 +7157,17 @@ window.TZ_SOG_DATA = {
     "citation": "Être homme, c'est précisément être responsable.",
     "auteur": "Saint-Exupéry, Terre des hommes (1939)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Saint-Exupéry, Terre des hommes (1939)",
+     "nom": "Saint-Exupéry",
+     "oeuvre": "Terre des hommes",
+     "annee": 1939,
+     "annees": [
+      1939
+     ],
+     "periode": null,
+     "anneeTexte": "1939"
+    },
     "trou": {
      "texte": "Être homme, c'est précisément être ______.",
      "manquant": "responsable"
@@ -6626,6 +7193,17 @@ window.TZ_SOG_DATA = {
     "citation": "Chaque génération se croit vouée à refaire le monde ; la tâche de la sienne est « d'empêcher que le monde se défasse ».",
     "auteur": "Albert Camus, discours du prix Nobel (1957)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Albert Camus, discours du prix Nobel (1957)",
+     "nom": "Albert Camus",
+     "oeuvre": null,
+     "annee": 1957,
+     "annees": [
+      1957
+     ],
+     "periode": null,
+     "anneeTexte": "1957"
+    },
     "trou": {
      "texte": "Chaque génération se croit vouée à refaire le monde ; la tâche de la sienne est « ______ que le monde se défasse ».",
      "manquant": "d'empêcher"
@@ -6651,6 +7229,17 @@ window.TZ_SOG_DATA = {
     "citation": "Plutôt la tête bien faite que bien pleine.",
     "auteur": "Montaigne, Essais (1580)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Montaigne, Essais (1580)",
+     "nom": "Montaigne",
+     "oeuvre": "Essais",
+     "annee": 1580,
+     "annees": [
+      1580
+     ],
+     "periode": null,
+     "anneeTexte": "1580"
+    },
     "trou": {
      "texte": "Plutôt la tête bien faite que bien ______.",
      "manquant": "pleine"
@@ -6676,6 +7265,17 @@ window.TZ_SOG_DATA = {
     "citation": "L'éducation est l'arme la plus puissante qu'on puisse utiliser pour changer le monde.",
     "auteur": "Attribuée à Nelson Mandela (2003)",
     "auteurCourt": "Nelson Mandela",
+    "source": {
+     "brut": "Attribuée à Nelson Mandela (2003)",
+     "nom": "Nelson Mandela",
+     "oeuvre": null,
+     "annee": 2003,
+     "annees": [
+      2003
+     ],
+     "periode": null,
+     "anneeTexte": "2003"
+    },
     "trou": {
      "texte": "______ est l'arme la plus puissante qu'on puisse utiliser pour changer le monde.",
      "manquant": "L'éducation"
@@ -6700,6 +7300,15 @@ window.TZ_SOG_DATA = {
     "citation": "Ouvrir une école, c'est fermer une prison.",
     "auteur": "Attribuée à Victor Hugo",
     "auteurCourt": "Victor Hugo",
+    "source": {
+     "brut": "Attribuée à Victor Hugo",
+     "nom": "Victor Hugo",
+     "oeuvre": null,
+     "annee": null,
+     "annees": [],
+     "periode": null,
+     "anneeTexte": null
+    },
     "trou": {
      "texte": "Ouvrir une école, c'est fermer une ______.",
      "manquant": "prison"
@@ -6725,6 +7334,17 @@ window.TZ_SOG_DATA = {
     "citation": "On ne naît pas femme : on le devient.",
     "auteur": "Simone de Beauvoir, Le Deuxième Sexe (1949)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Simone de Beauvoir, Le Deuxième Sexe (1949)",
+     "nom": "Simone de Beauvoir",
+     "oeuvre": "Le Deuxième Sexe",
+     "annee": 1949,
+     "annees": [
+      1949
+     ],
+     "periode": null,
+     "anneeTexte": "1949"
+    },
     "trou": {
      "texte": "On ne naît pas femme : on le ______.",
      "manquant": "devient"
@@ -6750,6 +7370,17 @@ window.TZ_SOG_DATA = {
     "citation": "Notre maison brûle et nous regardons ailleurs.",
     "auteur": "Jacques Chirac, sommet de Johannesburg (2002)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Jacques Chirac, sommet de Johannesburg (2002)",
+     "nom": "Jacques Chirac",
+     "oeuvre": null,
+     "annee": 2002,
+     "annees": [
+      2002
+     ],
+     "periode": null,
+     "anneeTexte": "2002"
+    },
     "trou": {
      "texte": "Notre maison brûle et nous ______ ailleurs.",
      "manquant": "regardons"
@@ -6774,6 +7405,17 @@ window.TZ_SOG_DATA = {
     "citation": "Un développement « qui répond aux besoins du présent sans compromettre la capacité des générations futures de répondre aux leurs »",
     "auteur": "Rapport Brundtland, ONU (1987)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Rapport Brundtland, ONU (1987)",
+     "nom": "Rapport Brundtland",
+     "oeuvre": "ONU",
+     "annee": 1987,
+     "annees": [
+      1987
+     ],
+     "periode": null,
+     "anneeTexte": "1987"
+    },
     "trou": {
      "texte": "Un ______ « qui répond aux besoins du présent sans compromettre la capacité des générations futures de répondre aux leurs »",
      "manquant": "développement"
@@ -6797,6 +7439,15 @@ window.TZ_SOG_DATA = {
     "citation": "Nous n'héritons pas de la terre de nos ancêtres, nous l'empruntons à nos enfants.",
     "auteur": "Attribuée à Saint-Exupéry",
     "auteurCourt": "Saint-Exupéry",
+    "source": {
+     "brut": "Attribuée à Saint-Exupéry",
+     "nom": "Saint-Exupéry",
+     "oeuvre": null,
+     "annee": null,
+     "annees": [],
+     "periode": null,
+     "anneeTexte": null
+    },
     "trou": {
      "texte": "Nous n'héritons pas de la terre de nos ancêtres, nous ______ à nos enfants.",
      "manquant": "l'empruntons"
@@ -6820,6 +7471,15 @@ window.TZ_SOG_DATA = {
     "citation": "Rien ne se perd, rien ne se crée, tout se transforme.",
     "auteur": "Attribuée à Lavoisier (résumé de sa loi)",
     "auteurCourt": "Lavoisier",
+    "source": {
+     "brut": "Attribuée à Lavoisier (résumé de sa loi)",
+     "nom": "Lavoisier",
+     "oeuvre": null,
+     "annee": null,
+     "annees": [],
+     "periode": null,
+     "anneeTexte": null
+    },
     "trou": {
      "texte": "Rien ne se perd, rien ne se crée, tout se ______.",
      "manquant": "transforme"
@@ -6844,6 +7504,15 @@ window.TZ_SOG_DATA = {
     "citation": "L'homme est un animal politique.",
     "auteur": "Aristote, Politique",
     "auteurCourt": null,
+    "source": {
+     "brut": "Aristote, Politique",
+     "nom": "Aristote",
+     "oeuvre": "Politique",
+     "annee": null,
+     "annees": [],
+     "periode": null,
+     "anneeTexte": null
+    },
     "trou": {
      "texte": "L'homme est un animal ______.",
      "manquant": "politique"
@@ -6869,6 +7538,17 @@ window.TZ_SOG_DATA = {
     "citation": "La nation est « un plébiscite de tous les jours ».",
     "auteur": "Ernest Renan, Qu'est-ce qu'une nation ? (1882)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Ernest Renan, Qu'est-ce qu'une nation ? (1882)",
+     "nom": "Ernest Renan",
+     "oeuvre": "Qu'est-ce qu'une nation ?",
+     "annee": 1882,
+     "annees": [
+      1882
+     ],
+     "periode": null,
+     "anneeTexte": "1882"
+    },
     "trou": {
      "texte": "La nation est « un ______ de tous les jours ».",
      "manquant": "plébiscite"
@@ -6894,6 +7574,17 @@ window.TZ_SOG_DATA = {
     "citation": "Nous devons apprendre à vivre ensemble comme des frères, sinon nous allons mourir ensemble comme des idiots.",
     "auteur": "Martin Luther King (1964)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Martin Luther King (1964)",
+     "nom": "Martin Luther King",
+     "oeuvre": null,
+     "annee": 1964,
+     "annees": [
+      1964
+     ],
+     "periode": null,
+     "anneeTexte": "1964"
+    },
     "trou": {
      "texte": "Nous devons ______ à vivre ensemble comme des frères, sinon nous allons mourir ensemble comme des idiots.",
      "manquant": "apprendre"
@@ -6919,6 +7610,17 @@ window.TZ_SOG_DATA = {
     "citation": "Mal nommer les choses, c'est ajouter au malheur du monde.",
     "auteur": "Albert Camus (1944)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Albert Camus (1944)",
+     "nom": "Albert Camus",
+     "oeuvre": null,
+     "annee": 1944,
+     "annees": [
+      1944
+     ],
+     "periode": null,
+     "anneeTexte": "1944"
+    },
     "trou": {
      "texte": "Mal nommer les choses, c'est ajouter au ______ du monde.",
      "manquant": "malheur"
@@ -6944,6 +7646,17 @@ window.TZ_SOG_DATA = {
     "citation": "Aucune femme ne recourt de gaieté de cœur à l'avortement.",
     "auteur": "Simone Veil, à l'Assemblée (1974)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Simone Veil, à l'Assemblée (1974)",
+     "nom": "Simone Veil",
+     "oeuvre": null,
+     "annee": 1974,
+     "annees": [
+      1974
+     ],
+     "periode": null,
+     "anneeTexte": "1974"
+    },
     "trou": {
      "texte": "Aucune femme ne recourt de gaieté de cœur à ______.",
      "manquant": "l'avortement"
@@ -6968,6 +7681,15 @@ window.TZ_SOG_DATA = {
     "citation": "Chaque homme porte la forme entière de l'humaine condition.",
     "auteur": "Montaigne, Essais",
     "auteurCourt": null,
+    "source": {
+     "brut": "Montaigne, Essais",
+     "nom": "Montaigne",
+     "oeuvre": "Essais",
+     "annee": null,
+     "annees": [],
+     "periode": null,
+     "anneeTexte": null
+    },
     "trou": {
      "texte": "Chaque homme porte la forme entière de l'humaine ______.",
      "manquant": "condition"
@@ -6993,6 +7715,17 @@ window.TZ_SOG_DATA = {
     "citation": "L'Europe ne se fera pas d'un coup […] : elle se fera par des réalisations concrètes créant d'abord une solidarité de fait.",
     "auteur": "Robert Schuman, déclaration du 9 mai 1950",
     "auteurCourt": null,
+    "source": {
+     "brut": "Robert Schuman, déclaration du 9 mai 1950",
+     "nom": "Robert Schuman",
+     "oeuvre": null,
+     "annee": 1950,
+     "annees": [
+      1950
+     ],
+     "periode": null,
+     "anneeTexte": "1950"
+    },
     "trou": {
      "texte": "L'Europe ne se fera pas d'un coup […] : elle se fera par des ______ concrètes créant d'abord une solidarité de fait.",
      "manquant": "réalisations"
@@ -7017,6 +7750,15 @@ window.TZ_SOG_DATA = {
     "citation": "Nous ne coalisons pas des États, nous unissons des hommes.",
     "auteur": "Jean Monnet",
     "auteurCourt": null,
+    "source": {
+     "brut": "Jean Monnet",
+     "nom": "Jean Monnet",
+     "oeuvre": null,
+     "annee": null,
+     "annees": [],
+     "periode": null,
+     "anneeTexte": null
+    },
     "trou": {
      "texte": "Nous ne ______ pas des États, nous unissons des hommes.",
      "manquant": "coalisons"
@@ -7041,6 +7783,17 @@ window.TZ_SOG_DATA = {
     "citation": "La guerre est une simple continuation de la politique par d'autres moyens.",
     "auteur": "Clausewitz, De la guerre (1832)",
     "auteurCourt": null,
+    "source": {
+     "brut": "Clausewitz, De la guerre (1832)",
+     "nom": "Clausewitz",
+     "oeuvre": "De la guerre",
+     "annee": 1832,
+     "annees": [
+      1832
+     ],
+     "periode": null,
+     "anneeTexte": "1832"
+    },
     "trou": {
      "texte": "La guerre est une simple ______ de la politique par d'autres moyens.",
      "manquant": "continuation"
@@ -7066,6 +7819,17 @@ window.TZ_SOG_DATA = {
     "citation": "Le nationalisme, c'est la guerre !",
     "auteur": "François Mitterrand, Parlement européen (1995)",
     "auteurCourt": null,
+    "source": {
+     "brut": "François Mitterrand, Parlement européen (1995)",
+     "nom": "François Mitterrand",
+     "oeuvre": "Parlement européen",
+     "annee": 1995,
+     "annees": [
+      1995
+     ],
+     "periode": null,
+     "anneeTexte": "1995"
+    },
     "trou": {
      "texte": "Le ______, c'est la guerre !",
      "manquant": "nationalisme"
