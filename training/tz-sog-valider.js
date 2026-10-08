@@ -280,10 +280,12 @@
            la réponse telle quelle. */
         f.champs.push(champ('date', 'La date', 'texte', { texte: cle }, { court: true }));
       }
-      if (carte.tags.length) {
-        f.champs.push(champ('emploi', 'Dans quel type de sujet tu la places', 'tag',
-                            { tags: carte.tags.slice() },
-                            { aide: 'Un mot suffit.', court: true }));
+      /* Savoir la date ne suffit pas : en copie, une date sans argument ne
+         rapporte rien. Le second champ demande donc ce qu'elle DÉMONTRE,
+         jugé sur les mots-clés de l'argument que porte le document. */
+      if (c.preuve) {
+        f.champs.push(champMots('preuve', 'Ce que cette date prouve', c.preuve, null,
+                                'En une phrase, l’argument qu’elle sert.'));
       }
 
     } else if (carte.type === 'chiffre') {
@@ -332,7 +334,11 @@
       if (s && s.anneeTexte) t += ' (' + s.anneeTexte + ')';
       return t + ' — ' + c.valeur;
     }
-    if (carte.type === 'date') return c.cle + ' — ' + c.valeur;
+    if (carte.type === 'date') {
+      var ligne = c.cle + ' — ' + c.valeur;
+      if (c.preuve) ligne += (/[.!?]$/.test(ligne) ? ' ' : '. ') + c.preuve;
+      return ligne;
+    }
     if (carte.type === 'chiffre') return String(c.question).replace('______', c.valeur);
     return c.cle + ' — ' + c.valeur;
   }
@@ -441,23 +447,8 @@
     return sortie;
   }
 
-  function verdictTag(saisie, attendu) {
-    var a = normaliser(saisie);
-    if (!a) return { verdict: 'rate', detail: null };
-    var ok = attendu.tags.some(function (t) {
-      var n = normaliser(t);
-      if (!n) return false;
-      if (a.indexOf(n) >= 0 || n.indexOf(a) >= 0) return true;
-      return n.split(' ').some(function (m) {
-        return m.length >= 5 && a.split(' ').some(function (x) { return racine(x) === racine(m); });
-      });
-    });
-    return ok ? { verdict: 'juste', detail: null }
-              : { verdict: 'rate', detail: 'Le document dit : ' + attendu.tags.join(', ') + '.' };
-  }
-
   var JUGES = { texte: verdictTexte, nom: verdictNom, annee: verdictAnnee,
-                date: verdictDate, mots: verdictMots, tag: verdictTag };
+                date: verdictDate, mots: verdictMots };
 
   /* corriger(fiche, reponses) → { verdict, champs }
      « reponses » est un objet { cléDuChamp: ce qui a été écrit }.
@@ -487,7 +478,6 @@
     var a = ch.attendu;
     if (ch.controle === 'nom') return a.nom;
     if (ch.controle === 'annee') return a.texte;
-    if (ch.controle === 'tag') return a.tags.join(', ');
     return a.texte;
   }
 

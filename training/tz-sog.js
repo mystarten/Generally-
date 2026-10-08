@@ -160,10 +160,20 @@
       return e.boite > 0 && e.du && e.du <= date;
     });
   }
+  /* Ce que je rate. L'ancienne définition demandait d'être en boîte 1 ou 2 ET
+     d'avoir deux erreurs : elle affichait « 0 point faible » à quelqu'un qui
+     venait d'en rater six, et ne répétait donc rien. Une seule erreur suffit
+     désormais, et une carte y reste tant qu'elle n'est pas validée.
+
+     Triée : le plus raté d'abord. C'est le moteur de la répétition. */
   function faibles() {
     return cartes.filter(function (c) {
       var e = etat(c.id);
-      return e.boite > 0 && e.boite <= 2 && e.erreurs >= 2;
+      return (e.erreurs || 0) >= 1 && e.boite < 5;
+    }).sort(function (a, b) {
+      var ea = etat(a.id), eb = etat(b.id);
+      if (eb.erreurs !== ea.erreurs) return eb.erreurs - ea.erreurs;
+      return (ea.boite || 0) - (eb.boite || 0);
     });
   }
   /* Le haut de l'échelle, en trois états — et « validée » ne se décrète plus
@@ -187,6 +197,106 @@
     return cartes.filter(function (c) {
       var b = etat(c.id).boite;
       return b >= 3 && b < 5;
+    });
+  }
+
+  /* ================================================ les cinq états d'une carte
+     Tout le tableau de bord se lit avec ce seul vocabulaire. « Point faible »
+     ne voulait rien dire ; ces cinq mots disent exactement où en est chaque
+     référence, et ils veulent dire la même chose partout dans la page. */
+  var ETATS = [
+    { id: 'jamais', nom: 'jamais vue' },
+    { id: 'route', nom: 'commencée' },
+    { id: 'prete', nom: 'prête pour la fiche' },
+    { id: 'validee', nom: 'validée' },
+    { id: 'confirmee', nom: 'confirmée' }
+  ];
+  function etatDe(carte) {
+    var e = etat(carte.id), b = e.boite || 0;
+    if (!b) return 'jamais';
+    if (b < 3) return 'route';
+    if (b < 5) return 'prete';
+    return (e.fiches || 0) >= 2 ? 'confirmee' : 'validee';
+  }
+  /* Compte les cinq états sur un lot. « acquises » regroupe validées et
+     confirmées : c'est ce qui est réellement su. */
+  function compter(lot) {
+    var n = { jamais: 0, route: 0, prete: 0, validee: 0, confirmee: 0,
+              total: lot.length, acquises: 0, erreurs: 0 };
+    lot.forEach(function (c) {
+      n[etatDe(c)]++;
+      if ((etat(c.id).erreurs || 0) >= 1) n.erreurs++;
+    });
+    n.acquises = n.validee + n.confirmee;
+    return n;
+  }
+
+  /* Le socle : les dates que le document marque « à placer en dissertation ».
+     Ce sont celles dont l'utilisateur a dit lui-même qu'il devait les savoir ;
+     le reste est du complément. */
+  function socle() {
+    return cartes.filter(function (c) { return c.priorite; });
+  }
+
+  /* ------------------------------------------------- l'index par sujet
+     Un même sujet s'écrit « Liberté » ici et « libertés » là : on regroupe
+     sur la forme normalisée, et on affiche l'orthographe la plus fréquente. */
+  /* La clé d'un sujet : normalisée, et au singulier mot à mot. Sans cela
+     « liberté » et « libertés », « science » et « sciences » comptaient pour
+     deux sujets différents, chacun avec la moitié des références. */
+  function cleSujet(t) {
+    return normaliser(t).split(' ').map(function (m) {
+      return m.length > 3 ? m.replace(/s$/, '') : m;
+    }).join(' ');
+  }
+
+  function sujets(mini) {
+    var index = {};
+    cartes.forEach(function (c) {
+      c.tags.forEach(function (t) {
+        var k = cleSujet(t);
+        if (!k || k.length < 3) return;
+        if (!index[k]) index[k] = { cle: k, noms: {}, cartes: [] };
+        index[k].noms[t] = (index[k].noms[t] || 0) + 1;
+        if (index[k].cartes.indexOf(c) < 0) index[k].cartes.push(c);
+      });
+    });
+    return Object.keys(index).map(function (k) {
+      var s = index[k];
+      var nom = Object.keys(s.noms).sort(function (a, b) { return s.noms[b] - s.noms[a]; })[0];
+      return { cle: k, nom: nom, cartes: s.cartes, compte: compter(s.cartes) };
+    }).filter(function (s) {
+      return s.cartes.length >= (mini || 3);
+    }).sort(function (a, b) {
+      if (b.cartes.length !== a.cartes.length) return b.cartes.length - a.cartes.length;
+      return a.nom.localeCompare(b.nom);
+    });
+  }
+
+  /* ------------------------------------------------ l'index par auteur
+     Le document conseille d'avoir au moins une référence par auteur : on ne
+     peut le vérifier que si les auteurs sont comptés un par un. Citations et
+     penseurs se rejoignent ici — Montesquieu cité et Montesquieu penseur sont
+     le même homme dans une copie. */
+  function auteurs() {
+    var index = {};
+    cartes.forEach(function (c) {
+      var s = c.contenu.source;
+      if (!s || !s.nom) return;
+      var k = normaliser(s.nom);
+      if (!index[k]) index[k] = { cle: k, nom: s.nom, cartes: [] };
+      /* le nom le plus complet l'emporte : « Albert Camus » plutôt que « Camus » */
+      if (s.nom.length > index[k].nom.length) index[k].nom = s.nom;
+      index[k].cartes.push(c);
+    });
+    return Object.keys(index).map(function (k) {
+      return { cle: k, nom: index[k].nom, cartes: index[k].cartes,
+               compte: compter(index[k].cartes) };
+    }).sort(function (a, b) {
+      /* ceux dont on ne sait rien d'abord : c'est là qu'est le travail */
+      if ((a.compte.acquises > 0) !== (b.compte.acquises > 0)) return a.compte.acquises ? 1 : -1;
+      if (b.cartes.length !== a.cartes.length) return b.cartes.length - a.cartes.length;
+      return a.nom.localeCompare(b.nom);
     });
   }
 
@@ -272,110 +382,43 @@
     return 'fiche';
   }
 
-  function questionPlacement(carte, production) {
-    var bonne = carte.tags[Math.floor(Math.random() * carte.tags.length)];
-    var normBonnes = carte.tags.map(normaliser);
+  /* ------------------------------------------------- produire une référence
+     Le sujet est donné, la référence est à trouver — de mémoire, sans rien à
+     l'écran. C'est le geste même de la copie, et le seul exercice de placement
+     qui apprenne quelque chose.
 
+     Le sens inverse, « dans quel type de sujet placer cette référence ? », a
+     été retiré : c'était un QCM sur quatre étiquettes, où la bonne réponse se
+     devinait sans rien connaître, et où plusieurs réponses étaient de toute
+     façon défendables. Il faisait monter des cartes sans rien prouver.
+
+     Ce mode ne touche pas aux boîtes : il travaille l'emploi des références,
+     pas leur restitution. */
+  function questionPlacement(carte) {
     function enonceDe(c) { return c.contenu.valeur || c.contenu.citation || c.contenu.question; }
 
-    /* En mode Placement, on ne choisit plus : on produit. C'est ce que demande
-       une copie — trouver soi-même la référence qui sert le sujet — et aucune
-       des réponses n'est soufflée. Ce mode ne touche pas aux boîtes : il
-       travaille l'emploi des références, pas leur restitution. */
-    if (production) {
-      /* On ne garde pas le sujet tiré plus haut : il faut un sujet que
-         plusieurs références portent, sinon la question n'a qu'une réponse
-         possible et ce n'est plus un exercice de placement. On essaie donc
-         tous les sujets de la carte avant de renoncer. */
-      var sujets = melanger(carte.tags);
-      for (var s = 0; s < sujets.length; s++) {
-        var sujet = sujets[s];
-        var memeTag = cartes.filter(function (c) {
-          return c.tags.some(function (t) { return normaliser(t) === normaliser(sujet); });
-        });
-        if (memeTag.length < 2) continue;
-        return {
-          genre: 'placementLibre', format: 'production',
-          masquerCarte: true,
-          enonce: 'Cite une référence que tu placerais dans un sujet « ' + sujet + ' »',
-          consigne: 'Une date, une citation, une notion ou un chiffre. Écris-la de mémoire.',
-          acceptees: memeTag,
-          bonne: enonceDe(carte),
-          aide: memeTag.length + ' références du document portent ce sujet.'
-        };
-      }
-      /* Pas assez de matière pour produire : on renonce au placement plutôt
-         que de retomber sur un QCM. Le mode Placement demande de trouver, pas
-         de reconnaître. */
-      return null;
-    }
-
-    /* Les leurres se prennent d'abord dans le MÊME thème. Pris ailleurs, ils
-       sautaient aux yeux : « Loi sur les accidents du travail » contre
-       « petite enfance », « loisirs », « égalité des chances », on répond sans
-       rien savoir. */
-    var faux = [];
-    function ramasser(memeTheme) {
-      melanger(cartes).some(function (c) {
-        if ((c.theme === carte.theme) !== memeTheme) return false;
-        c.tags.forEach(function (t) {
-          if (faux.length >= 3) return;
-          if (normBonnes.indexOf(normaliser(t)) >= 0) return;
-          if (faux.some(function (f) { return normaliser(f) === normaliser(t); })) return;
-          faux.push(t);
-        });
-        return faux.length >= 3;
+    /* Il faut un sujet que plusieurs références portent, sinon la question n'a
+       qu'une seule réponse possible et ce n'est plus un exercice. On essaie
+       tous les sujets de la carte avant de renoncer. */
+    var sujets = melanger(carte.tags);
+    for (var s = 0; s < sujets.length; s++) {
+      var sujet = sujets[s];
+      var memeTag = cartes.filter(function (c) {
+        return c.tags.some(function (t) { return normaliser(t) === normaliser(sujet); });
       });
+      if (memeTag.length < 2) continue;
+      return {
+        genre: 'placementLibre', format: 'production',
+        masquerCarte: true,
+        enonce: 'Quelle référence placerais-tu dans un sujet « ' + sujet + ' » ?',
+        consigne: 'Une date, une citation, un penseur, une notion ou un chiffre. ' +
+                  'Écris-la de mémoire : c\u2019est exactement ce qu\u2019on te demande en copie.',
+        acceptees: memeTag,
+        bonne: enonceDe(carte),
+        aide: memeTag.length + ' références du document portent ce sujet.'
+      };
     }
-    ramasser(true);
-    if (faux.length < 3) ramasser(false);
-    if (faux.length < 2) return null;
-
-    /* Dans un sens : la référence est donnée, on cherche le sujet. Dans
-       l'autre : le sujet est donné, on cherche la référence. Les deux se
-       travaillent, et une copie demande surtout le second. */
-    if (Math.random() < 0.5) {
-      /* Un leurre ne doit ni porter le sujet dans ses tags, ni le nommer dans
-         son texte : « La liberte consiste a... » serait un aussi bon choix que
-         la reponse attendue, et la question n'aurait plus de reponse. */
-      var motSujet = normaliser(bonne);
-      var autres = [];
-      function ramasserRefs(memeTheme) {
-        melanger(cartes).some(function (c) {
-          if (c.id === carte.id) return false;
-          if ((c.theme === carte.theme) !== memeTheme) return false;
-          if (c.tags.some(function (t) { return normBonnes.indexOf(normaliser(t)) >= 0; })) return false;
-          var e = enonceDe(c);
-          if (!e || autres.indexOf(e) >= 0) return false;
-          if (motSujet.length > 3 && normaliser(e).indexOf(motSujet) >= 0) return false;
-          autres.push(e);
-          return autres.length >= 3;
-        });
-      }
-      ramasserRefs(true);                      /* même thème d'abord : plus dur */
-      if (autres.length < 3) ramasserRefs(false);
-      if (autres.length >= 2) {
-        var vraie = enonceDe(carte);
-        return {
-          genre: 'placement', format: 'qcm',
-          masquerCarte: true,          /* type et theme decriraient la reponse */
-          enonce: 'Quelle référence placer dans un sujet « ' + bonne + ' » ?',
-          bonne: vraie,
-          options: melanger([vraie].concat(autres)),
-          aide: 'Une seule des quatre porte ce sujet dans le document.'
-        };
-      }
-    }
-
-    return {
-      genre: 'placement',
-      format: 'qcm',
-      enonce: 'Dans quel type de sujet placer cette référence ?',
-      support: enonceDe(carte),
-      bonne: bonne,
-      options: melanger([bonne].concat(faux)),
-      aide: 'Plusieurs réponses seraient acceptables ; une seule figure dans le document.'
-    };
+    return null;
   }
 
   function questionAttribuee(carte) {
@@ -463,24 +506,14 @@
 
     var f = formatImpose || format(boite);
 
-    /* Les détours — placer la référence dans un sujet, démasquer une formule
-       attribuée — ne valent qu'en bas de l'échelle. Une question de placement
-       se joue sur quatre cases et une formule attribuée sur deux : en haut de
-       l'échelle, elles laisseraient monter une carte qu'on n'a jamais écrite.
-       À partir de la boîte 3, c'est la carte elle-même, et elle entière.
-
-       En défi non plus, où le format est imposé : tout le monde doit lire le
-       même énoncé. Seul l'ordre des propositions diffère, et c'est tant
-       mieux. */
-    if (!formatImpose && (f === 'qcm' || f === 'saisie')) {
-      if (carte.tags.length >= 2 && Math.random() < 0.25) {
-        var p = questionPlacement(carte, false);
-        if (p) return p;
-      }
-      if (carte.attribuee && carte.type === 'citation' && Math.random() < 0.34) {
-        var at = questionAttribuee(carte);
-        if (at) return at;
-      }
+    /* Le piège de la formule attribuée ne vaut qu'en bas de l'échelle : c'est
+       une question à deux cases, donc une pièce à pile ou face. Plus haut,
+       c'est la carte elle-même, et elle entière. En défi non plus, où le
+       format est imposé : tout le monde doit lire le même énoncé. */
+    if (!formatImpose && (f === 'qcm' || f === 'saisie') &&
+        carte.attribuee && carte.type === 'citation' && Math.random() < 0.34) {
+      var at = questionAttribuee(carte);
+      if (at) return at;
     }
 
     /* ------------------------------------------------- la fiche, boîtes 3 à 5 */
@@ -545,7 +578,6 @@
     var taille = reglages.taille;
     var d = jour();
 
-    if (mode === 'faibles') return melanger(faibles()).slice(0, taille);
 
     /* « Valider » : les cartes prêtes pour l'épreuve écrite, celles qui sont
        en boîte 3 ou 4. Pas de tirage au sort ici — c'est une file d'attente,
@@ -565,6 +597,37 @@
         return (ea.boite || 0) - (eb.boite || 0);
       });
       return prets.slice(0, taille);
+    }
+
+    /* Mes erreurs : le moteur de la répétition. Le plus raté d'abord, et sans
+       condition de boîte — ce qu'on se trompe doit revenir, point. */
+    if (mode === 'erreurs') return faibles().slice(0, taille);
+
+    /* Le socle : les dates à placer en dissertation, celles dont le document
+       dit qu'elles sont indispensables. Ce qui n'est pas encore su passe
+       devant. */
+    if (mode === 'socle') {
+      var noyau = socle().slice();
+      noyau.sort(function (a, b) {
+        return (etat(a.id).boite || 0) - (etat(b.id).boite || 0);
+      });
+      return noyau.slice(0, taille);
+    }
+
+    /* Un sujet de dissertation : toutes les références qui s'y placent, tous
+       types confondus. C'est la révision de la veille d'un concours. */
+    if (mode === 'sujet') {
+      return melanger(cartes.filter(function (c) {
+        return c.tags.some(function (t) { return cleSujet(t) === filtre; });
+      })).slice(0, taille);
+    }
+
+    /* Un auteur : ses citations et son idée clé d'un seul tenant. */
+    if (mode === 'auteur') {
+      return melanger(cartes.filter(function (c) {
+        var s = c.contenu.source;
+        return s && s.nom && normaliser(s.nom) === filtre;
+      })).slice(0, taille);
     }
 
     /* « Placement » : l'exercice de la copie, trouver soi-même la référence
@@ -588,8 +651,10 @@
                                return filtre === 'attribuee' ? c.attribuee : c.type === filtre; })).slice(0, taille);
     if (mode === 'libre')   return melanger(cartes).slice(0, taille);
 
-    /* session du jour : moitié de cartes dues, un tiers de points faibles,
-       le reste en nouveautés, dans la limite du quota quotidien. */
+    /* session du jour : moitié de cartes arrivées à échéance, un tiers de
+       cartes ratées, le reste en nouveautés, dans la limite du quota
+       quotidien. Les ratées passent avant les nouvelles : apprendre une
+       référence de plus vaut moins que réparer celle qu'on vient de manquer. */
     var nouvellesAujourdhui = (journal()[d] || {}).nouvelles || 0;
     var quota = Math.max(0, reglages.nouvellesMax - nouvellesAujourdhui);
 
@@ -605,8 +670,7 @@
       return lot.filter(function (c) { return etat(c.id).boite === 0; }).length;
     }
     ajouter(dues(d), Math.round(taille * 0.5));
-    ajouter(faibles().sort(function (a, b) { return etat(b.id).erreurs - etat(a.id).erreurs; }),
-            Math.round(taille * 0.3));
+    ajouter(faibles(), Math.round(taille * 0.3), true);   /* déjà trié : le plus raté d'abord */
     ajouter(nouvelles(), Math.min(quota, Math.round(taille * 0.2)), true);
     /* On complète avec ce qui est dû, puis avec des nouvelles — sans jamais
        dépasser le quota du jour, qui compte aussi les sessions précédentes. */
@@ -664,7 +728,7 @@
        n'est pas traitée comme si elle était déjà en boîte 1. */
     var boite = e.boite || 0;
     var qst = item.forcerQuestion ||
-      (session.placement ? questionPlacement(carte, true) : null) ||
+      (session.placement ? questionPlacement(carte) : null) ||
       questionCarte(carte, boite, session.formatImpose);
     item.forcerQuestion = null;
 
@@ -1264,7 +1328,7 @@
 
     actions(hote, [
       { texte: 'Nouvelle session', action: function () { demarrer('jour'); } },
-      { texte: 'Ma progression', fantome: true, action: ecranArsenal },
+      { texte: 'Tableau de bord', fantome: true, action: ecranBord },
       { texte: 'Retour', fantome: true, action: ecranAccueil }
     ]);
     ecran('bilan');
@@ -1273,8 +1337,12 @@
   function ecranRienAFaire(mode) {
     var hote = vide(q('#sog-bilan'));
     hote.appendChild(el('h2', null, 'Rien à réviser'));
-    hote.appendChild(el('p', 'sog-sous', mode === 'faibles'
-      ? 'Aucune carte en boîte 1 ou 2 avec au moins deux erreurs. C’est bon signe.'
+    hote.appendChild(el('p', 'sog-sous', mode === 'erreurs'
+      ? 'Aucune erreur enregistrée. Il n’y a rien à repasser — reviens quand tu en auras.'
+      : mode === 'socle'
+      ? 'Le document ne marque encore aucune date « à placer en dissertation ».'
+      : mode === 'sujet' || mode === 'auteur'
+      ? 'Aucune référence ne correspond.'
       : mode === 'valider'
       ? 'Aucune carte n’est prête pour la fiche écrite. Une carte y arrive quand ' +
         'elle a passé le QCM puis la saisie : fais d’abord une session du jour.'
@@ -1289,7 +1357,7 @@
   }
 
   /* ============================================================== écrans */
-  var ECRANS = ['accueil', 'session', 'bilan', 'arsenal', 'fiches', 'methode', 'sujet', 'frise'];
+  var ECRANS = ['accueil', 'session', 'bilan', 'bord', 'fiches', 'methode', 'sujet', 'frise'];
   function ecran(nom) {
     ECRANS.forEach(function (n) {
       var s = q('#sog-ecran-' + n);
@@ -1314,7 +1382,7 @@
   function ecranAccueil() {
     var hote = vide(q('#sog-accueil'));
 
-    var d = dues().length, n = nouvelles().length, f = faibles().length;
+    var d = dues().length, f = faibles().length;
     var pretes = aValider().length;
 
     /* L'avis de reprise : il explique une seule fois pourquoi des cartes
@@ -1339,12 +1407,47 @@
       hote.appendChild(avis);
     }
 
+    /* --------------------------------------------- comment ça marche
+       Première chose sur la page tant que rien n'est acquis : personne ne
+       peut suivre une progression dont il ne connaît pas la règle. Le bloc
+       se replie de lui-même dès la première carte acquise, et se rouvre
+       d'un clic. */
+    var n5 = compter(cartes);
+    var regle = el('details', 'sog-regle');
+    if (!n5.acquises) regle.open = true;
+    var som = el('summary', null, 'Comment marche la progression');
+    regle.appendChild(som);
+    var ul = el('ul', 'sog-puces');
+    [
+      'Une carte jamais vue : tu la lis d’abord, on ne t’interroge pas dessus.',
+      'Boîte 1, elle revient en QCM. Boîte 2, tu écris la réponse.',
+      'Boîtes 3 et 4, tu écris la fiche entière de mémoire : la date, l’auteur, ' +
+        'l’œuvre, l’argument. C’est ça, valider.',
+      'Deux fiches justes et la carte est acquise. Elle revient quand même en ' +
+        'contrôle vingt jours plus tard.',
+      'Une erreur, à n’importe quel étage, renvoie la carte en boîte 1 — et elle ' +
+        'passe en tête de « mes erreurs », donc elle reviendra vite.',
+      'Les délais doublent à chaque étage : 1, 2, 4, 8, puis 20 jours. C’est ce ' +
+        'qui fait tenir une préparation sur des mois sans tout revoir chaque soir.'
+    ].forEach(function (t) { ul.appendChild(el('li', null, t)); });
+    regle.appendChild(ul);
+    hote.appendChild(regle);
+
     var tete = el('div', 'sog-bloc-principal');
     tete.appendChild(el('span', 'sog-etiquette', 'Recommandé'));
     tete.appendChild(el('h2', null, 'Session du jour'));
-    tete.appendChild(el('p', 'sog-sous',
-      d + ' à revoir · ' + f + ' point(s) faible(s) · ' + n + ' jamais vue(s)'));
-    actions(tete, [{ texte: 'Commencer', action: function () { demarrer('jour'); } }]);
+    /* Les chiffres de l'accueil disent des états, pas un jugement. L'ancienne
+       ligne annonçait « 0 point faible » à quelqu'un qui n'avait encore rien
+       vu : exact, et parfaitement inutile. */
+    var compteurs = [n5.acquises + ' acquise(s)', n5.route + ' commencée(s)',
+                     n5.jamais + ' jamais vue(s)'];
+    if (d) compteurs.unshift(d + ' à revoir aujourd’hui');
+    if (f) compteurs.push(f + ' à repasser');
+    tete.appendChild(el('p', 'sog-sous', compteurs.join(' · ')));
+    actions(tete, [
+      { texte: 'Commencer', action: function () { demarrer('jour'); } },
+      { texte: 'Tableau de bord', fantome: true, action: ecranBord }
+    ]);
     hote.appendChild(tete);
 
     /* Le bloc de validation ne s'affiche que quand il y a quelque chose à
@@ -1360,7 +1463,7 @@
       actions(bv, [
         { texte: 'Passer les fiches', action: function () {
             demarrer('valider', null, 'Validation écrite'); } },
-        { texte: 'Ma progression', fantome: true, action: ecranArsenal }
+        { texte: 'Tableau de bord', fantome: true, action: ecranBord }
       ]);
       hote.appendChild(bv);
     }
@@ -1379,11 +1482,19 @@
     }));
     hote.appendChild(reg);
 
-    /* les autres modes */
+    /* les autres modes. Le socle n'apparaît que si le document en désigne un :
+       une entrée « 0 date » n'apprendrait rien à personne. */
     var modes = el('div', 'sog-modes');
-    [
-      ['Ma progression', 'paliers par catégorie', ecranArsenal],
-      ['Points faibles', f + ' carte(s)', function () { demarrer('faibles', null, 'Points faibles'); }],
+    var entrees = [
+      ['Tableau de bord', 'où j’en suis, et par quoi continuer', ecranBord],
+      ['Mes erreurs', f ? f + ' carte(s) à repasser' : 'rien à repasser',
+        function () { demarrer('erreurs', null, 'Mes erreurs'); }]
+    ];
+    if (socle().length) {
+      entrees.push(['Le socle', socle().length + ' dates à placer en dissertation',
+        function () { demarrer('socle', null, 'Le socle'); }]);
+    }
+    entrees = entrees.concat([
       ['Par catégorie', 'dates, citations, auteurs…', choisirType],
       ['Par thème', '12 thèmes', choisirTheme],
       ['Placement', 'trouver la référence d’un sujet',
@@ -1392,7 +1503,8 @@
       ['Mode Sujet', '3 minutes de brouillon', ecranSujet],
       ['Mes fiches', 'lecture et recherche', ecranFiches],
       ['Méthode', 'les règles du document', ecranMethode]
-    ].forEach(function (m) {
+    ]);
+    entrees.forEach(function (m) {
       var b = el('button', 'sog-carte');
       b.type = 'button';
       b.appendChild(el('b', null, m[0]));
@@ -1492,142 +1604,324 @@
   }
 
   /* ----------------------------------------------------- Ma progression */
-  function ecranArsenal() {
-    var hote = vide(q('#sog-arsenal'));
-    hote.appendChild(el('h2', null, 'Ma progression'));
+  /* =========================================================== tableau de bord
+     Une seule page pour répondre à « où j'en suis et par quoi je continue ».
+     Elle est faite de blocs qui disent tous la même chose sous un angle
+     différent : par état, par erreur, par catégorie, par sujet de
+     dissertation, par auteur, par thème.
+
+     Règle de l'écran : aucune ligne n'est un cul-de-sac. Chaque bloc se
+     termine par un bouton qui lance exactement la session dont il parle,
+     sinon ce n'est pas un tableau de bord, c'est un bulletin. */
+  function ecranBord() {
+    var hote = vide(q('#sog-bord'));
+    hote.appendChild(el('h2', null, 'Tableau de bord'));
     hote.appendChild(el('p', 'sog-sous',
-      'Une carte est validée quand tu as écrit sa fiche entière, juste, deux fois ' +
-      'à plusieurs jours d’écart : la date, l’auteur, l’œuvre, la définition. ' +
-      'C’est le seul compteur qui dise ce que tu sauras poser dans une copie.'));
+      'Tout part d’une seule règle : une référence est acquise quand tu sais ' +
+      'l’écrire de mémoire, deux fois, à plusieurs jours d’écart. Le reste de ' +
+      'cette page dit ce qui l’est, ce qui ne l’est pas, et par quoi commencer.'));
 
-    var s = el('div', 'sog-grille-chiffres');
-    [[dues().length, 'à revoir aujourd’hui'], [aValider().length, 'prêtes pour la fiche'],
-     [validees().length, 'validées'], [confirmees().length, 'confirmées'],
-     [serie(), 'jours d’affilée']].forEach(function (p) {
-      var c = el('div', 'sog-chiffre');
-      c.appendChild(el('b', null, String(p[0])));
-      c.appendChild(el('span', null, p[1]));
-      s.appendChild(c);
-    });
-    hote.appendChild(s);
+    sommaire(hote, [
+      ['etats', 'Où j’en suis'],
+      ['erreurs', 'Mes erreurs'],
+      ['cats', 'Par catégorie'],
+      ['sujets', 'Par sujet'],
+      ['auteurs', 'Par auteur'],
+      ['themes', 'Par thème']
+    ]);
 
+    peindreEtats(hote);
+    peindreErreurs(hote);
     peindreCategories(hote);
+    peindreSujets(hote);
+    peindreAuteurs(hote);
     peindreGrille(hote);
-
-    /* courbe 30 jours */
-    var cadre = el('div', 'sog-courbe');
-    cadre.appendChild(el('span', 'sog-etiquette', 'Cartes validées, 30 derniers jours'));
-    var toile = el('canvas');
-    toile.width = 900; toile.height = 220;
-    cadre.appendChild(toile);
-    hote.appendChild(cadre);
-    dessinerCourbe(toile);
-    /* Le compteur a changé de sens : avant la fiche écrite, il comptait les
-       cartes des boîtes 4 et 5, celles qu'on s'était notées soi-même. Une
-       courbe qui baisse à la date de cette mise à jour n'est pas une
-       régression, c'est le même savoir mesuré plus sévèrement. */
-    cadre.appendChild(el('p', 'sog-sous',
-      'Avant la validation écrite, ce compteur incluait les cartes auto-évaluées. ' +
-      'Une marche descendante sur la courbe vient de ce changement de mesure, ' +
-      'pas d’un oubli.'));
-
-    /* les plus ratées */
-    var pires = cartes.slice()
-      .filter(function (c) { return etat(c.id).erreurs > 0; })
-      .sort(function (a, b) { return etat(b.id).erreurs - etat(a.id).erreurs; })
-      .slice(0, 10);
-    var l = el('div', 'sog-liste');
-    l.appendChild(el('span', 'sog-etiquette', 'Les 10 cartes les plus ratées'));
-    if (!pires.length) l.appendChild(el('p', 'sog-sous', 'Aucune erreur enregistrée pour l’instant.'));
-    pires.forEach(function (c) {
-      var r = el('div', 'sog-ligne');
-      r.appendChild(el('span', 'sog-pastille sog-' + c.type, c.type));
-      r.appendChild(el('span', 'sog-ligne-txt', c.contenu.question));
-      var n = etat(c.id).erreurs;
-      r.appendChild(el('span', 'sog-ligne-val', n + (n > 1 ? ' erreurs' : ' erreur')));
-      l.appendChild(r);
-    });
-    hote.appendChild(l);
+    peindreCourbe(hote);
 
     actions(hote, [
       { texte: 'Session du jour', action: function () { demarrer('jour'); } },
       { texte: 'Retour', fantome: true, action: ecranAccueil }
     ]);
-    ecran('arsenal');
+    ecran('bord');
   }
 
-  /* ------------------------------------------- les paliers par catégorie
-     Une ligne par famille de références : où on en est, ce qu'il faut savoir
-     écrire pour valider, et de combien de cartes on est loin du palier
-     suivant. Le compte brut est toujours à côté du nom du palier : un palier
-     qui cacherait son chiffre ne servirait qu'à se faire plaisir. */
+  /* Une rangée de pastilles qui mènent aux blocs. La page est longue par
+     nature — elle couvre six angles — et une table des matières coûte moins
+     cher que de la raccourcir en cachant des chiffres. */
+  function sommaire(hote, entrees) {
+    var r = el('nav', 'sog-sommaire');
+    r.setAttribute('aria-label', 'Sections du tableau de bord');
+    entrees.forEach(function (e) {
+      var b = el('button', null, e[1]);
+      b.type = 'button';
+      b.addEventListener('click', function () {
+        var cible = q('#sog-bloc-' + e[0]);
+        if (cible) cible.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      r.appendChild(b);
+    });
+    hote.appendChild(r);
+  }
+
+  /* Les listes longues s'arrêtent à ce qui tient à l'écran et disent combien
+     elles cachent. Soixante-huit sujets déroulés d'un coup font une page de
+     dix-huit mille pixels, que personne ne lit jusqu'en bas. Rien n'est
+     supprimé pour autant : le bouton annonce le nombre exact. */
+  function plier(hote, noeuds, visibles, motAutres) {
+    if (noeuds.length <= visibles) return;
+    noeuds.forEach(function (n, i) { if (i >= visibles) n.hidden = true; });
+    var b = el('button', 'sog-btn sog-mini sog-fantome',
+      'Afficher les ' + (noeuds.length - visibles) + ' ' + motAutres);
+    b.type = 'button';
+    b.addEventListener('click', function () {
+      noeuds.forEach(function (n) { n.hidden = false; });
+      b.parentNode.remove();
+    });
+    var r = el('div', 'sog-rangee');
+    r.appendChild(b);
+    hote.appendChild(r);
+  }
+
+  function bloc(hote, id, titre, sous) {
+    var b = el('div', 'sog-bloc-bord');
+    b.id = 'sog-bloc-' + id;
+    b.appendChild(el('span', 'sog-etiquette', titre));
+    if (sous) b.appendChild(el('p', 'sog-sous', sous));
+    hote.appendChild(b);
+    return b;
+  }
+
+  /* Une barre en cinq parts, la même partout : jamais vue, commencée, prête,
+     validée, confirmée. Lue une fois, elle se lit partout. */
+  function barreEtats(n) {
+    var piste = el('div', 'sog-cat-piste');
+    [['sog-part-confirmee', n.confirmee], ['sog-part-valide', n.validee],
+     ['sog-part-prete', n.prete], ['sog-part-route', n.route]].forEach(function (p) {
+      if (!p[1] || !n.total) return;
+      var i = el('i', p[0]);
+      i.style.width = (p[1] / n.total * 100) + '%';
+      piste.appendChild(i);
+    });
+    return piste;
+  }
+  function motsEtats(n) {
+    var bouts = [];
+    if (n.confirmee) bouts.push(n.confirmee + ' confirmée' + (n.confirmee > 1 ? 's' : ''));
+    if (n.validee) bouts.push(n.validee + ' validée' + (n.validee > 1 ? 's' : ''));
+    if (n.prete) bouts.push(n.prete + ' prête' + (n.prete > 1 ? 's' : '') + ' pour la fiche');
+    if (n.route) bouts.push(n.route + ' commencée' + (n.route > 1 ? 's' : ''));
+    if (n.jamais) bouts.push(n.jamais + ' jamais vue' + (n.jamais > 1 ? 's' : ''));
+    return bouts.join(' · ');
+  }
+
+  /* ------------------------------------------------------------ où j'en suis */
+  function peindreEtats(hote) {
+    var n = compter(cartes);
+    var b = bloc(hote, 'etats', 'Où j’en suis',
+      'Les cinq états d’une référence. Une carte monte d’un cran à chaque ' +
+      'bonne réponse et retombe à « commencée » dès qu’on la rate.');
+
+    var g = el('div', 'sog-grille-chiffres');
+    [[n.jamais, 'jamais vues'], [n.route, 'commencées'], [n.prete, 'prêtes pour la fiche'],
+     [n.validee + n.confirmee, 'acquises'], [serie(), 'jours d’affilée']].forEach(function (p) {
+      var c = el('div', 'sog-chiffre');
+      c.appendChild(el('b', null, String(p[0])));
+      c.appendChild(el('span', null, p[1]));
+      g.appendChild(c);
+    });
+    b.appendChild(g);
+    b.appendChild(barreEtats(n));
+
+    var duJour = dues().length;
+    b.appendChild(el('p', 'sog-cat-chiffres',
+      duJour ? duJour + ' carte(s) arrivent à échéance aujourd’hui.'
+             : 'Rien n’arrive à échéance aujourd’hui : la suite, ce sont des cartes neuves.'));
+
+    /* Le socle : ce que le document dit indispensable. */
+    var noyau = socle();
+    if (noyau.length) {
+      var ns = compter(noyau);
+      b.appendChild(el('p', 'sog-cat-chiffres',
+        'Socle du concours — les dates à placer en dissertation : ' +
+        ns.acquises + ' acquise(s) sur ' + ns.total + '.'));
+    }
+
+    var boutons = [{ texte: 'Session du jour', action: function () { demarrer('jour'); } }];
+    if (noyau.length) {
+      boutons.push({ texte: 'Travailler le socle', fantome: true, action: function () {
+        demarrer('socle', null, 'Le socle');
+      } });
+    }
+    actions(b, boutons);
+  }
+
+  /* --------------------------------------------------------------- mes erreurs
+     Le bloc que l'ancien « 0 point faible » remplaçait par rien. */
+  function peindreErreurs(hote) {
+    var rates = faibles();
+    var b = bloc(hote, 'erreurs', 'Mes erreurs',
+      'Ce que tu rates revient plus souvent, et d’abord ce que tu rates le plus. ' +
+      'Une carte sort de cette liste le jour où elle est validée.');
+
+    if (!rates.length) {
+      var vus = cartes.filter(function (c) { return etat(c.id).vues > 0; }).length;
+      b.appendChild(el('p', 'sog-sous', vus
+        ? 'Aucune erreur enregistrée sur les ' + vus + ' cartes déjà vues. ' +
+          'Rien à repasser pour l’instant.'
+        : 'Rien encore : tu n’as pas commencé. La liste se remplira toute seule, ' +
+          'et c’est elle qui vaudra le plus de points.'));
+      return;
+    }
+
+    b.appendChild(el('p', 'sog-cat-chiffres',
+      rates.length + ' carte(s) à repasser, ' +
+      rates.reduce(function (n, c) { return n + etat(c.id).erreurs; }, 0) + ' erreurs en tout.'));
+
+    var l = el('div', 'sog-liste');
+    rates.slice(0, 12).forEach(function (c) {
+      var r = el('div', 'sog-ligne');
+      r.appendChild(el('span', 'sog-pastille sog-' + c.type, c.type));
+      r.appendChild(el('span', 'sog-ligne-txt', c.contenu.cle || c.contenu.question));
+      var n = etat(c.id).erreurs;
+      r.appendChild(el('span', 'sog-ligne-val', n + (n > 1 ? ' erreurs' : ' erreur')));
+      l.appendChild(r);
+    });
+    if (rates.length > 12) {
+      l.appendChild(el('p', 'sog-sous', 'et ' + (rates.length - 12) + ' autre(s).'));
+    }
+    b.appendChild(l);
+    actions(b, [{ texte: 'Reprendre mes erreurs', action: function () {
+      demarrer('erreurs', null, 'Mes erreurs');
+    } }]);
+  }
+
+  /* ------------------------------------------- les paliers par catégorie */
   function peindreCategories(hote) {
-    var bloc = el('div', 'sog-cats');
-    bloc.appendChild(el('span', 'sog-etiquette', 'Paliers par catégorie'));
+    var b = bloc(hote, 'cats', 'Par catégorie',
+      'Six familles de références. Le palier se calcule sur la part de la ' +
+      'famille que tu as acquise ; le compte brut est toujours à côté.');
 
     V.CATEGORIES.forEach(function (cat) {
       var lot = cartesDe(cat.type);
       if (!lot.length) return;
-      var v = 0, pretes = 0, route = 0;
-      lot.forEach(function (c) {
-        var b = etat(c.id).boite || 0;
-        if (b >= 5) v++;
-        else if (b >= 3) pretes++;
-        else if (b >= 1) route++;
-      });
-      var p = V.palier(v, lot.length);
+      var n = compter(lot);
+      var p = V.palier(n.acquises, n.total);
 
       var ligne = el('div', 'sog-cat');
       var tete = el('div', 'sog-cat-tete');
-      tete.appendChild(el('b', null, cat.nom));
+      tete.appendChild(el('b', null, cat.nom + ' · ' + n.total));
       tete.appendChild(el('span', 'sog-cat-palier',
         'Palier ' + p.rang + '/' + p.haut + ' · ' + p.nom));
       ligne.appendChild(tete);
       ligne.appendChild(el('p', 'sog-cat-quoi', 'À écrire de mémoire : ' + cat.ecrire + '.'));
+      ligne.appendChild(barreEtats(n));
 
-      /* Une piste en trois parts : validé, prêt pour la fiche, commencé. */
-      var piste = el('div', 'sog-cat-piste');
-      [['sog-part-valide', v], ['sog-part-prete', pretes], ['sog-part-route', route]]
-        .forEach(function (part) {
-          if (!part[1]) return;
-          var i = el('i', part[0]);
-          i.style.width = (part[1] / lot.length * 100) + '%';
-          piste.appendChild(i);
-        });
-      ligne.appendChild(piste);
-
-      ligne.appendChild(el('p', 'sog-cat-chiffres',
-        v + ' validée(s) · ' + pretes + ' prête(s) pour la fiche · ' +
-        lot.length + ' en tout' +
-        (p.suivant ? ' · encore ' + p.suivant.manque + ' pour « ' + p.suivant.nom + ' »'
-                   : ' · rien ne manque')));
+      var dit = motsEtats(n);
+      var noyau = lot.filter(function (c) { return c.priorite; });
+      if (noyau.length) {
+        dit += ' · socle : ' + compter(noyau).acquises + '/' + noyau.length;
+      }
+      if (p.suivant) dit += ' · encore ' + p.suivant.manque + ' pour « ' + p.suivant.nom + ' »';
+      ligne.appendChild(el('p', 'sog-cat-chiffres', dit));
 
       var boutons = [];
-      if (pretes) {
+      if (n.prete) {
         boutons.push({ texte: 'Valider', action: function () {
           demarrer('valider', cat.type, 'Validation · ' + cat.nom);
         } });
       }
-      boutons.push({ texte: 'Réviser', fantome: !!pretes, action: function () {
+      boutons.push({ texte: 'Réviser', fantome: !!n.prete, action: function () {
         demarrer('type', cat.type, cat.nom);
       } });
       actions(ligne, boutons);
-      bloc.appendChild(ligne);
+      b.appendChild(ligne);
     });
-    hote.appendChild(bloc);
+  }
+
+  /* --------------------------------------------- par sujet de dissertation
+     C'est la vue qui sert la veille d'un concours : « sur un sujet Travail,
+     qu'est-ce que j'ai sous la main, et qu'est-ce que je sais vraiment ? » */
+  function peindreSujets(hote) {
+    var liste = sujets(3);
+    var b = bloc(hote, 'sujets', 'Par sujet de dissertation',
+      'Les ' + liste.length + ' sujets portés par au moins trois références du ' +
+      'document. Le détail dit de quoi ton arsenal est fait : des dates sans ' +
+      'citation, ou l’inverse, c’est une copie bancale.');
+
+    var corps = el('div', 'sog-sujets');
+    liste.forEach(function (s) {
+      var ligne = el('div', 'sog-sujet');
+      var tete = el('div', 'sog-cat-tete');
+      tete.appendChild(el('b', null, s.nom));
+      tete.appendChild(el('span', 'sog-cat-palier',
+        s.compte.acquises + ' / ' + s.compte.total + ' acquises'));
+      ligne.appendChild(tete);
+
+      /* le détail par type : c'est là qu'on voit ce qui manque */
+      var detail = V.CATEGORIES.map(function (cat) {
+        var n = s.cartes.filter(function (c) { return c.type === cat.type; }).length;
+        return n ? n + ' ' + (n > 1 ? pluriel(cat) : singulier(cat)) : null;
+      }).filter(Boolean).join(' · ');
+      ligne.appendChild(el('p', 'sog-cat-quoi', detail));
+      ligne.appendChild(barreEtats(s.compte));
+
+      var bouton = el('button', 'sog-btn sog-mini sog-fantome', 'Réviser ce sujet');
+      bouton.type = 'button';
+      bouton.addEventListener('click', function () {
+        demarrer('sujet', s.cle, 'Sujet · ' + s.nom);
+      });
+      var r = el('div', 'sog-rangee');
+      r.appendChild(bouton);
+      ligne.appendChild(r);
+      corps.appendChild(ligne);
+    });
+    b.appendChild(corps);
+    plier(b, Array.prototype.slice.call(corps.children), 12, 'autres sujets');
+  }
+
+  function singulier(cat) {
+    return { date: 'date', citation: 'citation', penseur: 'auteur',
+             notion: 'notion', repere: 'repère', chiffre: 'chiffre' }[cat.type] || cat.type;
+  }
+  function pluriel(cat) { return singulier(cat) + 's'; }
+
+  /* ------------------------------------------------------------ par auteur
+     « Au moins une référence par auteur » : un auteur dont on ne sait rien
+     est un auteur qu'on ne citera pas. Ils passent donc en tête. */
+  function peindreAuteurs(hote) {
+    var liste = auteurs();
+    var inconnus = liste.filter(function (a) { return !a.compte.acquises; }).length;
+    var b = bloc(hote, 'auteurs', 'Par auteur',
+      liste.length + ' auteurs dans le document. L’objectif est d’en avoir au moins ' +
+      'une référence solide pour chacun : un auteur dont tu ne sais rien est un ' +
+      'auteur que tu ne citeras pas.' +
+      (inconnus ? ' Il t’en reste ' + inconnus + ' dans ce cas, en tête de liste.' : ''));
+
+    var corps = el('div', 'sog-auteurs');
+    liste.forEach(function (a) {
+      var ligne = el('button', 'sog-auteur' + (a.compte.acquises ? '' : ' sog-auteur-vide'));
+      ligne.type = 'button';
+      ligne.appendChild(el('b', null, a.nom));
+      ligne.appendChild(el('span', null,
+        a.cartes.length + ' référence' + (a.cartes.length > 1 ? 's' : '') +
+        ' · ' + (a.compte.acquises ? a.compte.acquises + ' acquise' + (a.compte.acquises > 1 ? 's' : '')
+                                   : 'aucune acquise')));
+      ligne.addEventListener('click', function () {
+        demarrer('auteur', a.cle, 'Auteur · ' + a.nom);
+      });
+      corps.appendChild(ligne);
+    });
+    b.appendChild(corps);
+    plier(b, Array.prototype.slice.call(corps.children), 18, 'autres auteurs');
   }
 
   /* ------------------------------------- la grille thème × catégorie
-     C'est la réponse à « qu'est-ce que je sais vraiment ? ». Une case vide
-     dans une colonne dit exactement quoi travailler ensuite. La dernière
-     colonne reprend l'objectif du document : 5 à 8 références solides par
-     thème. */
+     Une case vide dit quoi travailler ce soir. La dernière colonne reprend
+     l'objectif du document : 5 à 8 références solides par thème. */
   function peindreGrille(hote) {
-    var bloc = el('div', 'sog-grille-themes');
-    bloc.appendChild(el('span', 'sog-etiquette', 'Validées par thème et par catégorie'));
-    bloc.appendChild(el('p', 'sog-sous',
-      'Chaque case : validées sur total. Le document conseille 5 à 8 références ' +
-      'solides par thème — c’est la dernière colonne.'));
+    var b = bloc(hote, 'themes', 'Par thème',
+      'Chaque case : acquises sur total. La dernière colonne est l’objectif du ' +
+      'document, 5 à 8 références solides par thème.');
 
     var cadre = el('div', 'sog-table-cadre');
     var table = el('table', 'sog-table');
@@ -1643,10 +1937,16 @@
     themes().forEach(function (t) {
       var duTheme = cartes.filter(function (c) { return c.theme === t; });
       var tr = el('tr');
-      tr.appendChild(el('th', 'sog-th-theme', t));
+      var th = el('th', 'sog-th-theme');
+      var lien = el('button', 'sog-lien-theme', t);
+      lien.type = 'button';
+      lien.addEventListener('click', function () { demarrer('theme', t, t); });
+      th.appendChild(lien);
+      tr.appendChild(th);
+
       V.CATEGORIES.forEach(function (cat) {
         var lot = duTheme.filter(function (c) { return c.type === cat.type; });
-        var v = lot.filter(function (c) { return (etat(c.id).boite || 0) >= 5; }).length;
+        var v = compter(lot).acquises;
         var td = el('td');
         if (!lot.length) {
           td.className = 'sog-c-vide';
@@ -1656,12 +1956,13 @@
           td.className = v === lot.length ? 'sog-c-plein' : v ? 'sog-c-part' : 'sog-c-zero';
           td.appendChild(el('b', null, String(v)));
           td.appendChild(el('span', null, '/' + lot.length));
-          td.setAttribute('aria-label', v + ' validée(s) sur ' + lot.length +
+          td.setAttribute('aria-label', v + ' acquise(s) sur ' + lot.length +
                                         ' — ' + cat.nom + ', ' + t);
         }
         tr.appendChild(td);
       });
-      var vTheme = duTheme.filter(function (c) { return (etat(c.id).boite || 0) >= 5; }).length;
+
+      var vTheme = compter(duTheme).acquises;
       var objectif = Math.min(8, duTheme.length);
       var tdo = el('td', vTheme >= objectif ? 'sog-c-plein' : vTheme ? 'sog-c-part' : 'sog-c-zero');
       tdo.appendChild(el('b', null, String(vTheme)));
@@ -1671,8 +1972,23 @@
     });
     table.appendChild(tbody);
     cadre.appendChild(table);
-    bloc.appendChild(cadre);
-    hote.appendChild(bloc);
+    b.appendChild(cadre);
+  }
+
+  /* ------------------------------------------------------- la courbe */
+  function peindreCourbe(hote) {
+    var cadre = el('div', 'sog-courbe');
+    cadre.appendChild(el('span', 'sog-etiquette', 'Cartes acquises, 30 derniers jours'));
+    var toile = el('canvas');
+    toile.width = 900; toile.height = 220;
+    cadre.appendChild(toile);
+    hote.appendChild(cadre);
+    dessinerCourbe(toile);
+    /* Le compteur a changé de sens le jour de la validation écrite : avant, il
+       comptait aussi les cartes auto-évaluées. */
+    cadre.appendChild(el('p', 'sog-sous',
+      'Avant la validation écrite, ce compteur incluait les cartes auto-évaluées. ' +
+      'Une marche descendante vient de ce changement de mesure, pas d’un oubli.'));
   }
 
   function dessinerCourbe(toile) {

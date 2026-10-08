@@ -167,8 +167,22 @@ if (bastille) {
   attendre('date en chiffres', verdictChamp(bastille, 'date', '14/07/1789'), 'juste');
   attendre('année seule, jour et mois oubliés', verdictChamp(bastille, 'date', '1789'), 'presque');
   attendre('bon jour, mauvaise année', verdictChamp(bastille, 'date', '14 juillet 1889'), 'rate');
-  attendre('emploi reconnu', verdictChamp(bastille, 'emploi', 'la liberté'), 'juste');
-  attendre('emploi hors sujet', verdictChamp(bastille, 'emploi', 'la fiscalité'), 'rate');
+}
+
+/* La colonne « Ce que ça prouve » : l'argument que la date sert dans une copie.
+   Elle ne vient que des lignes du document qui la portent — tant que le
+   document n'en a pas, il n'y a rien à vérifier, et on le dit. */
+const avecPreuve = cartes.filter(c => c.type === 'date' && c.contenu.preuve);
+console.log('   ' + avecPreuve.length + ' date(s) sur ' +
+            cartes.filter(c => c.type === 'date').length + ' portent un argument « ce que ça prouve »');
+if (avecPreuve.length) {
+  const d = avecPreuve[0];
+  const cles = V.motsCles(d.contenu.preuve);
+  attendre('argument recopié', verdictChamp(d, 'preuve', d.contenu.preuve), 'juste');
+  attendre('argument hors sujet', verdictChamp(d, 'preuve', 'je ne sais pas du tout'), 'rate');
+  attendre('la fiche d’une date a deux champs', V.fiche(d).champs.length, 2);
+  console.log('        (« ' + d.contenu.valeur.slice(0, 50) + '… » : ' +
+              cles.map(k => k.mot).join(', ') + ')');
 }
 
 const tocqueville = trouver(c => c.contenu.source && /Tocqueville/.test(c.contenu.source.brut || ''),

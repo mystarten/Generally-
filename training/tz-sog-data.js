@@ -40,6 +40,7 @@ window.TZ_SOG_DATA = {
     "reponse": "14 juillet 1789",
     "cle": "14 juillet 1789",
     "valeur": "Prise de la Bastille",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 14 juillet 1789 ?",
      "reponse": "Prise de la Bastille"
@@ -66,6 +67,7 @@ window.TZ_SOG_DATA = {
     "reponse": "26 août 1789",
     "cle": "26 août 1789",
     "valeur": "Déclaration des droits de l'homme et du citoyen (DDHC)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 26 août 1789 ?",
      "reponse": "Déclaration des droits de l'homme et du citoyen (DDHC)"
@@ -89,6 +91,7 @@ window.TZ_SOG_DATA = {
     "reponse": "16 février 1791",
     "cle": "16 février 1791",
     "valeur": "Loi créant la Gendarmerie nationale, héritière de la maréchaussée",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 16 février 1791 ?",
      "reponse": "Loi créant la Gendarmerie nationale, héritière de la maréchaussée"
@@ -114,6 +117,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1792",
     "cle": "1792",
     "valeur": "Proclamation de la Iʳᵉ République ; La Marseillaise composée par Rouget de Lisle",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1792 ?",
      "reponse": "Proclamation de la Iʳᵉ République ; La Marseillaise composée par Rouget de Lisle"
@@ -139,6 +143,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1794",
     "cle": "1794",
     "valeur": "Première abolition de l'esclavage (rétabli par Napoléon en 1802)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1794 ?",
      "reponse": "Première abolition de l'esclavage (rétabli par Napoléon en 1802)"
@@ -164,6 +169,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1804",
     "cle": "1804",
     "valeur": "Code civil (Napoléon) : égalité devant la loi, propriété, mais infériorité juridique de la femme mariée",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1804 ?",
      "reponse": "Code civil (Napoléon) : égalité devant la loi, propriété, mais infériorité juridique de la femme mariée"
@@ -189,6 +195,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1811-1816",
     "cle": "1811-1816",
     "valeur": "Révolte des luddites en Angleterre : des ouvriers brisent les machines textiles",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1811-1816 ?",
      "reponse": "Révolte des luddites en Angleterre : des ouvriers brisent les machines textiles"
@@ -215,6 +222,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1841",
     "cle": "1841",
     "valeur": "Première loi limitant le travail des enfants dans les usines (interdit avant 8 ans)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1841 ?",
      "reponse": "Première loi limitant le travail des enfants dans les usines (interdit avant 8 ans)"
@@ -240,6 +248,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1848",
     "cle": "1848",
     "valeur": "Suffrage universel masculin ; abolition définitive de l'esclavage (décret du 27 avril, porté par Victor Schœlcher)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1848 ?",
      "reponse": "Suffrage universel masculin ; abolition définitive de l'esclavage (décret du 27 avril, porté par Victor Schœlcher)"
@@ -266,6 +275,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1864",
     "cle": "1864",
     "valeur": "Reconnaissance du droit de grève",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1864 ?",
      "reponse": "Reconnaissance du droit de grève"
@@ -291,6 +301,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1881",
     "cle": "1881",
     "valeur": "Loi du 29 juillet sur la liberté de la presse, toujours en vigueur",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1881 ?",
      "reponse": "Loi du 29 juillet sur la liberté de la presse, toujours en vigueur"
@@ -317,6 +328,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1881-1882",
     "cle": "1881-1882",
     "valeur": "Lois Jules Ferry : école gratuite, obligatoire et laïque",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1881-1882 ?",
      "reponse": "Lois Jules Ferry : école gratuite, obligatoire et laïque"
@@ -342,6 +354,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1884",
     "cle": "1884",
     "valeur": "Loi Waldeck-Rousseau autorisant les syndicats",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1884 ?",
      "reponse": "Loi Waldeck-Rousseau autorisant les syndicats"
@@ -367,6 +380,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1894-1906",
     "cle": "1894-1906",
     "valeur": "Affaire Dreyfus ; Zola publie « J'accuse… ! » (1898)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1894-1906 ?",
      "reponse": "Affaire Dreyfus ; Zola publie « J'accuse… ! » (1898)"
@@ -394,6 +408,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1898",
     "cle": "1898",
     "valeur": "Loi sur les accidents du travail : l'employeur en devient responsable",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1898 ?",
      "reponse": "Loi sur les accidents du travail : l'employeur en devient responsable"
@@ -419,6 +434,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1er juillet 1901",
     "cle": "1er juillet 1901",
     "valeur": "Loi sur la liberté d'association",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1er juillet 1901 ?",
      "reponse": "Loi sur la liberté d'association"
@@ -445,6 +461,7 @@ window.TZ_SOG_DATA = {
     "reponse": "9 décembre 1905",
     "cle": "9 décembre 1905",
     "valeur": "Loi de séparation des Églises et de l'État",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 9 décembre 1905 ?",
      "reponse": "Loi de séparation des Églises et de l'État"
@@ -470,6 +487,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1906",
     "cle": "1906",
     "valeur": "Repos hebdomadaire obligatoire",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1906 ?",
      "reponse": "Repos hebdomadaire obligatoire"
@@ -494,6 +512,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1914-1918",
     "cle": "1914-1918",
     "valeur": "Première Guerre mondiale ; armistice le 11 novembre 1918",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1914-1918 ?",
      "reponse": "Première Guerre mondiale ; armistice le 11 novembre 1918"
@@ -520,6 +539,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1936",
     "cle": "1936",
     "valeur": "Front populaire : premiers congés payés, semaine de 40 heures",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1936 ?",
      "reponse": "Front populaire : premiers congés payés, semaine de 40 heures"
@@ -545,6 +565,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1939-1945",
     "cle": "1939-1945",
     "valeur": "Seconde Guerre mondiale ; la Shoah",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1939-1945 ?",
      "reponse": "Seconde Guerre mondiale ; la Shoah"
@@ -570,6 +591,7 @@ window.TZ_SOG_DATA = {
     "reponse": "18 juin 1940",
     "cle": "18 juin 1940",
     "valeur": "Appel du général de Gaulle depuis Londres",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 18 juin 1940 ?",
      "reponse": "Appel du général de Gaulle depuis Londres"
@@ -596,6 +618,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1944",
     "cle": "1944",
     "valeur": "Droit de vote des femmes (ordonnance du 21 avril, premier vote en 1945)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1944 ?",
      "reponse": "Droit de vote des femmes (ordonnance du 21 avril, premier vote en 1945)"
@@ -620,6 +643,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1945",
     "cle": "1945",
     "valeur": "Création de la Sécurité sociale et de l'ONU ; puis Déclaration universelle des droits de l'homme (10 décembre 1948, rédigée notamment par le Français René Cassin)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1945 ?",
      "reponse": "Création de la Sécurité sociale et de l'ONU ; puis Déclaration universelle des droits de l'homme (10 décembre 1948, rédigée notamment par le Français René Cassin)"
@@ -647,6 +671,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1945-1975",
     "cle": "1945-1975",
     "valeur": "Les « Trente Glorieuses » (expression de l'économiste Jean Fourastié, 1979)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1945-1975 ?",
      "reponse": "Les « Trente Glorieuses » (expression de l'économiste Jean Fourastié, 1979)"
@@ -672,6 +697,7 @@ window.TZ_SOG_DATA = {
     "reponse": "4 octobre 1958",
     "cle": "4 octobre 1958",
     "valeur": "Constitution de la Vᵉ République",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 4 octobre 1958 ?",
      "reponse": "Constitution de la Vᵉ République"
@@ -696,6 +722,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1962",
     "cle": "1962",
     "valeur": "Fin de la guerre d'Algérie ; élection du président au suffrage universel direct (référendum)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1962 ?",
      "reponse": "Fin de la guerre d'Algérie ; élection du président au suffrage universel direct (référendum)"
@@ -720,6 +747,7 @@ window.TZ_SOG_DATA = {
     "reponse": "Mai 1968",
     "cle": "Mai 1968",
     "valeur": "Grand mouvement étudiant et ouvrier",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en Mai 1968 ?",
      "reponse": "Grand mouvement étudiant et ouvrier"
@@ -745,6 +773,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1974",
     "cle": "1974",
     "valeur": "Majorité à 18 ans ; création du GIGN",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1974 ?",
      "reponse": "Majorité à 18 ans ; création du GIGN"
@@ -769,6 +798,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1975",
     "cle": "1975",
     "valeur": "Loi Veil autorisant l'interruption volontaire de grossesse (IVG)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1975 ?",
      "reponse": "Loi Veil autorisant l'interruption volontaire de grossesse (IVG)"
@@ -793,6 +823,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1981",
     "cle": "1981",
     "valeur": "Abolition de la peine de mort (loi portée par Robert Badinter)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1981 ?",
      "reponse": "Abolition de la peine de mort (loi portée par Robert Badinter)"
@@ -818,6 +849,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1997",
     "cle": "1997",
     "valeur": "Suspension du service militaire obligatoire",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1997 ?",
      "reponse": "Suspension du service militaire obligatoire"
@@ -843,6 +875,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2002",
     "cle": "2002",
     "valeur": "L'euro entre dans les porte-monnaie",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2002 ?",
      "reponse": "L'euro entre dans les porte-monnaie"
@@ -867,6 +900,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2005",
     "cle": "2005",
     "valeur": "Émeutes dans les banlieues ; la Charte de l'environnement entre dans la Constitution",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2005 ?",
      "reponse": "Émeutes dans les banlieues ; la Charte de l'environnement entre dans la Constitution"
@@ -891,6 +925,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2008",
     "cle": "2008",
     "valeur": "Crise financière mondiale (faillite de Lehman Brothers)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2008 ?",
      "reponse": "Crise financière mondiale (faillite de Lehman Brothers)"
@@ -915,6 +950,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2015",
     "cle": "2015",
     "valeur": "Attentats de Charlie Hebdo (7 janvier) et du 13 novembre ; Accord de Paris sur le climat (COP21)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2015 ?",
      "reponse": "Attentats de Charlie Hebdo (7 janvier) et du 13 novembre ; Accord de Paris sur le climat (COP21)"
@@ -941,6 +977,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2016",
     "cle": "2016",
     "valeur": "Attentat de Nice (14 juillet)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2016 ?",
      "reponse": "Attentat de Nice (14 juillet)"
@@ -965,6 +1002,7 @@ window.TZ_SOG_DATA = {
     "reponse": "23 mars 2018",
     "cle": "23 mars 2018",
     "valeur": "Le lieutenant-colonel Arnaud Beltrame se substitue à un otage à Trèbes et meurt",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 23 mars 2018 ?",
      "reponse": "Le lieutenant-colonel Arnaud Beltrame se substitue à un otage à Trèbes et meurt"
@@ -991,6 +1029,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2018-2019",
     "cle": "2018-2019",
     "valeur": "Mouvement des gilets jaunes",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2018-2019 ?",
      "reponse": "Mouvement des gilets jaunes"
@@ -1017,6 +1056,7 @@ window.TZ_SOG_DATA = {
     "reponse": "15 avril 2019",
     "cle": "15 avril 2019",
     "valeur": "Incendie de Notre-Dame de Paris (réouverte en décembre 2024)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 15 avril 2019 ?",
      "reponse": "Incendie de Notre-Dame de Paris (réouverte en décembre 2024)"
@@ -1041,6 +1081,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2020",
     "cle": "2020",
     "valeur": "Pandémie de Covid-19, confinements ; assassinat de Samuel Paty (16 octobre)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2020 ?",
      "reponse": "Pandémie de Covid-19, confinements ; assassinat de Samuel Paty (16 octobre)"
@@ -1068,6 +1109,7 @@ window.TZ_SOG_DATA = {
     "reponse": "24 février 2022",
     "cle": "24 février 2022",
     "valeur": "Invasion de l'Ukraine par la Russie",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 24 février 2022 ?",
      "reponse": "Invasion de l'Ukraine par la Russie"
@@ -1094,6 +1136,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2023",
     "cle": "2023",
     "valeur": "Assassinat du professeur Dominique Bernard à Arras (13 octobre) ; réforme des retraites",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2023 ?",
      "reponse": "Assassinat du professeur Dominique Bernard à Arras (13 octobre) ; réforme des retraites"
@@ -1119,6 +1162,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2024",
     "cle": "2024",
     "valeur": "L'IVG inscrite dans la Constitution (4 mars) ; Jeux olympiques et paralympiques de Paris",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2024 ?",
      "reponse": "L'IVG inscrite dans la Constitution (4 mars) ; Jeux olympiques et paralympiques de Paris"
@@ -1947,6 +1991,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1981",
     "cle": "1981",
     "valeur": "abolition de la peine de mort, portée par Robert Badinter. Son discours devant l'Assemblée reste une référence sur la dignité humaine.",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1981 ?",
      "reponse": "abolition de la peine de mort, portée par Robert Badinter. Son discours devant l'Assemblée reste une référence sur la dignité humaine."
@@ -2782,6 +2827,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1949",
     "cle": "1949",
     "valeur": "George Orwell publie 1984 : « Big Brother vous regarde »",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1949 ?",
      "reponse": "George Orwell publie 1984 : « Big Brother vous regarde »"
@@ -2808,6 +2854,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1974",
     "cle": "1974",
     "valeur": "Scandale du projet SAFARI de fichage général des Français",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1974 ?",
      "reponse": "Scandale du projet SAFARI de fichage général des Français"
@@ -2833,6 +2880,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1978",
     "cle": "1978",
     "valeur": "Loi Informatique et libertés ; création de la CNIL",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1978 ?",
      "reponse": "Loi Informatique et libertés ; création de la CNIL"
@@ -2858,6 +2906,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1989",
     "cle": "1989",
     "valeur": "Tim Berners-Lee invente le World Wide Web au CERN",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1989 ?",
      "reponse": "Tim Berners-Lee invente le World Wide Web au CERN"
@@ -2883,6 +2932,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2004 / 2007",
     "cle": "2004 / 2007",
     "valeur": "Création de Facebook / lancement de l'iPhone",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2004 / 2007 ?",
      "reponse": "Création de Facebook / lancement de l'iPhone"
@@ -2908,6 +2958,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2013",
     "cle": "2013",
     "valeur": "Edward Snowden révèle la surveillance de masse de la NSA américaine",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2013 ?",
      "reponse": "Edward Snowden révèle la surveillance de masse de la NSA américaine"
@@ -2933,6 +2984,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2017",
     "cle": "2017",
     "valeur": "Cyberattaque mondiale WannaCry (rançongiciel)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2017 ?",
      "reponse": "Cyberattaque mondiale WannaCry (rançongiciel)"
@@ -2957,6 +3009,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2018",
     "cle": "2018",
     "valeur": "Affaire Cambridge Analytica : données Facebook utilisées à des fins politiques",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2018 ?",
      "reponse": "Affaire Cambridge Analytica : données Facebook utilisées à des fins politiques"
@@ -2982,6 +3035,7 @@ window.TZ_SOG_DATA = {
     "reponse": "25 mai 2018",
     "cle": "25 mai 2018",
     "valeur": "Entrée en application du RGPD européen",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 25 mai 2018 ?",
      "reponse": "Entrée en application du RGPD européen"
@@ -3006,6 +3060,7 @@ window.TZ_SOG_DATA = {
     "reponse": "Novembre 2022",
     "cle": "Novembre 2022",
     "valeur": "Lancement de ChatGPT : l'IA générative entre dans la vie quotidienne",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en Novembre 2022 ?",
      "reponse": "Lancement de ChatGPT : l'IA générative entre dans la vie quotidienne"
@@ -3032,6 +3087,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2023",
     "cle": "2023",
     "valeur": "Loi sur l'influence commerciale (9 juin) ; loi sur la majorité numérique à 15 ans (juillet)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2023 ?",
      "reponse": "Loi sur l'influence commerciale (9 juin) ; loi sur la majorité numérique à 15 ans (juillet)"
@@ -3057,6 +3113,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2024",
     "cle": "2024",
     "valeur": "Le Digital Services Act (DSA) s'applique à toutes les plateformes ; adoption de l'AI Act européen",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2024 ?",
      "reponse": "Le Digital Services Act (DSA) s'applique à toutes les plateformes ; adoption de l'AI Act européen"
@@ -3082,6 +3139,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2024",
     "cle": "2024",
     "valeur": "La commission écrans recommande pas de smartphone avant 13 ans, pas de réseaux sociaux avant 15 ans",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2024 ?",
      "reponse": "La commission écrans recommande pas de smartphone avant 13 ans, pas de réseaux sociaux avant 15 ans"
@@ -3315,6 +3373,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1962",
     "cle": "1962",
     "valeur": "Rachel Carson publie Printemps silencieux, sur les ravages des pesticides : naissance de l'écologie moderne",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1962 ?",
      "reponse": "Rachel Carson publie Printemps silencieux, sur les ravages des pesticides : naissance de l'écologie moderne"
@@ -3340,6 +3399,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1972",
     "cle": "1972",
     "valeur": "Rapport Meadows du Club de Rome, Les Limites à la croissance ; premier sommet de l'ONU sur l'environnement à Stockholm",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1972 ?",
      "reponse": "Rapport Meadows du Club de Rome, Les Limites à la croissance ; premier sommet de l'ONU sur l'environnement à Stockholm"
@@ -3365,6 +3425,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1986 / 2011",
     "cle": "1986 / 2011",
     "valeur": "Catastrophes nucléaires de Tchernobyl et de Fukushima",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1986 / 2011 ?",
      "reponse": "Catastrophes nucléaires de Tchernobyl et de Fukushima"
@@ -3390,6 +3451,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1987",
     "cle": "1987",
     "valeur": "Rapport Brundtland : définition du développement durable",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1987 ?",
      "reponse": "Rapport Brundtland : définition du développement durable"
@@ -3413,6 +3475,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1988",
     "cle": "1988",
     "valeur": "Création du GIEC (Groupe d'experts intergouvernemental sur l'évolution du climat)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1988 ?",
      "reponse": "Création du GIEC (Groupe d'experts intergouvernemental sur l'évolution du climat)"
@@ -3438,6 +3501,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1992 / 1997",
     "cle": "1992 / 1997",
     "valeur": "Sommet de la Terre à Rio ; protocole de Kyoto",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1992 / 1997 ?",
      "reponse": "Sommet de la Terre à Rio ; protocole de Kyoto"
@@ -3461,6 +3525,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2002",
     "cle": "2002",
     "valeur": "Jacques Chirac au sommet de Johannesburg : « Notre maison brûle et nous regardons ailleurs. »",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2002 ?",
      "reponse": "Jacques Chirac au sommet de Johannesburg : « Notre maison brûle et nous regardons ailleurs. »"
@@ -3484,6 +3549,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2005",
     "cle": "2005",
     "valeur": "La Charte de l'environnement entre dans la Constitution ; elle consacre le principe de précaution",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2005 ?",
      "reponse": "La Charte de l'environnement entre dans la Constitution ; elle consacre le principe de précaution"
@@ -3509,6 +3575,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2015",
     "cle": "2015",
     "valeur": "Accord de Paris (COP21) : limiter le réchauffement nettement sous 2 °C, si possible 1,5 °C",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2015 ?",
      "reponse": "Accord de Paris (COP21) : limiter le réchauffement nettement sous 2 °C, si possible 1,5 °C"
@@ -3534,6 +3601,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2018",
     "cle": "2018",
     "valeur": "Les gilets jaunes, nés de la hausse de la taxe carbone : « Fin du monde, fin du mois »",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2018 ?",
      "reponse": "Les gilets jaunes, nés de la hausse de la taxe carbone : « Fin du monde, fin du mois »"
@@ -3559,6 +3627,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2019-2021",
     "cle": "2019-2021",
     "valeur": "Convention citoyenne pour le climat (150 citoyens tirés au sort), puis loi Climat et résilience (2021)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2019-2021 ?",
      "reponse": "Convention citoyenne pour le climat (150 citoyens tirés au sort), puis loi Climat et résilience (2021)"
@@ -3583,6 +3652,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2019",
     "cle": "2019",
     "valeur": "Pacte vert européen : neutralité carbone en 2050, fin des voitures thermiques neuves prévue en 2035",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2019 ?",
      "reponse": "Pacte vert européen : neutralité carbone en 2050, fin des voitures thermiques neuves prévue en 2035"
@@ -3608,6 +3678,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2021",
     "cle": "2021",
     "valeur": "« L'Affaire du siècle » : l'État condamné par la justice pour inaction climatique",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2021 ?",
      "reponse": "« L'Affaire du siècle » : l'État condamné par la justice pour inaction climatique"
@@ -3632,6 +3703,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2022",
     "cle": "2022",
     "valeur": "Crise de l'énergie après l'invasion de l'Ukraine ; plan de sobriété énergétique",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2022 ?",
      "reponse": "Crise de l'énergie après l'invasion de l'Ukraine ; plan de sobriété énergétique"
@@ -4140,6 +4212,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1929",
     "cle": "1929",
     "valeur": "Krach boursier de Wall Street et grande dépression",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1929 ?",
      "reponse": "Krach boursier de Wall Street et grande dépression"
@@ -4165,6 +4238,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1936",
     "cle": "1936",
     "valeur": "Front populaire : deux semaines de congés payés, semaine de 40 heures",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1936 ?",
      "reponse": "Front populaire : deux semaines de congés payés, semaine de 40 heures"
@@ -4190,6 +4264,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1945",
     "cle": "1945",
     "valeur": "Création de la Sécurité sociale (ordonnances d'octobre, Ambroise Croizat et Pierre Laroque)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1945 ?",
      "reponse": "Création de la Sécurité sociale (ordonnances d'octobre, Ambroise Croizat et Pierre Laroque)"
@@ -4215,6 +4290,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1945-1975",
     "cle": "1945-1975",
     "valeur": "Les Trente Glorieuses : forte croissance, plein emploi, société de consommation",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1945-1975 ?",
      "reponse": "Les Trente Glorieuses : forte croissance, plein emploi, société de consommation"
@@ -4240,6 +4316,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1950 / 1970",
     "cle": "1950 / 1970",
     "valeur": "Création du salaire minimum (SMIG), devenu SMIC en 1970",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1950 / 1970 ?",
      "reponse": "Création du salaire minimum (SMIG), devenu SMIC en 1970"
@@ -4264,6 +4341,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1973",
     "cle": "1973",
     "valeur": "Premier choc pétrolier : fin des Trente Glorieuses, début du chômage de masse",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1973 ?",
      "reponse": "Premier choc pétrolier : fin des Trente Glorieuses, début du chômage de masse"
@@ -4289,6 +4367,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1988",
     "cle": "1988",
     "valeur": "Création du RMI (devenu RSA en 2009)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1988 ?",
      "reponse": "Création du RMI (devenu RSA en 2009)"
@@ -4314,6 +4393,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1998-2000",
     "cle": "1998-2000",
     "valeur": "Les 35 heures",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1998-2000 ?",
      "reponse": "Les 35 heures"
@@ -4338,6 +4418,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2008",
     "cle": "2008",
     "valeur": "Crise financière des subprimes",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2008 ?",
      "reponse": "Crise financière des subprimes"
@@ -4362,6 +4443,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2016",
     "cle": "2016",
     "valeur": "Droit à la déconnexion (loi Travail)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2016 ?",
      "reponse": "Droit à la déconnexion (loi Travail)"
@@ -4387,6 +4469,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2020",
     "cle": "2020",
     "valeur": "Covid : généralisation du télétravail ; « quoi qu'il en coûte »",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2020 ?",
      "reponse": "Covid : généralisation du télétravail ; « quoi qu'il en coûte »"
@@ -4412,6 +4495,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2023",
     "cle": "2023",
     "valeur": "Réforme des retraites : âge légal relevé progressivement de 62 à 64 ans, très contestée",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2023 ?",
      "reponse": "Réforme des retraites : âge légal relevé progressivement de 62 à 64 ans, très contestée"
@@ -4549,6 +4633,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1944",
     "cle": "1944",
     "valeur": "Droit de vote et d'éligibilité des femmes (premier vote en 1945)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1944 ?",
      "reponse": "Droit de vote et d'éligibilité des femmes (premier vote en 1945)"
@@ -4573,6 +4658,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1949",
     "cle": "1949",
     "valeur": "Simone de Beauvoir, Le Deuxième Sexe : « On ne naît pas femme : on le devient. »",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1949 ?",
      "reponse": "Simone de Beauvoir, Le Deuxième Sexe : « On ne naît pas femme : on le devient. »"
@@ -4598,6 +4684,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1965",
     "cle": "1965",
     "valeur": "Les femmes mariées peuvent travailler et ouvrir un compte bancaire sans l'accord de leur mari",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1965 ?",
      "reponse": "Les femmes mariées peuvent travailler et ouvrir un compte bancaire sans l'accord de leur mari"
@@ -4622,6 +4709,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1967",
     "cle": "1967",
     "valeur": "Loi Neuwirth autorisant la contraception",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1967 ?",
      "reponse": "Loi Neuwirth autorisant la contraception"
@@ -4646,6 +4734,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1975",
     "cle": "1975",
     "valeur": "Loi Veil sur l'IVG. Simone Veil devant l'Assemblée (1974) : « Aucune femme ne recourt de gaieté de cœur à l'avortement. »",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1975 ?",
      "reponse": "Loi Veil sur l'IVG. Simone Veil devant l'Assemblée (1974) : « Aucune femme ne recourt de gaieté de cœur à l'avortement. »"
@@ -4670,6 +4759,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2000",
     "cle": "2000",
     "valeur": "Loi sur la parité en politique",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2000 ?",
      "reponse": "Loi sur la parité en politique"
@@ -4694,6 +4784,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2017",
     "cle": "2017",
     "valeur": "Mouvement #MeToo",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2017 ?",
      "reponse": "Mouvement #MeToo"
@@ -4719,6 +4810,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2024",
     "cle": "2024",
     "valeur": "La liberté de recourir à l'IVG inscrite dans la Constitution (4 mars)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2024 ?",
      "reponse": "La liberté de recourir à l'IVG inscrite dans la Constitution (4 mars)"
@@ -4964,6 +5056,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1885",
     "cle": "1885",
     "valeur": "Pasteur réussit la première vaccination contre la rage. Sujet vaccination ou progrès scientifique.",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1885 ?",
      "reponse": "Pasteur réussit la première vaccination contre la rage. Sujet vaccination ou progrès scientifique."
@@ -4985,6 +5078,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1928",
     "cle": "1928",
     "valeur": "Fleming découvre la pénicilline, premier antibiotique.",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1928 ?",
      "reponse": "Fleming découvre la pénicilline, premier antibiotique."
@@ -5006,6 +5100,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1945",
     "cle": "1945",
     "valeur": "Sécurité sociale. Et l'OMS définit la santé (1946) comme « un état de complet bien-être physique, mental et social », pas seulement l'absence de maladie.",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1945 ?",
      "reponse": "Sécurité sociale. Et l'OMS définit la santé (1946) comme « un état de complet bien-être physique, mental et social », pas seulement l'absence de maladie."
@@ -5027,6 +5122,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2020",
     "cle": "2020",
     "valeur": "pandémie de Covid-19, confinements, débat sur le passe sanitaire et les libertés.",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2020 ?",
      "reponse": "pandémie de Covid-19, confinements, débat sur le passe sanitaire et les libertés."
@@ -5096,6 +5192,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1999",
     "cle": "1999",
     "valeur": "PACS. 2013 : mariage pour tous.",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1999 ?",
      "reponse": "PACS. 2013 : mariage pour tous."
@@ -5133,6 +5230,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1974",
     "cle": "1974",
     "valeur": "majorité à 18 ans.",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1974 ?",
      "reponse": "majorité à 18 ans."
@@ -5154,6 +5252,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2010",
     "cle": "2010",
     "valeur": "création du service civique.",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2010 ?",
      "reponse": "création du service civique."
@@ -5207,6 +5306,7 @@ window.TZ_SOG_DATA = {
     "reponse": "9 mai 1950",
     "cle": "9 mai 1950",
     "valeur": "Déclaration Schuman : « L'Europe ne se fera pas d'un coup, ni dans une construction d'ensemble : elle se fera par des réalisations concrètes créant d'abord une solidarité de fait. »",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 9 mai 1950 ?",
      "reponse": "Déclaration Schuman : « L'Europe ne se fera pas d'un coup, ni dans une construction d'ensemble : elle se fera par des réalisations concrètes créant d'abord une solidarité de fait. »"
@@ -5232,6 +5332,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1951",
     "cle": "1951",
     "valeur": "CECA (Communauté européenne du charbon et de l'acier) : mettre en commun les industries de guerre pour rendre la guerre impossible",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1951 ?",
      "reponse": "CECA (Communauté européenne du charbon et de l'acier) : mettre en commun les industries de guerre pour rendre la guerre impossible"
@@ -5256,6 +5357,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1957",
     "cle": "1957",
     "valeur": "Traité de Rome : naissance de la Communauté économique européenne (6 pays)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1957 ?",
      "reponse": "Traité de Rome : naissance de la Communauté économique européenne (6 pays)"
@@ -5280,6 +5382,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1963",
     "cle": "1963",
     "valeur": "Traité de l'Élysée : réconciliation franco-allemande (de Gaulle et Adenauer)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1963 ?",
      "reponse": "Traité de l'Élysée : réconciliation franco-allemande (de Gaulle et Adenauer)"
@@ -5305,6 +5408,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1979",
     "cle": "1979",
     "valeur": "Première élection du Parlement européen au suffrage universel ; Simone Veil en devient présidente",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1979 ?",
      "reponse": "Première élection du Parlement européen au suffrage universel ; Simone Veil en devient présidente"
@@ -5328,6 +5432,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1985",
     "cle": "1985",
     "valeur": "Accords de Schengen : libre circulation des personnes",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1985 ?",
      "reponse": "Accords de Schengen : libre circulation des personnes"
@@ -5353,6 +5458,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1992",
     "cle": "1992",
     "valeur": "Traité de Maastricht : naissance de l'Union européenne et de la citoyenneté européenne",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1992 ?",
      "reponse": "Traité de Maastricht : naissance de l'Union européenne et de la citoyenneté européenne"
@@ -5377,6 +5483,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2002",
     "cle": "2002",
     "valeur": "L'euro en circulation",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2002 ?",
      "reponse": "L'euro en circulation"
@@ -5401,6 +5508,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2005",
     "cle": "2005",
     "valeur": "Les Français rejettent par référendum le traité constitutionnel européen (55 % de non)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2005 ?",
      "reponse": "Les Français rejettent par référendum le traité constitutionnel européen (55 % de non)"
@@ -5425,6 +5533,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2007",
     "cle": "2007",
     "valeur": "Traité de Lisbonne",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2007 ?",
      "reponse": "Traité de Lisbonne"
@@ -5448,6 +5557,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2016 / 2020",
     "cle": "2016 / 2020",
     "valeur": "Vote du Brexit, puis sortie effective du Royaume-Uni (31 janvier 2020)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2016 / 2020 ?",
      "reponse": "Vote du Brexit, puis sortie effective du Royaume-Uni (31 janvier 2020)"
@@ -5473,6 +5583,7 @@ window.TZ_SOG_DATA = {
     "reponse": "Aujourd'hui",
     "cle": "Aujourd'hui",
     "valeur": "27 États membres",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en Aujourd'hui ?",
      "reponse": "27 États membres"
@@ -5496,6 +5607,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1945",
     "cle": "1945",
     "valeur": "Création de l'ONU ; bombes atomiques sur Hiroshima et Nagasaki",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1945 ?",
      "reponse": "Création de l'ONU ; bombes atomiques sur Hiroshima et Nagasaki"
@@ -5520,6 +5632,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1947-1991",
     "cle": "1947-1991",
     "valeur": "Guerre froide entre les États-Unis et l'URSS",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1947-1991 ?",
      "reponse": "Guerre froide entre les États-Unis et l'URSS"
@@ -5544,6 +5657,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1948",
     "cle": "1948",
     "valeur": "Déclaration universelle des droits de l'homme (René Cassin)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1948 ?",
      "reponse": "Déclaration universelle des droits de l'homme (René Cassin)"
@@ -5567,6 +5681,7 @@ window.TZ_SOG_DATA = {
     "reponse": "9 novembre 1989",
     "cle": "9 novembre 1989",
     "valeur": "Chute du mur de Berlin ; 1991, fin de l'URSS",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 9 novembre 1989 ?",
      "reponse": "Chute du mur de Berlin ; 1991, fin de l'URSS"
@@ -5592,6 +5707,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1992",
     "cle": "1992",
     "valeur": "Francis Fukuyama annonce « la fin de l'histoire » (le triomphe de la démocratie libérale)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1992 ?",
      "reponse": "Francis Fukuyama annonce « la fin de l'histoire » (le triomphe de la démocratie libérale)"
@@ -5616,6 +5732,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1996",
     "cle": "1996",
     "valeur": "Samuel Huntington, Le Choc des civilisations",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1996 ?",
      "reponse": "Samuel Huntington, Le Choc des civilisations"
@@ -5640,6 +5757,7 @@ window.TZ_SOG_DATA = {
     "reponse": "11 septembre 2001",
     "cle": "11 septembre 2001",
     "valeur": "Attentats contre les États-Unis : le terrorisme islamiste devient une menace mondiale",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 11 septembre 2001 ?",
      "reponse": "Attentats contre les États-Unis : le terrorisme islamiste devient une menace mondiale"
@@ -5665,6 +5783,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2014",
     "cle": "2014",
     "valeur": "Annexion de la Crimée par la Russie",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2014 ?",
      "reponse": "Annexion de la Crimée par la Russie"
@@ -5689,6 +5808,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2023 / 2024",
     "cle": "2023 / 2024",
     "valeur": "La Finlande puis la Suède rejoignent l'OTAN",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2023 / 2024 ?",
      "reponse": "La Finlande puis la Suède rejoignent l'OTAN"
@@ -5713,6 +5833,7 @@ window.TZ_SOG_DATA = {
     "reponse": "7 octobre 2023",
     "cle": "7 octobre 2023",
     "valeur": "Attaque terroriste du Hamas contre Israël, suivie de la guerre à Gaza",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 7 octobre 2023 ?",
      "reponse": "Attaque terroriste du Hamas contre Israël, suivie de la guerre à Gaza"
@@ -5818,6 +5939,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1859",
     "cle": "1859",
     "valeur": "Darwin, L'Origine des espèces",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1859 ?",
      "reponse": "Darwin, L'Origine des espèces"
@@ -5843,6 +5965,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1903 / 1911",
     "cle": "1903 / 1911",
     "valeur": "Marie Curie, deux prix Nobel (physique puis chimie)",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1903 / 1911 ?",
      "reponse": "Marie Curie, deux prix Nobel (physique puis chimie)"
@@ -5868,6 +5991,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1945",
     "cle": "1945",
     "valeur": "Hiroshima : la science peut aussi détruire",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1945 ?",
      "reponse": "Hiroshima : la science peut aussi détruire"
@@ -5892,6 +6016,7 @@ window.TZ_SOG_DATA = {
     "reponse": "1957 / 1969",
     "cle": "1957 / 1969",
     "valeur": "Spoutnik, premier satellite ; Neil Armstrong marche sur la Lune",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 1957 / 1969 ?",
      "reponse": "Spoutnik, premier satellite ; Neil Armstrong marche sur la Lune"
@@ -5917,6 +6042,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2003",
     "cle": "2003",
     "valeur": "Séquençage complet du génome humain",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2003 ?",
      "reponse": "Séquençage complet du génome humain"
@@ -5941,6 +6067,7 @@ window.TZ_SOG_DATA = {
     "reponse": "2020",
     "cle": "2020",
     "valeur": "Vaccins à ARN messager mis au point en moins d'un an contre le Covid",
+    "preuve": null,
     "inverse": {
      "question": "Que s’est-il passé en 2020 ?",
      "reponse": "Vaccins à ARN messager mis au point en moins d'un an contre le Covid"

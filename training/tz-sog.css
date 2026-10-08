@@ -137,8 +137,11 @@
 /* Les jauges par thème ont laissé la place à la grille thème x categorie :
    elle dit la meme chose par categorie, ce que les jauges ne savaient pas
    faire. Leurs regles sont parties avec elles. */
-.sog-cats,.sog-grille-themes,.sog-courbe,.sog-liste,.sog-bloc{background:var(--tz-creux);
+.sog-bloc-bord,.sog-courbe,.sog-liste,.sog-bloc{background:var(--tz-creux);
   border-radius:var(--tz-r);padding:18px 20px;margin-bottom:16px}
+/* une liste dans un bloc du tableau de bord : creux sur creux ne se voit
+   plus, elle repasse donc sur le fond des cartes */
+.sog-bloc-bord .sog-liste{background:var(--tz-carte);padding:14px 16px;margin:0}
 .sog-courbe canvas{width:100%;height:auto;display:block}
 
 .sog-ligne{display:flex;gap:10px;align-items:center;padding:8px 0;
@@ -280,3 +283,57 @@
 .sog-avis{background:var(--tz-ac-pale);border-left:4px solid var(--tz-ac);
   border-radius:var(--tz-r-s);padding:15px 18px;margin-bottom:18px}
 .sog-avis p{margin:0 0 10px;font-size:.92rem;line-height:1.5}
+
+/* ======================================================= tableau de bord
+   La page est longue parce qu'elle regarde la même progression sous six
+   angles. Une table des matières coûte moins cher que de cacher des
+   chiffres pour la raccourcir. */
+.sog-sommaire{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 18px}
+.sog-sommaire button{border:none;cursor:pointer;border-radius:99px;
+  padding:7px 14px;font-family:var(--tz-texte);font-size:.84rem;
+  background:var(--tz-creux);color:var(--tz-txt-2);
+  box-shadow:inset 0 0 0 1px var(--tz-bord)}
+.sog-sommaire button:hover{color:var(--tz-txt);background:var(--tz-ac-pale)}
+
+/* La règle du jeu, dépliée tant que rien n'est acquis. */
+.sog-regle{background:var(--tz-ac-pale);border-radius:var(--tz-r);
+  padding:14px 18px;margin-bottom:18px}
+.sog-regle summary{cursor:pointer;font-family:var(--tz-titre);font-weight:600;
+  font-size:1rem;color:var(--tz-txt)}
+.sog-regle[open] summary{margin-bottom:10px}
+.sog-regle .sog-puces li{font-size:.92rem;margin-bottom:6px}
+
+/* La cinquième part de la barre : confirmée, soit validée deux fois. */
+.sog-part-confirmee{background:var(--tz-savoirs)}
+
+/* --------------------------------------------- par sujet de dissertation */
+.sog-sujets{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:11px}
+.sog-sujet{background:var(--tz-carte);border-radius:var(--tz-r);
+  padding:14px 16px;box-shadow:0 1px 0 var(--tz-bord)}
+.sog-sujet .sog-cat-tete b{font-size:1rem}
+.sog-sujet .sog-cat-quoi{margin:4px 0 9px}
+.sog-sujet .sog-rangee{margin-top:10px}
+
+/* ------------------------------------------------------------ par auteur */
+.sog-auteurs{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
+.sog-auteur{display:flex;flex-direction:column;gap:2px;text-align:left;border:none;
+  background:var(--tz-carte);border-radius:var(--tz-r-s);padding:11px 14px;
+  cursor:pointer;font-family:var(--tz-texte);color:var(--tz-txt);
+  box-shadow:0 1px 0 var(--tz-bord);transition:transform .1s}
+.sog-auteur:hover{transform:translateY(-2px)}
+/* display:flex l'emporterait sur la regle du navigateur pour [hidden] :
+   sans cette ligne, « afficher les 31 autres » n'aurait aucun effet. */
+.sog-auteur[hidden],.sog-sujet[hidden]{display:none}
+.sog-auteur b{font-size:.95rem}
+.sog-auteur span{font-size:.8rem;color:var(--tz-txt-2)}
+/* Un auteur dont on ne sait rien : c'est là qu'est le travail, il se voit. */
+.sog-auteur-vide{box-shadow:0 1px 0 var(--tz-bord),inset 3px 0 0 var(--tz-ac)}
+.sog-auteur-vide span{color:var(--tz-ac-b)}
+
+/* Le nom du thème ouvre sa révision : une ligne de tableau n'est pas un
+   cul-de-sac. */
+.sog-lien-theme{border:none;background:none;padding:0;cursor:pointer;text-align:left;
+  font-family:var(--tz-texte);font-size:.85rem;font-weight:600;color:var(--tz-txt);
+  text-decoration:underline;text-decoration-color:var(--tz-bord);
+  text-underline-offset:3px}
+.sog-lien-theme:hover{text-decoration-color:var(--tz-ac)}

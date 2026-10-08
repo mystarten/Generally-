@@ -90,6 +90,11 @@ const RE_ATTRIBUEE = /attribu[ée]e?\b/i;
    carte qu'elle produit. */
 const RE_GRAS = /\*\*[^*]+\*\*|__[^_]+__/;
 const RE_INCONTOURNABLE = /\b(?:a connaitre absolument|a savoir absolument|incontournable)\b/i;
+/* Les sous-parties « Les dates à placer en dissertation » sont le socle : ce
+   sont les dates que l'utilisateur a lui-même retenues comme devant être
+   sues. Tout ce qui s'y trouve est prioritaire, sans avoir à mettre chaque
+   ligne en gras dans le document. */
+const RE_SECTION_SOCLE = /dates? a placer en dissertation/i;
 let prioriteCourante = false;
 
 function demarquer(cellule) {
@@ -301,7 +306,7 @@ function decouper(ligne, estEntete) {
 
 /* ------------------------------------------------- un rang de tableau */
 function traiterRang(entete, cellules) {
-  prioriteCourante = !!cellules.gras;
+  prioriteCourante = !!cellules.gras || RE_SECTION_SOCLE.test(sansAccents(section));
   if (cellules.length !== entete.length) {
     douter(cellules.join(' | '), 'Rang dont le nombre de colonnes ne suit pas l’en-tête :');
     return;
@@ -312,6 +317,10 @@ function traiterRang(entete, cellules) {
   entete.forEach((nom, k) => { col[normaliser(nom)] = cellules[k]; });
   const iTags = entete.findIndex(n => /^à placer dans$/i.test(n.trim()));
   const tags = iTags >= 0 ? tagsDe(cellules[iTags]) : [];
+  /* Colonne facultative : l'argument que la date sert dans une copie. C'est
+     elle qui transforme une date qu'on récite en une date qu'on place. */
+  const iPreuve = entete.findIndex(n => /ce que ca prouve/.test(normaliser(n)));
+  const preuve = iPreuve >= 0 ? cellules[iPreuve] : null;
 
   const e0 = normaliser(entete[0]);
   const a = cellules[0], b = cellules[1], c = cellules[2];
@@ -320,7 +329,7 @@ function traiterRang(entete, cellules) {
   if (e0 === 'citation') return carteCitation(a, b, tags);
 
   /* Date | Événement | À placer dans */
-  if (e0 === 'date' && /evenement/.test(normaliser(entete[1]))) return carteDate(a, b, tags);
+  if (e0 === 'date' && /evenement/.test(normaliser(entete[1]))) return carteDate(a, b, tags, preuve);
 
   /* Penseur | Idée clé... | À placer dans */
   if (e0 === 'penseur') return cartePenseur(a, b, tags);
@@ -342,7 +351,7 @@ function pousser(carte) {
   cartes.push(carte);
 }
 
-function carteDate(date, evenement, tags) {
+function carteDate(date, evenement, tags, preuve) {
   if (!date || !evenement) { douter(date + ' | ' + evenement, 'Ligne de date incomplète :'); return; }
   pousser({
     id: identifiant('date', date, evenement),
@@ -354,6 +363,10 @@ function carteDate(date, evenement, tags) {
       reponse: date,
       cle: date,
       valeur: evenement,
+      /* Ce que la date prouve : l'argument, pas le fait. La fiche de
+         validation le demande par écrit — savoir la date sans savoir ce
+         qu'elle démontre ne sert à rien dans une copie. */
+      preuve: preuve || null,
       inverse: { question: 'Que s’est-il passé en ' + date + ' ?', reponse: evenement },
       annee: anneeDe(date)
     },
