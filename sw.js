@@ -17,7 +17,7 @@
    scripts — ce qui est pire qu'une version entièrement ancienne, parce que
    les deux moitiés ne s'accordent pas.
    ============================================================================= */
-const VERSION = 'generally-v12';
+const VERSION = 'generally-v13';
 
 /* Ce qui est telecharge des l'installation, pour que le site fonctionne sans
    reseau meme sur une page jamais ouverte.

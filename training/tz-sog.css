@@ -274,6 +274,9 @@
 .sog-c-plein b{color:var(--tz-ok)}
 
 @media (max-width:620px){
+  /* minmax(270px,1fr) ne descend pas sous 270 px : sous 388 px de fenetre le
+     bloc debordait et faisait defiler la page entiere en travers. */
+  .sog-sujets{grid-template-columns:1fr}
   .sog-corr-ligne{flex-direction:column;gap:4px}
   .sog-corr-label{flex:none}
   .sog-cat-palier{margin-left:0}
@@ -337,3 +340,60 @@
   text-decoration:underline;text-decoration-color:var(--tz-bord);
   text-underline-offset:3px}
 .sog-lien-theme:hover{text-decoration-color:var(--tz-ac)}
+
+/* ==================================================== les trois choix
+   L'entrée unique de la révision : on choisit un lot, pas une mécanique. */
+.sog-choix{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:10px;margin:16px 0 4px}
+.sog-choix-un{display:flex;flex-direction:column;gap:4px;text-align:left;border:none;
+  background:var(--tz-carte);border-radius:var(--tz-r);padding:15px 17px;cursor:pointer;
+  font-family:var(--tz-texte);color:var(--tz-txt);box-shadow:0 2px 0 var(--tz-bord);
+  transition:transform .1s}
+.sog-choix-un:hover{transform:translateY(-2px)}
+.sog-choix-un b{font-family:var(--tz-titre);font-size:1.05rem}
+.sog-choix-un span{font-size:.84rem;color:var(--tz-txt-2)}
+/* Un lot vide mène à la liste a cocher plutot qu'a une seance de rien. */
+.sog-choix-vide{opacity:.72}
+.sog-choix-vide span{color:var(--tz-ac-b)}
+
+.sog-reglage-dit{flex:0 0 100%;margin:8px 0 0;font-size:.82rem;color:var(--tz-txt-2)}
+
+/* ====================================================== mes maîtrises
+   Une case par référence, avec sa réponse dessous : on ne peut pas déclarer
+   savoir ce qu'on ne voit pas. */
+.sog-maitrise-liste{margin-top:14px}
+.sog-maitrise-theme{background:var(--tz-creux);border-radius:var(--tz-r);
+  padding:12px 16px;margin-bottom:10px}
+.sog-maitrise-theme summary{cursor:pointer;display:flex;gap:12px;align-items:baseline;
+  flex-wrap:wrap}
+.sog-maitrise-theme summary b{font-family:var(--tz-titre);font-size:1rem}
+.sog-maitrise-theme summary span{margin-left:auto;font-size:.82rem;color:var(--tz-txt-2);
+  white-space:nowrap}
+.sog-maitrise-theme[open] summary{margin-bottom:10px}
+
+.sog-maitrise-ligne{display:flex;gap:11px;align-items:flex-start;cursor:pointer;
+  background:var(--tz-carte);border-radius:var(--tz-r-s);padding:10px 13px;
+  margin-bottom:6px;border-left:3px solid transparent}
+.sog-maitrise-ligne:hover{background:var(--tz-ac-pale)}
+.sog-maitrise-ligne input{margin-top:3px;flex:0 0 auto;width:18px;height:18px;
+  accent-color:var(--tz-ok)}
+.sog-maitrise-ligne.sog-cochee{border-left-color:var(--tz-ok)}
+.sog-maitrise-ligne.sog-cochee .sog-maitrise-haut{opacity:.6}
+.sog-maitrise-txt{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.sog-maitrise-haut{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:.93rem}
+.sog-maitrise-rep{font-size:.83rem;color:var(--tz-txt-2);overflow-wrap:break-word}
+
+/* Le chrono du Mode Sujet vire a l'orange sur la fin. */
+.sog-compteur-fin{color:var(--tz-ko)}
+
+/* Les très petits écrans — 320 px, les vieux iPhone SE et quelques Android.
+   Tout passe sur une colonne plutôt que de faire defiler la page en travers :
+   un tableau de bord qu'on lit de biais ne se lit pas. */
+@media (max-width:360px){
+  .sog-auteurs,.sog-grille-chiffres,.sog-choix,.sog-modes,.sog-sujets{
+    grid-template-columns:1fr}
+  .sog-filtres .sog-saisie{min-width:0;width:100%}
+  .sog-filtres .sog-select{width:100%}
+  .sog-cat-palier{white-space:normal;margin-left:0}
+  .sog-maitrise-theme summary span{margin-left:0}
+}

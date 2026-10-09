@@ -40,7 +40,6 @@ function echec(quoi, detail) {
 /* La réponse que le document lui-même donne pour un champ. */
 function reponseDuDocument(ch) {
   if (ch.controle === 'nom') return ch.attendu.nom;
-  if (ch.controle === 'tag') return ch.attendu.tags[0];
   if (ch.controle === 'annee') return ch.attendu.texte;
   return ch.attendu.texte;
 }
@@ -160,13 +159,36 @@ if (montesquieu) {
            verdictChamp(montesquieu, 'nom', 'Montesquieux'), 'juste');
 }
 
-const bastille = trouver(c => c.type === 'date' && /Bastille/.test(c.contenu.valeur || ''),
-                         'prise de la Bastille');
+/* Le champ « date exacte » n'existe que sur une date qui porte un argument :
+   sans lui, la fiche est retournée et c'est l'événement qu'on écrit. On teste
+   donc le juge de date sur une carte fabriquée ici, pour que la vérification
+   ne dépende pas de l'état du document. */
+function dateAvecArgument(cle, valeur) {
+  return { id: 'essai', type: 'date', theme: 'Essai', tags: [],
+           attribuee: false, volatile: false, priorite: false,
+           contenu: { question: 'En quelle année : ' + valeur + ' ?', reponse: cle,
+                      cle: cle, valeur: valeur, preuve: 'Un argument de contrôle.',
+                      annee: null } };
+}
+const bastille = dateAvecArgument('14 juillet 1789', 'Prise de la Bastille');
 if (bastille) {
+  attendre('la fiche d’une date à argument a deux champs', V.fiche(bastille).champs.length, 2);
   attendre('date complète', verdictChamp(bastille, 'date', '14 juillet 1789'), 'juste');
   attendre('date en chiffres', verdictChamp(bastille, 'date', '14/07/1789'), 'juste');
   attendre('année seule, jour et mois oubliés', verdictChamp(bastille, 'date', '1789'), 'presque');
   attendre('bon jour, mauvaise année', verdictChamp(bastille, 'date', '14 juillet 1889'), 'rate');
+}
+
+/* La fiche retournée : date donnée, événement à écrire. */
+const sansArgument = trouver(c => c.type === 'date' && !c.contenu.preuve, 'date sans argument');
+if (sansArgument) {
+  const f = V.fiche(sansArgument);
+  attendre('fiche retournée : l’énoncé est la date', f.enonce, sansArgument.contenu.cle);
+  attendre('fiche retournée : un champ rédigé', f.champs[0].controle, 'mots');
+  attendre('événement recopié',
+           verdictChamp(sansArgument, 'evenement', sansArgument.contenu.valeur), 'juste');
+  attendre('événement hors sujet',
+           verdictChamp(sansArgument, 'evenement', 'je ne sais pas du tout'), 'rate');
 }
 
 /* La colonne « Ce que ça prouve » : l'argument que la date sert dans une copie.
@@ -180,7 +202,7 @@ if (avecPreuve.length) {
   const cles = V.motsCles(d.contenu.preuve);
   attendre('argument recopié', verdictChamp(d, 'preuve', d.contenu.preuve), 'juste');
   attendre('argument hors sujet', verdictChamp(d, 'preuve', 'je ne sais pas du tout'), 'rate');
-  attendre('la fiche d’une date a deux champs', V.fiche(d).champs.length, 2);
+  attendre('une date à argument a deux champs', V.fiche(d).champs.length, 2);
   console.log('        (« ' + d.contenu.valeur.slice(0, 50) + '… » : ' +
               cles.map(k => k.mot).join(', ') + ')');
 }
@@ -192,8 +214,7 @@ if (tocqueville) {
   attendre('seconde année d’un intervalle', verdictChamp(tocqueville, 'annee', '1840'), 'juste');
 }
 
-const deuxDates = trouver(c => c.type === 'date' && V.anneesDe(c.contenu.cle).length > 1,
-                          'date à deux années');
+const deuxDates = dateAvecArgument('1811-1816', 'Révolte des luddites');
 if (deuxDates) {
   const texte = deuxDates.contenu.cle;
   const premiere = String(V.anneesDe(texte)[0]);
@@ -216,8 +237,39 @@ if (notion) {
               cles.map(k => k.mot).join(', ') + ' — ' + requis + ' sur ' + cles.length + ' exigés)');
 }
 
+/* ------------------------------------------- l'invariant de l'échelle
+   Une fiche doit demander PLUS que l'étage d'en dessous. La boîte 2 donne
+   l'énoncé de la carte et réclame sa réponse ; une fiche qui se réduit à ce
+   même échange ne prouve rien, et la carte monterait jusqu'à « acquise »
+   sans que rien de neuf ait été écrit.
+
+   Cette vérification manquait, et c'est ce qui a laissé passer une version où
+   les cent vingt-sept dates se validaient sur la question de la boîte 2. */
+console.log('\n5. Une fiche demande plus que la boîte 2');
+const creuses = cartes.filter(c => {
+  /* Un chiffre porte un seul fait : la valeur. Il n'y a rien d'autre à
+     demander, et inventer un second champ reviendrait à poser une question
+     dont la réponse est déjà écrite dans l'énoncé. Pour lui, ce qui change en
+     haut de l'échelle est l'intervalle — vingt jours au lieu de deux — pas la
+     question. C'est assumé, pas oublié. */
+  if (c.type === 'chiffre') return false;
+  const f = V.fiche(c);
+  if (f.champs.length >= 2) return false;
+  if (f.champs[0] && f.champs[0].controle === 'mots') return false;  /* rédaction */
+  /* un seul champ, jugé à l'identique : la fiche rejoue-t-elle l'énoncé ? */
+  return V.normaliser(f.enonce) === V.normaliser(c.contenu.question) ||
+         V.normaliser(f.enonce) === V.normaliser(c.contenu.valeur || '');
+});
+if (creuses.length) {
+  echec(creuses.length + ' fiche(s) ne demandent rien de plus que la boîte 2');
+  creuses.slice(0, 6).forEach(c => console.log('          [' + c.type + '] ' + c.contenu.question));
+} else {
+  console.log('   aucune, hors les ' + cartes.filter(c => c.type === 'chiffre').length +
+              ' chiffres, qui n’ont qu’un fait à savoir (exemption documentée)');
+}
+
 /* ------------------------------------------------------- les paliers */
-console.log('\n5. Paliers par catégorie');
+console.log('\n6. Paliers par catégorie');
 V.CATEGORIES.forEach(cat => {
   const total = cartes.filter(c => c.type === cat.type).length;
   const seuils = V.PALIERS.map(p => Math.ceil(p.part * total)).join(' · ');

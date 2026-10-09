@@ -145,7 +145,7 @@
      écrire » dit, en une ligne, ce que valider veut dire dans cette famille. */
   var CATEGORIES = [
     { id: 'date', nom: 'Dates', court: 'Dates', type: 'date',
-      ecrire: 'la date exacte, et le type de sujet où tu la places' },
+      ecrire: 'la date exacte et ce qu’elle prouve — ou l’événement, quand c’est la date qui est donnée' },
     { id: 'citation', nom: 'Citations', court: 'Citations', type: 'citation',
       ecrire: 'le mot manquant, l’auteur, l’œuvre et l’année' },
     { id: 'penseur', nom: 'Auteurs et penseurs', court: 'Auteurs', type: 'penseur',
@@ -265,27 +265,43 @@
       if (src && src.annees.length) f.champs.push(champAnnee(src));
 
     } else if (carte.type === 'date') {
-      f.enonce = c.valeur;
+      /* Une fiche de date doit demander PLUS que la boîte 2, qui donne déjà
+         l'événement et réclame l'année. Deux formes, selon ce que le document
+         fournit :
+
+           — il porte un argument (colonne « Ce que ça prouve ») : on donne
+             l'événement, et on réclame la date exacte ET l'argument. Savoir
+             la date sans savoir ce qu'elle démontre ne rapporte rien en copie ;
+
+           — il n'en porte pas : on RETOURNE la question. La date est donnée,
+             c'est l'événement qu'il faut écrire, jugé sur ses mots-clés. Dans
+             l'autre sens, la fiche aurait reposé mot pour mot la question de
+             la boîte 2, et trente-neuf pour cent du paquet se serait validé
+             sans rien prouver de neuf.
+
+         Le type et le thème restent affichés au-dessus : c'est ce qui lève
+         l'ambiguïté quand deux événements partagent une année. */
       var cle = String(c.cle || '');
-      if (anneesDe(cle).length) {
-        var mor = morceauxDate(cle);
-        f.champs.push(champ('date', 'La date exacte', 'date',
-                            { texte: cle, morceaux: mor }, {
-          court: true,
-          aide: mor.jour ? 'Jour, mois et année.'
-              : mor.annees.length > 1 ? 'Le document en donne deux.' : null
-        }));
-      } else {
-        /* « Aujourd'hui », « Mai 1968 » sans année : rien à découper, on juge
-           la réponse telle quelle. */
-        f.champs.push(champ('date', 'La date', 'texte', { texte: cle }, { court: true }));
-      }
-      /* Savoir la date ne suffit pas : en copie, une date sans argument ne
-         rapporte rien. Le second champ demande donc ce qu'elle DÉMONTRE,
-         jugé sur les mots-clés de l'argument que porte le document. */
       if (c.preuve) {
+        f.enonce = c.valeur;
+        if (anneesDe(cle).length) {
+          var mor = morceauxDate(cle);
+          f.champs.push(champ('date', 'La date exacte', 'date',
+                              { texte: cle, morceaux: mor }, {
+            court: true,
+            aide: mor.jour ? 'Jour, mois et année.'
+                : mor.annees.length > 1 ? 'Le document en donne deux.' : null
+          }));
+        } else {
+          /* « Aujourd'hui », « Mai 1968 » sans année : rien à découper. */
+          f.champs.push(champ('date', 'La date', 'texte', { texte: cle }, { court: true }));
+        }
         f.champs.push(champMots('preuve', 'Ce que cette date prouve', c.preuve, null,
                                 'En une phrase, l’argument qu’elle sert.'));
+      } else {
+        f.enonce = cle;
+        f.consigne = 'La date est donnée : écris ce qui s’est passé.';
+        f.champs.push(champMots('evenement', 'Ce qui s’est passé', c.valeur));
       }
 
     } else if (carte.type === 'chiffre') {
