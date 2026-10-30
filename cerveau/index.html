@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Page en ligne mais volontairement non referencee. Pas de Disallow dans
+     robots.txt : cela revelerait le chemin et empecherait Google de lire ce
+     noindex. Ne pas ajouter cette page au sitemap, ne pas y faire de lien. -->
+<meta name="robots" content="noindex, nofollow, noarchive">
 <title>Cerveau</title>
 <style>
   :root {
@@ -66,6 +70,7 @@
   #led { width: 7px; height: 7px; border-radius: 50%; background: #5a5f6a; }
   #led.on { background: #4ec98a; }
   #led.off { background: #d4604f; }
+  #led.stale { background: #6b7280; }
 
   /* ---- panneau ---- */
   #panel {
@@ -145,7 +150,7 @@
   <div class="meta" id="p-meta"></div>
 </aside>
 
-<script src="/lib/d3.min.js"></script>
+<script src="../lib/d3.min.js"></script>
 <script>
 'use strict';
 
@@ -579,9 +584,37 @@ function connect() {
   });
 }
 
-// premier rendu immediat, puis flux en direct
-fetch('/api/graph').then(r => r.json()).then(g => { apply(g); lastUpdate = Date.now(); }).catch(() => {});
-connect();
+/*
+ * Le meme fichier sert deux usages :
+ *  - en local, lance par « node server.js » : graphe en direct par SSE ;
+ *  - en ligne sur GitHub Pages, sans serveur : lecture de data.json, regenere
+ *    a chaque ecriture dans le cerveau puis pousse sur le depot.
+ */
+async function boot() {
+  try {
+    const r = await fetch('/api/graph', { cache: 'no-store' });
+    if (!r.ok) throw new Error('pas de serveur');
+    apply(await r.json());
+    lastUpdate = Date.now();
+    connect();
+    return;
+  } catch (_) {
+    // Aucun serveur local : on bascule sur l'instantane publie.
+  }
+
+  try {
+    const r = await fetch('data.json', { cache: 'no-store' });
+    if (!r.ok) throw new Error('data.json introuvable');
+    const g = await r.json();
+    apply(g);
+    led.className = 'stale';
+    statusText.textContent = 'hors ligne · ' + fmt(g.generated);
+  } catch (_) {
+    setStatus(false, 'donnees introuvables');
+  }
+}
+
+boot();
 </script>
 </body>
 </html>

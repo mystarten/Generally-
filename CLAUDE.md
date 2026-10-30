@@ -21,7 +21,11 @@ L'interface graphe se lance avec `node server.js` (http://localhost:3000) et se 
 4. **Relie.** Quand un nouvel élément concerne un élément déjà présent, ajoute le lien
    `[[...]]` (via `--link`), dans les deux sens si c'est utile.
 
-5. **Jamais de secrets.** Aucun numéro de carte, identifiant, mot de passe, clé d'API
+5. **Publie.** Juste apres avoir ecrit dans le cerveau, lance `node brain.js publish`.
+   Ca regenere `cerveau/data.json` et pousse sur GitHub : la page en ligne se met a jour
+   toute seule une minute plus tard. Si rien n'a change, la commande ne fait rien.
+
+6. **Jamais de secrets.** Aucun numéro de carte, identifiant, mot de passe, clé d'API
    ou token dans `brain/`. (`brain.js` refuse déjà ces lignes, ne le contourne pas.)
 
 ## Commandes
@@ -32,6 +36,7 @@ node brain.js search "gendarmerie"
 node brain.js show starten
 node brain.js import ./notes
 node brain.js list
+node brain.js publish
 node server.js
 ```
 

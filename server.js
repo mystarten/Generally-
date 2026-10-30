@@ -14,7 +14,7 @@ const brain = require('./brain.js');
 
 const PORT = Number(process.env.PORT || 3000);
 const ROOT = __dirname;
-const UI_DIR = path.join(ROOT, 'brain-ui');
+const UI_DIR = path.join(ROOT, 'cerveau');
 const BRAIN_DIR = brain.BRAIN_DIR;
 const DEBOUNCE_MS = 120;
 

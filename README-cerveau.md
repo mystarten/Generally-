@@ -3,13 +3,26 @@
 Graphe interactif (façon nuage Obsidian) de tout ce que je dis de durable.
 Les notes vivent dans `brain/`, le graphe se met à jour **en direct** dès qu'un fichier change.
 
-## Lancer
+## Voir le cerveau
+
+**En ligne, rien a lancer** — https://mystarten.github.io/Generally-/cerveau/
+
+Page volontairement non referencee (`noindex`, absente du sitemap, aucun lien depuis
+le site). Elle reste **techniquement publique** : qui a le lien peut lire.
+Elle lit `cerveau/data.json`, regenere a chaque ecriture et pousse par
+`node brain.js publish`. Compter ~1 min apres le push.
+
+**En local, en direct** — double-clic sur `demarrer-cerveau.command` (macOS)
+ou `demarrer-cerveau.bat` (Windows). Ou, en ligne de commande :
 
 ```bash
 node server.js
 ```
 
 → http://localhost:3000 (port modifiable : `PORT=4000 node server.js`)
+
+La meme page sert les deux usages : si un serveur repond, elle passe en direct ;
+sinon elle affiche le dernier instantane publie et l'indique (« hors ligne »).
 
 Le serveur surveille `brain/` en récursif et pousse le graphe au navigateur
 par Server-Sent Events (`/events`). Aucun polling, aucune dépendance npm
@@ -36,6 +49,16 @@ node brain.js search "gendarmerie"
 node brain.js show starten
 node brain.js list
 ```
+
+## Publier
+
+```bash
+node brain.js publish
+```
+
+Regenere `cerveau/data.json`, commit et pousse sur la branche courante
+(5 tentatives avec attente croissante si le reseau lache). Ne fait rien si
+rien n'a change. `node brain.js export` regenere l'instantane sans pousser.
 
 ## Importer
 
@@ -76,7 +99,7 @@ brain/agents/         agents IA
 
 | Route | Réponse |
 |---|---|
-| `GET /` | l'interface (`brain-ui/index.html`) |
+| `GET /` | l'interface (`cerveau/index.html`) |
 | `GET /events` | flux SSE, un message `graph` à chaque changement |
 | `GET /api/graph` | le graphe complet |
 | `GET /api/search?q=...` | noeuds correspondants + extraits |

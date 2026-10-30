@@ -555,6 +555,49 @@ function parseFileExternal(abs) {
   };
 }
 
+// ----------------------------------------------------------------- publication
+
+const DATA_FILE = path.join(ROOT, 'cerveau', 'data.json');
+
+/**
+ * Ecrit l'instantane du graphe lu par la page en ligne (GitHub Pages n'execute
+ * aucun serveur : la page ne peut lire qu'un fichier statique).
+ */
+function exportStatic() {
+  const graph = buildGraph(readAllNodes());
+  fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+  fs.writeFileSync(DATA_FILE, JSON.stringify(graph) + '\n', 'utf8');
+  return { file: path.relative(ROOT, DATA_FILE), nodes: graph.nodes.length, links: graph.links.length };
+}
+
+/** Regenere l'instantane puis l'envoie sur GitHub, si quelque chose a change. */
+function publish() {
+  const { execFileSync } = require('child_process');
+  const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' }).trim();
+
+  const snapshot = exportStatic();
+  const paths = ['brain', 'cerveau/data.json'];
+  git('add', '--', ...paths);
+  const staged = git('diff', '--cached', '--name-only', '--', ...paths);
+  if (!staged) return { pushed: false, reason: 'rien de nouveau', snapshot };
+
+  const branch = git('rev-parse', '--abbrev-ref', 'HEAD');
+  const count = staged.split('\n').filter(Boolean).length;
+  git('commit', '-m', 'cerveau : mise a jour (' + count + ' fichier(s))');
+
+  let lastErr = null;
+  for (const wait of [0, 2000, 4000, 8000, 16000]) {
+    if (wait) execFileSync('sleep', [String(wait / 1000)]);
+    try {
+      git('push', 'origin', branch);
+      return { pushed: true, branch, files: staged.split('\n').filter(Boolean), snapshot };
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw new Error('push impossible apres 5 tentatives : ' + (lastErr && lastErr.message));
+}
+
 // ------------------------------------------------------------------------ CLI
 
 function parseArgs(argv) {
@@ -591,6 +634,8 @@ const USAGE = `cerveau — capture et consultation
   node brain.js show <nom>
   node brain.js import <fichier|dossier>
   node brain.js list
+  node brain.js publish            regenere cerveau/data.json, commit et push
+  node brain.js export             regenere cerveau/data.json seulement
 `;
 
 function cmdAdd(flags) {
@@ -611,6 +656,7 @@ function cmdAdd(flags) {
   if (report.linksAdded.length) bits.push('liens : ' + report.linksAdded.map(l => '[[' + l + ']]').join(' '));
   if (report.skipped) bits.push('rien a ecrire (ni --fact ni --link)');
   console.log(report.file + ' — ' + (bits.join(', ') || 'inchange'));
+  if (!report.skipped) exportStatic();
 }
 
 function cmdSearch(query) {
@@ -661,6 +707,7 @@ function cmdImport(target) {
       + (r.created ? ', fichier cree' : '')
       + (r.skippedSecret ? ', ' + r.skippedSecret + ' ignore(s) (secret)' : ''));
   }
+  exportStatic();
 }
 
 function cmdList() {
@@ -681,6 +728,16 @@ function main(argv) {
       case 'show': return cmdShow(positional.join(' ') || String(flags.name || ''));
       case 'import': return cmdImport(positional[0] || String(flags.path || ''));
       case 'list': return cmdList();
+      case 'export': {
+        const r = exportStatic();
+        return console.log(r.file + ' — ' + r.nodes + ' noeuds, ' + r.links + ' liens');
+      }
+      case 'publish': {
+        const r = publish();
+        if (!r.pushed) return console.log('rien a publier (' + r.reason + ')');
+        return console.log('publie sur ' + r.branch + ' — ' + r.files.join(', ')
+          + '  (' + r.snapshot.nodes + ' noeuds, ' + r.snapshot.links + ' liens)');
+      }
       case 'graph': return console.log(JSON.stringify(buildGraph(readAllNodes()), null, 2));
       default:
         console.log(USAGE);
@@ -695,7 +752,8 @@ function main(argv) {
 module.exports = {
   BRAIN_DIR, ROOT, TYPE_TO_DIR, DIR_TO_TYPE,
   readAllNodes, buildGraph, searchNodes, findNode, neighborsOf,
-  addFact, importPath, slugify, norm, looksSecret
+  addFact, importPath, slugify, norm, looksSecret,
+  exportStatic, publish, DATA_FILE
 };
 
 if (require.main === module) main(process.argv.slice(2));
