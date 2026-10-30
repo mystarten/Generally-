@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'Rappel cerveau : Mats a-t-il donné une information durable dans ce tour (objectif, décision, projet, personne, outil, agent IA) ? Si oui, écris-la maintenant avec node brain.js add --type <type> --name <nom> --fact \"...\" [--link ...], seulement ses propres mots, puis annonce-le en une ligne. Jamais de carte, identifiant ni mot de passe.'"
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/brain-reminder.js\""
           }
         ]
       }
