@@ -68,6 +68,10 @@ function block(reason) {
 
 function pass() { process.exit(0); }
 
+// Lance par le moteur de l'interface (engine.js) : il publie lui-meme a la fin. Relancer
+// un tour ici coutait des tokens et ecrasait la vraie reponse par « je ne publie pas ».
+if (process.env.CERVEAU_ENGINE === '1') pass();
+
 let raw = '';
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', d => { raw += d; });

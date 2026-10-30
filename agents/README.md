@@ -66,9 +66,8 @@ Les règles communes à toute l'équipe sont dans `_protocole.md` : elles sont a
 
 ## Ce que les agents ne font pas
 
-Ils **n'envoient rien** (e-mail, DM, publication), ne dépensent rien, ne se connectent à aucun compte, ne
+Mats ne leur impose pas de limite. Mais ils n'ont **aucun outil d'envoi, de paiement ou de compte connecté** pour l'instant : ils préparent, tu envoies. Ils ne
 citent aucun barème ou règlement de mémoire (ils cherchent une source), et n'écrivent pas dans le cerveau.
-Ils préparent, tu envoies.
 
 ## Limite à connaître : la profondeur de délégation
 

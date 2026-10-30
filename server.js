@@ -12,8 +12,11 @@ const fs = require('fs');
 const path = require('path');
 const brain = require('./brain.js');
 const agents = require('./agents.js');
+const { Engine, writeConfig } = require('./engine.js');
 
 const PORT = Number(process.env.PORT || 3000);
+// Par defaut, seule ta machine peut joindre ce serveur : il peut lancer Claude Code et lit tout le cerveau.
+const HOST = process.env.HOST || '127.0.0.1';
 const ROOT = __dirname;
 const UI_DIR = path.join(ROOT, 'cerveau');
 const BRAIN_DIR = brain.BRAIN_DIR;
@@ -87,6 +90,7 @@ function handleEvents(req, res) {
   res.write('retry: 1500\n\n');
   res.write('event: graph\ndata: ' + JSON.stringify(graph) + '\n\n');
   res.write('event: agents\ndata: ' + JSON.stringify(agentsState) + '\n\n');
+  res.write('event: run\ndata: ' + JSON.stringify({ type: 'state', state: engine.state() }) + '\n\n');
   clients.add(res);
   log('client connecte (' + clients.size + ')');
 
@@ -255,6 +259,28 @@ function readJson(req, limit = 64 * 1024) {
   });
 }
 
+const engine = new Engine();
+engine.on('event', e => broadcast('run', e));
+
+function handleEngineWrite(req, res, p) {
+  const refusal = writeRefusal(req);
+  if (refusal) return sendJson(res, 403, { error: refusal });
+  readJson(req).then(body => {
+    try {
+      if (p === '/api/ask') {
+        const r = engine.start({ question: body.question, conversation: body.conversation || null });
+        log('question lancee ' + r.id + ' (plafond ' + r.budget.toFixed(2) + ' $)');
+        return sendJson(res, 202, r);
+      }
+      if (p === '/api/run/cancel') return sendJson(res, 200, { cancelled: engine.cancel() });
+      if (p === '/api/engine/config') return sendJson(res, 200, { config: writeConfig(body) });
+      return sendJson(res, 404, { error: 'route inconnue' });
+    } catch (err) {
+      return sendJson(res, err.status || 400, { error: err.message });
+    }
+  }).catch(err => sendJson(res, 400, { error: err.message }));
+}
+
 function handleAgentWrite(req, res, p) {
   const refusal = writeRefusal(req);
   if (refusal) return sendJson(res, 403, { error: refusal });
@@ -285,7 +311,15 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
   const p = url.pathname;
 
+  // Contre le « DNS rebinding » : un site tiers ne doit pas pouvoir lire le cerveau via localhost.
+  if (!/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(String(req.headers.host || '')) && HOST === '127.0.0.1') {
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('hote refuse');
+    return;
+  }
+
   if (req.method === 'POST' && p.startsWith('/api/agents/')) return handleAgentWrite(req, res, p);
+  if (req.method === 'POST' && (p === '/api/ask' || p === '/api/run/cancel' || p === '/api/engine/config')) return handleEngineWrite(req, res, p);
 
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.writeHead(405, { Allow: 'GET' });
@@ -298,6 +332,8 @@ const server = http.createServer((req, res) => {
   if (p === '/api/graph') return sendJson(res, 200, graph);
 
   if (p === '/api/agents') return sendJson(res, 200, agentsState);
+  if (p === '/api/engine') return sendJson(res, 200, engine.status());
+  if (p === '/api/runs') return sendJson(res, 200, { runs: engine.history(30) });
 
   if (p === '/api/search') {
     const q = url.searchParams.get('q') || '';
@@ -343,14 +379,15 @@ rebuild('demarrage');
 rebuildAgents('demarrage');
 ensureWatchers();
 
-server.listen(PORT, () => {
-  log('cerveau sur http://localhost:' + PORT);
+server.listen(PORT, HOST, () => {
+  log('cerveau sur http://localhost:' + PORT + (HOST === '127.0.0.1' ? ' (ta machine uniquement)' : ' (ecoute ' + HOST + ')'));
   log('surveille brain/ et agents/ (' + watchers.size + ' dossier(s))');
 });
 
 for (const sig of ['SIGINT', 'SIGTERM']) {
   process.on(sig, () => {
     log('arret');
+    engine.shutdown();
     for (const [, w] of watchers) { try { w.close(); } catch (_) {} }
     for (const res of clients) { try { res.end(); } catch (_) {} }
     server.close(() => process.exit(0));
