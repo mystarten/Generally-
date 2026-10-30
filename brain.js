@@ -636,9 +636,29 @@ function parseFileExternal(abs) {
  */
 function exportStatic() {
   const graph = buildGraph(readAllNodes());
-  fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
-  fs.writeFileSync(DATA_FILE, JSON.stringify(graph) + '\n', 'utf8');
-  return { file: path.relative(ROOT, DATA_FILE), nodes: graph.nodes.length, links: graph.links.length };
+  let before = '';
+  try { before = fs.readFileSync(DATA_FILE, 'utf8'); } catch (_) {}
+
+  // Les dates de fichiers ne disent rien de fiable : git les reecrit a chaque
+  // checkout. Un noeud dont le contenu n'a pas change garde donc la date de
+  // l'instantane precedent, et « generated » est la date du dernier changement.
+  // Sans ca, chaque publication produirait un fichier different, donc un commit.
+  let prev = [];
+  try { prev = JSON.parse(before).nodes || []; } catch (_) {}
+  const prevById = new Map(prev.map(n => [n.id, n]));
+  const sig = n => JSON.stringify([n.name, n.type, n.axis, n.description, n.aliases, n.facts]);
+  for (const n of graph.nodes) {
+    const p = prevById.get(n.id);
+    if (p && p.updated && sig(p) === sig(n)) n.updated = p.updated;
+  }
+  graph.generated = graph.nodes.reduce((m, n) => Math.max(m, n.updated || 0), 0);
+
+  const out = JSON.stringify(graph) + '\n';
+  if (out !== before) {
+    fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+    fs.writeFileSync(DATA_FILE, out, 'utf8');
+  }
+  return { file: path.relative(ROOT, DATA_FILE), nodes: graph.nodes.length, links: graph.links.length, changed: out !== before };
 }
 
 function makeGit() {
