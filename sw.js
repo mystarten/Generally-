@@ -17,7 +17,7 @@
    scripts — ce qui est pire qu'une version entièrement ancienne, parce que
    les deux moitiés ne s'accordent pas.
    ============================================================================= */
-const VERSION = 'generally-v13';
+const VERSION = 'generally-v14';
 
 /* Ce qui est telecharge des l'installation, pour que le site fonctionne sans
    reseau meme sur une page jamais ouverte.
@@ -105,6 +105,18 @@ self.addEventListener('fetch', (e) => {
 
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;   // on ne touche pas à l'extérieur
+
+  /* Le cerveau (/cerveau/) est hors de ce cache, entièrement.
+
+     Sa page lit un instantané, cerveau/data.json, réécrit à chaque fait
+     ajouté. Or data.json n'est pas du HTML : il tomberait dans la stratégie
+     « cache d'abord » plus bas et serait servi indéfiniment dans sa première
+     version. Le cerveau aurait l'air figé, sans message d'erreur — exactement
+     le travers décrit en tête de ce fichier pour training/.
+
+     Un cerveau sans réseau n'a rien à montrer de toute façon : on laisse ces
+     requêtes passer directement au réseau, sans cache ni repli. */
+  if (url.pathname.includes('/cerveau/')) return;
 
   const estPage = req.mode === 'navigate' ||
                   (req.headers.get('accept') || '').includes('text/html');

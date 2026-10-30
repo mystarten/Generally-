@@ -603,7 +603,12 @@ async function boot() {
   }
 
   try {
-    const r = await fetch('data.json', { cache: 'no-store' });
+    /* L'horodatage rend l'URL unique a chaque chargement. Sans lui, un
+       service worker deja installe sur l'appareil (le site Generally en a un,
+       en « cache d'abord » pour tout ce qui n'est pas du HTML) resservirait
+       indefiniment le premier data.json vu. Le sw.js du site ignore desormais
+       /cerveau/, mais un appareil peut encore tourner sur l'ancienne version. */
+    const r = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) throw new Error('data.json introuvable');
     const g = await r.json();
     apply(g);
