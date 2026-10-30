@@ -94,6 +94,14 @@
   .brand-title span { color: var(--cyan); margin: 0 .2em; }
   .brand-sub { margin-top: 5px; }
 
+  .nav { display: flex; gap: 6px; margin-left: 6px; }
+  .nav a {
+    padding: 7px 12px; border: 1px solid var(--line); background: rgba(4, 16, 30, .6); color: var(--muted);
+    font: 600 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; text-decoration: none;
+  }
+  .nav a:hover { color: var(--text); border-color: var(--line-strong); }
+  .nav a.on { color: var(--cyan); border-color: var(--line-strong); background: rgba(79, 216, 255, .1); }
+
   .search {
     position: relative; display: flex; align-items: center;
     width: 300px; margin-left: 10px;
@@ -262,6 +270,7 @@
     #top { flex-wrap: wrap; gap: 10px; padding: 14px 16px 0; }
     .brand-title { font-size: 13px; }
     .search { order: 3; width: 100%; margin: 0; }
+    .nav { margin-left: 0; }
     #layers { top: 128px; left: 16px; width: auto; max-width: calc(100vw - 32px); padding: 9px 12px; }
     #layers-toggle { display: block; }
     #layers .layers-body { display: none; margin-top: 10px; }
@@ -293,6 +302,7 @@
       <div class="brand-sub label" id="stats">—</div>
     </div>
   </div>
+  <nav class="nav"><a href="index.html" class="on">Cerveau</a><a href="agents.html">Agents</a></nav>
   <label class="search">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
     <input id="search" type="search" placeholder="Rechercher" autocomplete="off" spellcheck="false">
@@ -748,6 +758,9 @@ function apply(graph) {
     S.ready = true;
     overview(2600);
     document.getElementById('boot').classList.add('done');
+    // lien direct depuis la page des agents : index.html#n=topics/tractions
+    const deep = /[#&]n=([^&]+)/.exec(location.hash);
+    if (deep) setTimeout(() => focusNode(decodeURIComponent(deep[1]), true), 400);
   } else {
     reheat(fresh.length ? .3 : .06);
   }

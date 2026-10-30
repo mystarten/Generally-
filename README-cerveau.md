@@ -137,10 +137,31 @@ L'axe d'un nœud vient de `axis:`, sinon du hub le plus proche par les liens.
 | `GET /api/graph` | le graphe complet |
 | `GET /api/search?q=...` | nœuds correspondants et extraits |
 | `GET /api/node/:nom` | un nœud, son axe, ses faits et ses voisins |
+| `GET /api/agents` | l'équipe d'agents, les tâches et les messages |
+| `POST /api/agents/task` | crée une tâche de la part de Mats (machine locale uniquement) |
+| `POST /api/agents/task/:id/status` · `/message` | change le statut, ou répond sur une tâche (machine locale uniquement) |
+
+## Les agents
+
+À côté de la mémoire, une **équipe de 29 agents** (orchestrateur, archiviste, 6 chefs d'équipe et leurs
+spécialistes : coach force, coach course, copywriting, monteur, etc.). Ils se passent le travail par des
+tâches et des messages écrits dans `agents/tasks/`, et un tableau de bord les montre en direct :
+`cerveau/agents.html` (bouton « Agents » en haut de la page du cerveau).
+
+Tout est détaillé dans [`agents/README.md`](agents/README.md) : comment ça marche, comment dépose tes `.md` dans
+`agents/knowledge/<agent>/`, comment changer les consignes d'un agent ou en ajouter un.
+
+```bash
+node agents.js list                   # l'équipe en arbre
+node agents.js tasks --status open    # ce qui est à faire
+node agents.js check                  # tout vérifier
+node agents.js publish                # compile, met la page en ligne à jour, pousse
+```
 
 ## Claude Code
 
 `CLAUDE.md` contient les règles : consulter le cerveau avant de répondre, écrire immédiatement toute
 information durable, ne rien déduire, ranger dans un axe et relier, ne jamais stocker de secret.
-Le hook `Stop` (`.claude/settings.json`) bloque la fin d'un tour si des changements du cerveau ne sont
-pas poussés, puis rappelle de vérifier s'il reste une information à noter.
+Le hook `Stop` (`.claude/settings.json`) bloque la fin d'un tour si des changements du cerveau ou des agents
+ne sont pas poussés, puis rappelle de vérifier s'il reste une information à noter.
+Claude Code y joue aussi l'orchestrateur de l'équipe d'agents.

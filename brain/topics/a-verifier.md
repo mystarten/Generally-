@@ -10,3 +10,4 @@ axis: sport
 [verify] Heures de sport : 8 séances par semaine (ancien) contre 6 séances types plus 3 courses (actuel)
 [verify] Course à pied en pause 2 semaines depuis fin octobre, donc le 5 km du 15 novembre est incertain
 [links] [[tractions]] [[objectif-5km]] [[sport]] [[pause-course-oct-2026]] [[course-a-pied]]
+[verify] La trame Word de 12 semaines (12 oct. au 3 janv.) et le cycle de 13 semaines à partir du 1er octobre sont-ils le même programme, ou la trame remplace-t-elle l'ancien ? [[Trame street workout 12 semaines]] [[Programme oct. 2026]]

@@ -43,14 +43,15 @@ function newestMtime(dir) {
   return newest;
 }
 
-/** Ce qui, dans le cerveau, n'est pas encore sur GitHub. Silencieux hors depot git. */
+/** Ce qui, dans le cerveau ou chez les agents, n'est pas encore sur GitHub. Silencieux hors depot git. */
+const WATCHED = ['brain', 'cerveau/data.json', 'agents', 'cerveau/agents.json', '.claude/agents'];
 function unpublished() {
   const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
   try {
-    if (git('status', '--porcelain', '--', 'brain', 'cerveau/data.json')) return 'des fiches du cerveau ne sont pas commitees';
+    if (git('status', '--porcelain', '--', ...WATCHED)) return 'des fiches du cerveau ou des taches d\'agents ne sont pas commitees';
     try {
-      const ahead = Number(git('rev-list', '--count', '@{u}..HEAD', '--', 'brain', 'cerveau/data.json'));
-      if (ahead > 0) return ahead + ' commit(s) du cerveau pas encore pousse(s)';
+      const ahead = Number(git('rev-list', '--count', '@{u}..HEAD', '--', ...WATCHED));
+      if (ahead > 0) return ahead + ' commit(s) du cerveau ou des agents pas encore pousse(s)';
     } catch (_) {
       // pas de branche amont : rien a comparer
     }
@@ -80,7 +81,7 @@ process.stdin.on('end', () => {
   // 1. Tout ce qui est ecrit doit etre en ligne.
   const pending = unpublished();
   if (pending) {
-    block('Cerveau non publie : ' + pending + '. Lance « node brain.js publish » maintenant, '
+    block('Cerveau et agents non publies : ' + pending + '. Lance « node brain.js publish » (ou « node agents.js publish », c\'est la meme commande) maintenant, '
       + 'verifie que la sortie dit « publie sur ... + main (page en ligne) », puis annonce-le en une ligne. '
       + 'Si le push echoue, dis-le clairement a Mats au lieu de l\'ignorer.');
   }

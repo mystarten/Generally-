@@ -85,7 +85,11 @@ function firstLine(err) {
 
 // Regle 6 : jamais de numeros de carte, identifiants ou mots de passe.
 const SECRET_PATTERNS = [
-  /\b(?:\d[ -]?){13,19}\b/,
+  // Numero de carte : 13 a 19 chiffres colles, ou blocs 4-4-4-4 / 4-6-5 (Amex).
+  // Pas de simple « suite de chiffres » : une pyramide 5-10-15-20-15-10-5 n'est pas une carte.
+  /\b\d{13,19}\b/,
+  /\b\d{4}([ -])\d{4}\1\d{4}(\1\d{1,7})?\b/,
+  /\b\d{4}([ -])\d{6}\1\d{5}\b/,
   /\b(mot\s+de\s+passe|password|passwd|pwd)\b/i,
   /\b(api[\s_-]?key|cle\s+api|secret\s+key|client\s+secret|private\s+key)\b/i,
   /\b(cvv|cvc|iban|bic)\b/i,
@@ -661,6 +665,30 @@ function exportStatic() {
   return { file: path.relative(ROOT, DATA_FILE), nodes: graph.nodes.length, links: graph.links.length, changed: out !== before };
 }
 
+/*
+ * Fichiers produits par un script, jamais ecrits a la main : en cas de conflit
+ * apres un rebase on les regenere au lieu de les fusionner.
+ * agents.js est charge a la demande : il depend de ce fichier, pas l'inverse.
+ */
+const GENERATED_EXACT = ['cerveau/data.json', 'cerveau/agents.json'];
+const GENERATED_PREFIX = ['.claude/agents/'];
+const isGenerated = f => GENERATED_EXACT.includes(f) || GENERATED_PREFIX.some(p => f.startsWith(p));
+
+function agentsModule() {
+  try { return require('./agents.js'); } catch (err) {
+    if (err && err.code === 'MODULE_NOT_FOUND' && /agents\.js/.test(err.message)) return null;
+    throw err;
+  }
+}
+
+/** Regenere tout ce qui est genere : instantane du cerveau, agents compiles, instantane des agents. */
+function regenerateAll() {
+  const snapshot = exportStatic();
+  const agents = agentsModule();
+  const agentsSnapshot = agents ? agents.regenerate() : null;
+  return { snapshot, agentsSnapshot };
+}
+
 function makeGit() {
   const { execFileSync } = require('child_process');
   return (...args) => execFileSync('git', args, {
@@ -690,14 +718,15 @@ function pullRebase(git, branch) {
   }
   for (let i = 0; i < 100 && rebaseInProgress(git); i++) {
     const conflicted = git('diff', '--name-only', '--diff-filter=U').split('\n').filter(Boolean);
-    const others = conflicted.filter(f => f !== 'cerveau/data.json');
+    const others = conflicted.filter(f => !isGenerated(f));
     if (others.length) {
       try { git('rebase', '--abort'); } catch (_) {}
       throw new Error('conflit sur ' + others.join(', ') + ', a resoudre a la main (rebase annule, rien n\'est perdu)');
     }
     if (conflicted.length) {
-      exportStatic();
-      git('add', 'cerveau/data.json');
+      regenerateAll();
+      git('add', '-A', '--', ...conflicted.filter(f => fs.existsSync(path.join(ROOT, f))));
+      for (const f of conflicted.filter(f => !fs.existsSync(path.join(ROOT, f)))) git('rm', '--cached', '--quiet', '--', f);
     }
     try {
       git('-c', 'core.editor=true', 'rebase', '--continue');
@@ -733,11 +762,12 @@ function pushWithRetry(git, branch) {
   throw new Error('push impossible apres 5 tentatives : ' + firstLine(last));
 }
 
-/** Regenere data.json et le commit s'il a change (apres un rebase par exemple). */
+/** Regenere les instantanes et les commit s'ils ont change (apres un rebase par exemple). */
 function commitSnapshot(git) {
-  exportStatic();
-  git('add', '--', 'cerveau/data.json');
-  if (git('diff', '--cached', '--name-only', '--', 'cerveau/data.json')) {
+  regenerateAll();
+  const gen = GENERATED_EXACT.concat(['.claude/agents']).filter(f => fs.existsSync(path.join(ROOT, f)));
+  git('add', '-A', '--', ...gen);
+  if (git('diff', '--cached', '--name-only', '--', ...gen)) {
     git('commit', '-m', 'cerveau : instantane');
   }
 }
@@ -761,31 +791,42 @@ function mirrorMain(git) {
   }
 }
 
-/** Regenere l'instantane, commit ce qui a change dans le cerveau, et pousse. */
+/** Ce que publish() embarque : le cerveau, les agents, et leurs instantanes. */
+const PUBLISHED = ['brain', 'cerveau/data.json', 'agents', 'cerveau/agents.json', '.claude/agents'];
+
+/** Libelle lisible d'un commit : « cerveau : tractions, pompes » et/ou « agents : T-261030-k3f ». */
+function commitLabel(staged) {
+  const names = (prefix, strip) => [...new Set(staged.filter(f => f.startsWith(prefix)).map(f => path.basename(f, strip)))];
+  const fmt = list => list.slice(0, 5).join(', ') + (list.length > 5 ? ' +' + (list.length - 5) : '');
+  const parts = [];
+  const brainNames = names('brain/', '.md');
+  if (brainNames.length) parts.push('cerveau : ' + fmt(brainNames));
+  const agentNames = [...new Set(staged
+    .filter(f => f.startsWith('agents/') || f.startsWith('.claude/agents/'))
+    .map(f => path.basename(f).replace(/\.[a-z]+$/, '')))].filter(n => n && n !== '.gitkeep');
+  if (agentNames.length) parts.push('agents : ' + fmt(agentNames));
+  return parts.length ? parts.join(' ; ') : 'cerveau : instantane';
+}
+
+/** Regenere les instantanes, commit ce qui a change (cerveau et agents), et pousse. */
 function publish() {
   const git = makeGit();
   if (rebaseInProgress(git)) throw new Error('un rebase git est en cours dans ce depot : le terminer ou l\'annuler d\'abord');
-  const snapshot = exportStatic();
-  const paths = ['brain', 'cerveau/data.json'];
+  const { snapshot, agentsSnapshot } = regenerateAll();
+  const paths = PUBLISHED.filter(f => fs.existsSync(path.join(ROOT, f)));
   git('add', '-A', '--', ...paths);
   const staged = git('diff', '--cached', '--name-only', '--', ...paths).split('\n').filter(Boolean);
 
-  if (staged.length) {
-    const names = [...new Set(staged.filter(f => f.startsWith('brain/')).map(f => path.basename(f, '.md')))];
-    const label = names.length
-      ? names.slice(0, 5).join(', ') + (names.length > 5 ? ' +' + (names.length - 5) : '')
-      : 'instantane';
-    git('commit', '-m', 'cerveau : ' + label);
-  }
+  if (staged.length) git('commit', '-m', commitLabel(staged));
 
   const branch = git('rev-parse', '--abbrev-ref', 'HEAD');
   let ahead = 1;
   try { ahead = Number(git('rev-list', '--count', '@{u}..HEAD')); } catch (_) { /* pas d'amont : on pousse */ }
-  if (!staged.length && ahead === 0) return { pushed: false, reason: 'rien de nouveau', snapshot };
+  if (!staged.length && ahead === 0) return { pushed: false, reason: 'rien de nouveau', snapshot, agentsSnapshot };
 
   pushWithRetry(git, branch);
   const mirrored = branch !== 'main' ? mirrorMain(git) : null;
-  return { pushed: true, branch, files: staged, snapshot, mirrored };
+  return { pushed: true, branch, files: staged, snapshot, agentsSnapshot, mirrored };
 }
 
 // ------------------------------------------------------------------------ CLI
@@ -838,7 +879,7 @@ const USAGE = `cerveau — capture et consultation
 /** Apres chaque ecriture : instantane, puis publication sauf refus explicite. */
 function afterWrite(flags) {
   if (flags['no-push'] || process.env.BRAIN_NO_PUSH === '1') {
-    exportStatic();
+    regenerateAll();
     return;
   }
   try {
@@ -1001,8 +1042,8 @@ function main(argv) {
 module.exports = {
   BRAIN_DIR, ROOT, DATA_FILE, TYPE_TO_DIR, DIR_TO_TYPE,
   readAllNodes, buildGraph, buildResolver, searchNodes, findNode, neighborsOf,
-  addFact, removeNode, importPath, exportStatic, publish,
-  slugify, norm, looksSecret
+  addFact, removeNode, importPath, exportStatic, publish, regenerateAll, PUBLISHED,
+  parseFrontmatter, slugify, norm, looksSecret
 };
 
 if (require.main === module) main(process.argv.slice(2));
