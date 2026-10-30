@@ -156,10 +156,81 @@
 
   /* ---- dock ---- */
   #dock {
-    position: fixed; left: 50%; bottom: 22px; z-index: 10; transform: translateX(-50%);
+    position: fixed; right: 26px; top: 56px; z-index: 10;
     display: flex; align-items: center; gap: 8px; padding: 8px;
     max-width: calc(100vw - 32px);
   }
+  #hint { display: none; }
+
+  /* ---- barre de question ---- */
+  #ask { position: fixed; left: 50%; bottom: 20px; z-index: 14; transform: translateX(-50%); width: min(760px, calc(100vw - 32px)); padding: 10px 10px 8px; }
+  .ask-row { display: flex; align-items: flex-end; gap: 8px; }
+  #ask-text {
+    flex: 1; min-height: 40px; max-height: 120px; resize: none; padding: 10px 12px; border-radius: 0; outline: none;
+    background: rgba(2, 10, 20, .75); border: 1px solid var(--line); color: var(--text); font: 15px/1.4 var(--sans);
+  }
+  #ask-text:focus { border-color: var(--line-strong); }
+  #ask-text::placeholder { color: var(--dim); }
+  #ask-text:disabled { opacity: .55; }
+  .ask-btn {
+    flex: none; width: 40px; height: 40px; display: grid; place-items: center; cursor: pointer;
+    background: rgba(79, 216, 255, .12); border: 1px solid var(--line-strong); color: #eaf8ff;
+  }
+  .ask-btn:hover:not(:disabled) { background: rgba(79, 216, 255, .24); }
+  .ask-btn:disabled { opacity: .35; cursor: not-allowed; }
+  .ask-btn svg { width: 16px; height: 16px; fill: currentColor; }
+  #ask-send.stop { border-color: rgba(255, 77, 106, .7); color: #ff8aa0; background: rgba(255, 77, 106, .12); }
+  #ask-mic.on { border-color: #ff4d6a; color: #ff4d6a; animation: blink 1.2s ease-in-out infinite; }
+  .ask-foot { display: flex; gap: 12px; align-items: center; margin-top: 6px; min-height: 14px; }
+  .ask-meter { background: none; border: 0; padding: 0; cursor: pointer; font: 10.5px var(--mono); letter-spacing: .06em; color: var(--muted); text-align: left; }
+  .ask-meter.warn { color: #ffc04a; } .ask-meter.err { color: #ff8aa0; }
+  #ask-note { margin-left: auto; font: 11px var(--mono); color: #ffc04a; text-align: right; }
+  #ask-settings { display: none; margin-top: 8px; padding: 10px; border: 1px solid var(--line); background: rgba(2, 10, 20, .7); }
+  #ask-settings.open { display: grid; grid-template-columns: repeat(4, auto) 1fr; gap: 10px; align-items: end; }
+  #ask-settings label { display: flex; flex-direction: column; gap: 4px; font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  #ask-settings select, #ask-settings input[type=number] { width: 96px; padding: 6px; background: #06182a; color: var(--text); border: 1px solid var(--line); border-radius: 0; font: 13px var(--mono); }
+  #ask-settings .chk { flex-direction: row; align-items: center; gap: 6px; }
+  #cfg-err { grid-column: 1 / -1; color: #ff8aa0; font: 11px var(--mono); }
+
+  /* ---- reponse ---- */
+  #answer {
+    position: fixed; left: 50%; bottom: 104px; z-index: 13; transform: translateX(-50%); width: min(760px, calc(100vw - 32px));
+    max-height: min(44vh, 520px); display: none; flex-direction: column; padding: 16px 18px 12px;
+  }
+  #answer.open { display: flex; }
+  @media (min-width: 1100px) {
+    #answer { left: auto; right: 26px; top: 112px; bottom: 112px; transform: none; width: 420px; max-height: none; }
+  }
+  #answer::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--cyan); box-shadow: 0 0 14px var(--cyan); }
+  .ans-head { display: flex; gap: 10px; align-items: flex-start; }
+  #ans-q { flex: 1; font: 600 15px/1.35 var(--sans); color: #f2fbff; }
+  .ans-x { flex: none; width: 26px; height: 26px; background: none; border: 1px solid var(--line); color: var(--muted); cursor: pointer; }
+  .ans-status { margin-top: 6px; font: 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .ans-status.running { color: var(--cyan); } .ans-status.running::before { content: "● "; animation: blink 1s infinite; }
+  .ans-status.ok { color: #3dffa0; } .ans-status.err { color: #ff8aa0; }
+  #ans-body { margin-top: 10px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+  #ans-text { color: #dff3ff; font-size: 14.5px; line-height: 1.55; }
+  #ans-text p { margin: 0 0 8px; } #ans-text ul { margin: 0 0 8px; padding-left: 18px; } #ans-text li { margin: 2px 0; }
+  #ans-text h4 { margin: 10px 0 4px; font-size: 13px; color: #f2fbff; }
+  #ans-text code { font: 12.5px var(--mono); background: rgba(79, 216, 255, .08); padding: 0 4px; }
+  .ans-wait { color: var(--dim); }
+  .ans-sec { margin-top: 10px; } .ans-sec .label { margin-bottom: 6px; }
+  .chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .nb.st-active { border-color: var(--c); box-shadow: 0 0 10px var(--c); } .nb.st-failed { border-color: #ff4d6a; }
+  .ans-foot { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+  #ans-meta { flex: 1; font: 10.5px var(--mono); color: var(--muted); }
+  #ans-new { padding: 5px 10px; }
+
+  /* ---- panneau agent ---- */
+  #p-agent h3 { margin: 18px 0 8px; }
+  .agent-now { margin: 0; color: #cfe9f7; font-size: 13px; } .agent-sum { margin: 8px 0 0; color: #a9cde3; font-size: 13px; white-space: pre-wrap; }
+  .agent-link { display: inline-block; margin-top: 6px; color: var(--cyan); font: 11px var(--mono); }
+  #p-agent pre.prompt { margin: 10px 0 0; padding: 10px; max-height: 300px; overflow: auto; white-space: pre-wrap; font: 11px/1.5 var(--mono); color: #b9dcee; background: rgba(2, 8, 16, .6); border: 1px solid var(--line); }
+  #p-agent details { margin-top: 18px; } #p-agent > .btn { margin-top: 16px; }
+  .layer-switch { display: flex; align-items: center; gap: 9px; width: 100%; padding: 5px 6px; margin: 0 -6px; background: none; border: 0; cursor: pointer; text-align: left; font: 12px var(--mono); letter-spacing: .06em; color: var(--text); text-transform: uppercase; }
+  .layer-switch .hex { width: 10px; height: 10px; flex: none; background: #e6f7ff; clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0 50%); }
+  .layer-switch .name { flex: 1; } .layer-switch .count { color: var(--muted); font-size: 11px; }
+  .layer-switch.off { opacity: .35; }
   .btn {
     display: inline-flex; align-items: center; gap: 7px;
     padding: 8px 14px; background: rgba(79, 216, 255, .06); border: 1px solid var(--line);
@@ -225,7 +296,7 @@
 
   /* ---- exploration ---- */
   #tour {
-    position: fixed; left: 50%; bottom: 84px; z-index: 11; transform: translateX(-50%);
+    position: fixed; left: 50%; bottom: 120px; z-index: 11; transform: translateX(-50%);
     width: min(620px, calc(100vw - 32px)); padding: 16px 20px 14px;
   }
   #tour[hidden] { display: none; }
@@ -275,15 +346,17 @@
     #layers-toggle { display: block; }
     #layers .layers-body { display: none; margin-top: 10px; }
     #layers.open .layers-body { display: block; }
-    #hint { display: none; }
-    #dock { bottom: 14px; gap: 6px; padding: 6px; }
+    #dock { top: auto; bottom: 118px; right: 12px; gap: 6px; padding: 6px; }
+    #ask { bottom: 10px; }
+    #answer { bottom: 92px; max-height: 46vh; }
+    #ask-settings.open { grid-template-columns: 1fr 1fr; }
     .btn { padding: 8px 10px; letter-spacing: .1em; }
     #panel {
       top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: 62vh;
       transform: translateY(100%);
     }
     #panel.open { transform: none; }
-    #tour { bottom: 70px; }
+    #tour { bottom: 96px; }
     .corner { display: none; }
   }
 </style>
@@ -316,6 +389,7 @@
   <div class="layers-body">
     <div class="layer-group"><div class="label">Axes</div><div id="axis-list"></div></div>
     <div class="layer-group"><div class="label">Types</div><div id="type-list" class="chips"></div></div>
+    <div class="layer-group"><div class="label">Équipe</div><button id="sw-agents" class="layer-switch"><span class="hex"></span><span class="name">Agents</span><span class="count">—</span></button></div>
   </div>
 </aside>
 
@@ -345,14 +419,44 @@
   <div id="p-kind" class="label"></div>
   <h2 id="p-name"></h2>
   <p id="p-desc"></p>
+  <div id="p-agent" style="display:none"></div>
   <div id="p-facts-wrap"><h3 class="label">Faits</h3><ul id="p-facts"></ul></div>
   <div id="p-nb-wrap"><h3 class="label">Connexions</h3><div id="p-nb"></div></div>
   <div id="p-meta"></div>
 </aside>
 
+<section id="answer" class="hud" aria-live="polite">
+  <div class="ans-head"><div id="ans-q"></div><button id="ans-close" class="ans-x" title="Masquer">×</button></div>
+  <div id="ans-status" class="ans-status"></div>
+  <div id="ans-body">
+    <div id="ans-text"></div>
+    <div id="ans-team-wrap" class="ans-sec"><div class="label">Équipe consultée</div><div id="ans-team" class="chips-row"></div></div>
+    <div id="ans-lit-wrap" class="ans-sec"><div class="label">Fiches du cerveau lues</div><div id="ans-lit" class="chips-row"></div></div>
+  </div>
+  <div class="ans-foot"><span id="ans-meta"></span><button id="ans-new" class="btn" style="display:none">Nouvelle conversation</button></div>
+</section>
+
+<section id="ask" class="hud">
+  <div class="ask-row">
+    <button id="ask-mic" class="ask-btn" title="Dicter (le navigateur peut envoyer l'audio à son service de reconnaissance)"><svg viewBox="0 0 10 10"><rect x="3.5" y="1" width="3" height="5.2" rx="1.5"/><path d="M2 4.8a3 3 0 0 0 6 0M5 7.8V9.3" fill="none" stroke="currentColor" stroke-width=".9"/></svg></button>
+    <textarea id="ask-text" rows="1" placeholder="Pose ta question à Claude et à ton équipe…" spellcheck="true"></textarea>
+    <button id="ask-send" class="ask-btn" title="Envoyer (Entrée)"></button>
+  </div>
+  <div class="ask-foot"><button id="ask-meter" class="ask-meter" title="Réglages de consommation"></button><span id="ask-note"></span></div>
+  <div id="ask-settings">
+    <label>Modèle<select id="cfg-model"><option value="sonnet">sonnet</option><option value="haiku">haiku</option><option value="opus">opus</option></select></label>
+    <label>Plafond / question ($)<input id="cfg-run" type="number" min="0.1" max="20" step="0.1"></label>
+    <label>Plafond / jour ($)<input id="cfg-day" type="number" min="0.5" max="200" step="0.5"></label>
+    <label class="chk"><input id="cfg-pub" type="checkbox">Publier après</label>
+    <button id="cfg-save" class="btn primary">Enregistrer</button>
+    <div id="cfg-err"></div>
+  </div>
+</section>
+
 <div id="tip"></div>
 <div id="boot"><div><div class="label">Initialisation du cerveau</div><div class="bar"><i></i></div></div></div>
 
+<script src="jarvis.js"></script>
 <script>
 'use strict';
 
@@ -550,11 +654,33 @@ function flyToNode(n, dur, cinematic) {
  * barre du haut, le panneau des calques et le dock. Le nuage est un disque, pas
  * une sphere : une sphere englobante laisserait les deux tiers de l'ecran vides.
  */
+/** Quand le panneau de reponse est ouvert, on vise le milieu de la zone libre au-dessus de lui. */
+/*
+ * Zone libre de l'ecran quand le panneau de reponse est ouvert : a droite sur grand
+ * ecran, en bas sinon (on prend sa hauteur maximale, pas celle du moment : il grandit
+ * pendant que la reponse s'ecrit). La camera vise le centre de cette zone.
+ */
+function answerOpen() { const a = document.getElementById('answer'); return !!(a && a.classList.contains('open')); }
+function freeZone() {
+  const narrow = W < 860;
+  const z = { l: narrow ? 18 : 260, r: W - (narrow ? 18 : 260), t: narrow ? 150 : 96, b: H - (narrow ? 120 : 112) };
+  if (answerOpen()) {
+    if (W >= 1100) { z.l = 280; z.r = W - 470; }
+    else z.b = H - ((narrow ? H * .46 + 92 : Math.min(H * .44, 520) + 104) + 12);
+  }
+  return z;
+}
+function answerOffset() {
+  if (!answerOpen()) return { ox: 0, oy: 0 };
+  const z = freeZone();
+  return { ox: (z.l + z.r) / 2 - W / 2, oy: (z.t + z.b) / 2 - H / 2 };
+}
+
 function fitDistance(yaw, pitch) {
   const save = { tx: cam.tx, ty: cam.ty, tz: cam.tz, dist: cam.dist, yaw: cam.yaw, pitch: cam.pitch, ox: cam.ox, oy: cam.oy };
-  const narrow = W < 860;
-  const side = narrow ? 18 : 260, top = narrow ? 150 : 96, bottom = narrow ? 92 : 104;
-  cam.tx = cam.ty = cam.tz = 0; cam.yaw = yaw; cam.pitch = pitch; cam.ox = cam.oy = 0;
+  const z = freeZone(), off = answerOffset();
+  const agentPts = window.AG ? AG.points() : [];
+  cam.tx = cam.ty = cam.tz = 0; cam.yaw = yaw; cam.pitch = pitch; cam.ox = off.ox; cam.oy = off.oy;
   let lo = 150, hi = 9000;
   for (let i = 0; i < 22; i++) {
     cam.dist = (lo + hi) / 2;
@@ -564,7 +690,11 @@ function fitDistance(yaw, pitch) {
       if (!visible(n)) continue;
       const p = project(n.x, n.y, n.z);
       const m = p ? n.r * p.k * 2.5 : 0;
-      if (!p || p.x - m < side || p.x + m > W - side || p.y - m < top || p.y + m > H - bottom) { fits = false; break; }
+      if (!p || p.x - m < z.l || p.x + m > z.r || p.y - m < z.t || p.y + m > z.b) { fits = false; break; }
+    }
+    if (fits) for (const q of agentPts) {
+      const p = project(q.x, q.y, q.z);
+      if (!p || p.x - 20 < z.l || p.x + 20 > z.r || p.y - 20 < z.t || p.y + 30 > z.b) { fits = false; break; }
     }
     if (fits) hi = cam.dist; else lo = cam.dist;
   }
@@ -796,8 +926,9 @@ function frame(now) {
     }
     if (S.rotate && !tween && !tour.on && !drag && now - S.lastInput > 5000) cam.yaw += .035 * dt;
     const narrow = W < 860, open = panel.classList.contains('open');
-    const ox = open && !narrow ? -200 : 0;
-    const oy = tour.on ? -H * (narrow ? .22 : .17) : open && narrow ? -H * .24 : 0;
+    const ao = answerOffset();
+    const ox = open && !narrow ? -200 : ao.ox;
+    const oy = tour.on ? -H * (narrow ? .22 : .17) : open && narrow ? -H * .24 : ao.oy;
     const ko = 1 - Math.exp(-dt * 5);
     cam.ox = lerp(cam.ox, ox, ko); cam.oy = lerp(cam.oy, oy, ko);
     if (SIM.alpha > SIM.alphaMin) tick();
@@ -919,8 +1050,11 @@ function draw(now) {
     }
   }
   ctx.globalAlpha = 1;
+  if (window.AG) AG.draw(now, t);
+  ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = 'source-over';
   drawLabels(order, fid, near, dim);
+  if (window.AG) AG.labels(now);
 }
 
 function hudRings(n, t, a) {
@@ -1098,6 +1232,17 @@ canvas.addEventListener('pointermove', e => {
   const p = ptrs.get(e.pointerId);
   if (!p) {
     if (e.pointerType !== 'mouse' || !S.ready) return;
+    const ah = window.AG && AG.pick(e.clientX, e.clientY);
+    if (window.AG) AG.hover(ah ? ah.id : null);
+    if (ah) {
+      const tt = AG.tipText(ah.id);
+      S.hovered = null; canvas.classList.add('pointer');
+      tip.style.setProperty('--c', tt.color); tip.innerHTML = '';
+      const b = document.createElement('b'); b.textContent = tt.title;
+      tip.append(b, document.createTextNode('  AGENT · ' + tt.line));
+      tip.style.left = e.clientX + 'px'; tip.style.top = e.clientY + 'px'; tip.classList.add('show');
+      return;
+    }
     const hit = pick(e.clientX, e.clientY);
     const id = hit ? hit.id : null;
     if (id !== S.hovered) { S.hovered = id; canvas.classList.toggle('pointer', !!hit); }
@@ -1157,8 +1302,10 @@ function endPointer(e) {
   if (drag && drag.node && drag.node.fx != null) { drag.node.fx = drag.node.fy = drag.node.fz = null; }
   const tap = drag && !drag.moved && drag.mode !== 'pinch' && performance.now() - p.t0 < 600;
   if (tap && e.type === 'pointerup') {
+    const ah = window.AG && AG.pick(e.clientX, e.clientY);
     const hit = pick(e.clientX, e.clientY);
-    if (hit) focusNode(hit.id, true);
+    if (ah && (!hit || ah.z <= hit.sz)) AG.select(ah.id, true);
+    else if (hit) focusNode(hit.id, true);
     else if (!tour.on) closePanel();
   }
   if (ptrs.size === 1) {
@@ -1271,6 +1418,7 @@ function openPanel(id, keepScroll) {
   const n = S.byId.get(id);
   if (!n) return;
   const scroll = keepScroll ? panel.scrollTop : 0;
+  if (window.AG) AG.clearSelection();
   S.selected = id;
   panel.style.setProperty('--accent', n.color);
 
@@ -1324,6 +1472,7 @@ function openPanel(id, keepScroll) {
 }
 
 function closePanel() {
+  if (window.AG) AG.clearSelection();
   panel.classList.remove('open');
   S.selected = null;
   cam.follow = null;
@@ -1529,6 +1678,8 @@ function connect() {
     apply(g);
     live = true; lastUpdate = Date.now(); setStatus();
   });
+  es.addEventListener('agents', e => { try { if (window.AG) AG.onAgents(JSON.parse(e.data)); } catch (_) {} });
+  es.addEventListener('run', e => { try { if (window.AG) AG.onRun(JSON.parse(e.data)); } catch (_) {} });
   es.addEventListener('error', () => { live = false; led.className = 'off'; statusText.textContent = 'reconnexion…'; });
 }
 
@@ -1544,6 +1695,7 @@ async function boot() {
     if (!r.ok) throw new Error('pas de serveur');
     apply(await r.json());
     live = true; lastUpdate = Date.now(); setStatus();
+    if (window.AG) await AG.boot(true);
     connect();
     return;
   } catch (_) {
@@ -1560,6 +1712,7 @@ async function boot() {
     const g = await r.json();
     apply(g);
     snapshotAt = g.generated; setStatus();
+    if (window.AG) AG.boot(false);
   } catch (_) {
     led.className = 'off'; statusText.textContent = 'données introuvables';
     document.getElementById('boot').classList.add('done');
