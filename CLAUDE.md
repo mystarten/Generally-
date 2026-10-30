@@ -69,6 +69,9 @@ dans `.claude/agents/` (fichiers générés, ne pas les modifier).
 `engine.js` lance l'orchestrateur avec `claude -p` quand Mats pose une question dans la page locale.
 Ces lancements portent `CERVEAU_ENGINE=1` (le hook Stop se tait) et une consigne « MODE MOTEUR » :
 le moteur publie lui-même à la fin, ne lance donc ni `publish` ni `git` dans ce mode.
+Le serveur local fait aussi tourner `autopilot.js` : synchro (`git pull --ff-only` toutes les 5 min) et bilan
+du dimanche (`bilan-hebdo`, plafonné à 0,60 $). La case « séance faite » du tableau de bord écrit
+« <date> : séance faite (S<n>) » dans la fiche de la séance : c'est Mats qui coche, c'est donc son fait.
 
 ## Commandes
 

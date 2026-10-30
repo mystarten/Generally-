@@ -130,10 +130,59 @@
   #status-text { color: #a9cde3; }
 
   /* ---- calques ---- */
-  #layers { position: fixed; top: 86px; left: 26px; z-index: 9; width: 230px; padding: 14px 14px 12px; }
+  #layers { position: fixed; top: 86px; left: 26px; z-index: 12; width: 230px; padding: 9px 14px; }
   #layers-toggle {
-    display: none; width: 100%; background: none; border: 0; padding: 0; cursor: pointer; text-align: left;
+    display: block; width: 100%; background: none; border: 0; padding: 0; cursor: pointer; text-align: left;
   }
+  #layers .layers-body { display: none; margin-top: 12px; }
+  #layers.open .layers-body { display: block; }
+  #layers.open { padding-bottom: 12px; }
+
+  /* ---- aujourd'hui ---- */
+  #today {
+    position: fixed; top: 132px; left: 26px; bottom: 112px; z-index: 9; width: 300px;
+    display: none; flex-direction: column; padding: 14px 16px 10px;
+  }
+  #today.open { display: flex; }
+  #today::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #3dffa0; box-shadow: 0 0 14px #3dffa0; }
+  .td-head { display: flex; align-items: baseline; gap: 10px; }
+  .td-head .label { color: #3dffa0; }
+  #today-date { flex: 1; font: 600 14px var(--sans); color: #f2fbff; text-transform: capitalize; }
+  #today-close { display: none; }
+  #today-body { margin-top: 8px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+  .td-sec { margin-top: 14px; }
+  .td-sec:first-child { margin-top: 4px; }
+  .td-sec h3 { display: flex; margin: 0 0 6px; }
+  .td-count { margin-left: auto; color: var(--muted); }
+  .td-row { display: flex; gap: 9px; align-items: flex-start; padding: 5px 0; border-bottom: 1px solid rgba(79, 216, 255, .07); }
+  .td-row:last-child { border-bottom: 0; }
+  .td-row.done .td-txt { opacity: .5; }
+  .td-check {
+    flex: none; width: 20px; height: 20px; margin-top: 1px; padding: 0; cursor: pointer;
+    background: rgba(2, 10, 20, .6); border: 1px solid var(--line-strong); color: #3dffa0; font: 700 12px var(--mono);
+  }
+  .td-check:hover:not(:disabled) { background: rgba(61, 255, 160, .14); }
+  .td-check:disabled { cursor: default; }
+  .td-row.done .td-check { border-color: #3dffa0; }
+  .td-txt { flex: 1; min-width: 0; }
+  .td-link { display: block; padding: 0; background: none; border: 0; cursor: pointer; text-align: left; color: #dff3ff; font: 13px/1.35 var(--sans); text-decoration: none; }
+  .td-link.strong { font-weight: 600; }
+  .td-link:hover { color: var(--cyan); }
+  .td-sub { margin: 1px 0 0; color: #8fb4c9; font-size: 12px; line-height: 1.4; }
+  .td-cd { flex: none; min-width: 46px; padding: 1px 4px; text-align: center; font: 600 10.5px var(--mono); color: var(--cyan); border: 1px solid var(--line); }
+  .td-cd.soon { color: #ffc04a; border-color: rgba(255, 192, 74, .5); }
+  .td-cd.past { color: var(--muted); }
+  .td-cd.q { color: #ff8aa0; border-color: rgba(255, 77, 106, .5); min-width: 20px; }
+  .td-note { margin: 8px 0 0; color: #ff8aa0; font: 11px var(--mono); }
+  .td-note:empty { display: none; }
+
+  /* ---- pistes gratuites sous la barre ---- */
+  #ask-hints { display: none; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  #ask-hints.open { display: block; }
+  #ask-hints .label { margin-bottom: 4px; color: #3dffa0; }
+  .hint-row { display: block; width: 100%; padding: 4px 6px; background: none; border: 0; cursor: pointer; text-align: left; color: #b9dcee; font: 12.5px/1.4 var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hint-row b { color: var(--c); font-weight: 600; margin-right: 4px; }
+  .hint-row:hover { background: rgba(79, 216, 255, .08); }
   .layer-group + .layer-group { margin-top: 14px; }
   .layer-group .label { margin-bottom: 8px; }
   .axis-row {
@@ -187,6 +236,7 @@
   #ask-note { margin-left: auto; font: 11px var(--mono); color: #ffc04a; text-align: right; }
   #ask-settings { display: none; margin-top: 8px; padding: 10px; border: 1px solid var(--line); background: rgba(2, 10, 20, .7); }
   #ask-settings.open { display: grid; grid-template-columns: repeat(4, auto) 1fr; gap: 10px; align-items: end; }
+  #ask-settings .auto { grid-column: 1 / -1; display: flex; gap: 18px; flex-wrap: wrap; }
   #ask-settings label { display: flex; flex-direction: column; gap: 4px; font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
   #ask-settings select, #ask-settings input[type=number] { width: 96px; padding: 6px; background: #06182a; color: var(--text); border: 1px solid var(--line); border-radius: 0; font: 13px var(--mono); }
   #ask-settings .chk { flex-direction: row; align-items: center; gap: 6px; }
@@ -342,10 +392,9 @@
     .brand-title { font-size: 13px; }
     .search { order: 3; width: 100%; margin: 0; }
     .nav { margin-left: 0; }
-    #layers { top: 128px; left: 16px; width: auto; max-width: calc(100vw - 32px); padding: 9px 12px; }
-    #layers-toggle { display: block; }
-    #layers .layers-body { display: none; margin-top: 10px; }
-    #layers.open .layers-body { display: block; }
+    #layers { top: 164px; left: 16px; width: auto; max-width: calc(100vw - 32px); padding: 9px 12px; }
+    #today { top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: 66vh; z-index: 21; }
+    #today-close { display: block; }
     #dock { top: auto; bottom: 118px; right: 12px; gap: 6px; padding: 6px; }
     #ask { bottom: 10px; }
     #answer { bottom: 116px; max-height: 44vh; }
@@ -393,7 +442,13 @@
   </div>
 </aside>
 
+<section id="today" class="hud" aria-label="Aujourd'hui">
+  <div class="td-head"><span class="label">Aujourd'hui</span><span id="today-date"></span><button id="today-close" class="ans-x" title="Fermer">×</button></div>
+  <div id="today-body"></div>
+</section>
+
 <nav id="dock" class="hud">
+  <button id="btn-today" class="btn" title="Le tableau de bord du jour">Aujourd'hui</button>
   <button id="btn-explore" class="btn primary"><svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4z"/></svg><span>Explorer</span></button>
   <button id="btn-center" class="btn">Recentrer</button>
   <button id="btn-rotate" class="btn on">Rotation</button>
@@ -437,6 +492,7 @@
 </section>
 
 <section id="ask" class="hud">
+  <div id="ask-hints"></div>
   <div class="ask-row">
     <button id="ask-mic" class="ask-btn" title="Dicter (le navigateur peut envoyer l'audio à son service de reconnaissance)"><svg viewBox="0 0 10 10"><rect x="3.5" y="1" width="3" height="5.2" rx="1.5"/><path d="M2 4.8a3 3 0 0 0 6 0M5 7.8V9.3" fill="none" stroke="currentColor" stroke-width=".9"/></svg></button>
     <textarea id="ask-text" rows="1" placeholder="Pose ta question à Claude et à ton équipe…" spellcheck="true"></textarea>
@@ -448,6 +504,10 @@
     <label>Plafond / question ($)<input id="cfg-run" type="number" min="0.1" max="20" step="0.1"></label>
     <label>Plafond / jour ($)<input id="cfg-day" type="number" min="0.5" max="200" step="0.5"></label>
     <label class="chk"><input id="cfg-pub" type="checkbox">Publier après</label>
+    <div class="auto">
+      <label class="chk" title="Récupère toutes les 5 min ce que tu as noté ailleurs (app Claude, autre session). Gratuit."><input id="cfg-pull" type="checkbox">Synchro auto</label>
+      <label class="chk" title="Le dimanche à 19 h, bilan de la semaine par bilan-hebdo, plafonné à 0,60 $."><input id="cfg-weekly" type="checkbox">Bilan du dimanche</label>
+    </div>
     <button id="cfg-save" class="btn primary">Enregistrer</button>
     <div id="cfg-err"></div>
   </div>
@@ -456,6 +516,7 @@
 <div id="tip"></div>
 <div id="boot"><div><div class="label">Initialisation du cerveau</div><div class="bar"><i></i></div></div></div>
 
+<script src="today.js"></script>
 <script src="jarvis.js"></script>
 <script>
 'use strict';
@@ -660,12 +721,21 @@ function flyToNode(n, dur, cinematic) {
  * ecran, en bas sinon (on prend sa hauteur maximale, pas celle du moment : il grandit
  * pendant que la reponse s'ecrit). La camera vise le centre de cette zone.
  */
+function todayIsOpen() { const t = document.getElementById('today'); return !!(t && t.classList.contains('open')); }
+/** Ouvre ou ferme le tableau de bord ; le choix est garde sur l'appareil. Ferme par defaut sur telephone. */
+function setToday(open, remember = true) {
+  document.getElementById('today').classList.toggle('open', open);
+  document.getElementById('btn-today').classList.toggle('on', open);
+  if (remember) try { localStorage.setItem('cerveau.today', open ? '1' : '0'); } catch (_) {}
+  if (open && window.TODAY) TODAY.render();
+}
 function answerOpen() { const a = document.getElementById('answer'); return !!(a && a.classList.contains('open')); }
 function freeZone() {
   const narrow = W < 860;
-  const z = { l: narrow ? 18 : 260, r: W - (narrow ? 18 : 260), t: narrow ? 150 : 96, b: H - (narrow ? 120 : 112) };
+  const td = !narrow && todayIsOpen();
+  const z = { l: narrow ? 18 : td ? 346 : 260, r: W - (narrow ? 18 : 260), t: narrow ? 204 : 96, b: H - (narrow ? 120 : 112) };
   if (answerOpen()) {
-    if (W >= 1100) { z.l = 280; z.r = W - 470; }
+    if (W >= 1100) { z.l = td ? 346 : 280; z.r = W - 470; }
     else z.b = H - ((narrow ? H * .44 + 116 : Math.min(H * .44, 520) + 104) + 12);
   }
   return z;
@@ -897,6 +967,7 @@ function apply(graph) {
 
   if (S.selected && !S.byId.has(S.selected)) closePanel();
   else if (S.selected) openPanel(S.selected, true);
+  if (window.TODAY) TODAY.render();
   if (S.query) runSearch(false);
   buildLayers();
   const axes = S.hubs.length;
@@ -1553,6 +1624,12 @@ function buildLayers() {
   }
 }
 document.getElementById('layers-toggle').onclick = () => document.getElementById('layers').classList.toggle('open');
+{
+  let pref = null; try { pref = localStorage.getItem('cerveau.today'); } catch (_) {}
+  setToday(pref ? pref === '1' : window.innerWidth >= 860, false);
+  document.getElementById('btn-today').onclick = () => setToday(!todayIsOpen());
+  document.getElementById('today-close').onclick = () => setToday(false);
+}
 
 // ============================================================= exploration
 

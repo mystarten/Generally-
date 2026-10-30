@@ -2,3 +2,4 @@
 # ecrivent en meme temps, git garde les lignes des deux cotes au lieu de
 # signaler un conflit. (cerveau/data.json, lui, est regenere par brain.js.)
 brain/**/*.md merge=union
+*.bat text eol=crlf

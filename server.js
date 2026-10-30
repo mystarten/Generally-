@@ -12,7 +12,9 @@ const fs = require('fs');
 const path = require('path');
 const brain = require('./brain.js');
 const agents = require('./agents.js');
+const { spawn } = require('child_process');
 const { Engine, writeConfig } = require('./engine.js');
+const { Autopilot } = require('./autopilot.js');
 
 const PORT = Number(process.env.PORT || 3000);
 // Par defaut, seule ta machine peut joindre ce serveur : il peut lancer Claude Code et lit tout le cerveau.
@@ -261,6 +263,47 @@ function readJson(req, limit = 64 * 1024) {
 
 const engine = new Engine();
 engine.on('event', e => broadcast('run', e));
+const autopilot = new Autopilot(engine, log);
+
+const MOIS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
+function frenchDate(d) { return (d.getDate() === 1 ? '1er' : d.getDate()) + ' ' + MOIS[d.getMonth()] + ' ' + d.getFullYear(); }
+
+/** Publication du cerveau dans un processus a part (un push lent ne bloque pas le serveur). */
+function publishBrainAsync(why) {
+  if (process.env.ENGINE_NO_PUBLISH === '1' || process.env.BRAIN_NO_PUSH === '1') return;
+  const p = spawn(process.execPath, [path.join(__dirname, 'agents.js'), 'publish'], { cwd: __dirname, stdio: ['ignore', 'pipe', 'pipe'] });
+  let out = '';
+  p.stdout.on('data', d => { out += d; });
+  p.stderr.on('data', d => { out += d; });
+  p.on('close', code => log(why + ' : ' + (code === 0 ? 'publie' : 'publication en echec (' + String(out).trim().split('\n').pop() + ')')));
+  p.on('error', () => {});
+}
+
+/** La case « seance faite » du tableau de bord : un fait date, ecrit au nom de Mats (c'est lui qui coche). */
+function handleBrainWrite(req, res, p) {
+  const refusal = writeRefusal(req);
+  if (refusal) return sendJson(res, 403, { error: refusal });
+  readJson(req).then(body => {
+    try {
+      if (p !== '/api/brain/session-done') return sendJson(res, 404, { error: 'route inconnue' });
+      const node = nodes.find(n => n.id === String(body.session || ''));
+      if (!node || !/^(T\d|M\d|P\d) ·/.test(node.name)) return sendJson(res, 400, { error: 'seance inconnue' });
+      const week = Number(body.week);
+      if (!Number.isInteger(week) || week < 1 || week > 20) return sendJson(res, 400, { error: 'semaine invalide' });
+      const tag = 'seance faite (s' + week + ')';
+      const plain = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      if ((node.facts || []).some(f => plain(f.text).includes(tag))) return sendJson(res, 200, { ok: true, already: true });
+      const fact = frenchDate(new Date()) + ' : séance faite (S' + week + ')';
+      brain.addFact({ type: node.type, name: node.name, fact });
+      log('seance cochee : ' + node.name + ' S' + week);
+      rebuild('seance cochee');
+      publishBrainAsync('seance cochee');
+      return sendJson(res, 200, { ok: true, fact });
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message });
+    }
+  }).catch(err => sendJson(res, 400, { error: err.message }));
+}
 
 function handleEngineWrite(req, res, p) {
   const refusal = writeRefusal(req);
@@ -319,6 +362,7 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.method === 'POST' && p.startsWith('/api/agents/')) return handleAgentWrite(req, res, p);
+  if (req.method === 'POST' && p.startsWith('/api/brain/')) return handleBrainWrite(req, res, p);
   if (req.method === 'POST' && (p === '/api/ask' || p === '/api/run/cancel' || p === '/api/engine/config')) return handleEngineWrite(req, res, p);
 
   if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -332,7 +376,7 @@ const server = http.createServer((req, res) => {
   if (p === '/api/graph') return sendJson(res, 200, graph);
 
   if (p === '/api/agents') return sendJson(res, 200, agentsState);
-  if (p === '/api/engine') return sendJson(res, 200, engine.status());
+  if (p === '/api/engine') return sendJson(res, 200, { ...engine.status(), autopilot: autopilot.info() });
   if (p === '/api/runs') return sendJson(res, 200, { runs: engine.history(30) });
 
   if (p === '/api/search') {
@@ -379,7 +423,19 @@ rebuild('demarrage');
 rebuildAgents('demarrage');
 ensureWatchers();
 
+server.on('error', err => {
+  if (err.code === 'EADDRINUSE') {
+    // demarrage automatique + double-clic : le cerveau tourne deja, rien a faire
+    log('deja lance sur le port ' + PORT + ' : ouvre http://localhost:' + PORT + '/');
+    process.exit(0);
+  }
+  throw err;
+});
+
 server.listen(PORT, HOST, () => {
+  if (process.env.AUTOPILOT !== '0') autopilot.start();
+  // numero du processus, pour que « retirer-demarrage-auto » arrete ce serveur et lui seul
+  try { fs.mkdirSync(path.join(__dirname, '.engine'), { recursive: true }); fs.writeFileSync(path.join(__dirname, '.engine', 'server.pid'), String(process.pid)); } catch (_) {}
   log('cerveau sur http://localhost:' + PORT + (HOST === '127.0.0.1' ? ' (ta machine uniquement)' : ' (ecoute ' + HOST + ')'));
   log('surveille brain/ et agents/ (' + watchers.size + ' dossier(s))');
 });
@@ -388,6 +444,8 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
   process.on(sig, () => {
     log('arret');
     engine.shutdown();
+    autopilot.stop();
+    try { if (fs.readFileSync(path.join(__dirname, '.engine', 'server.pid'), 'utf8') === String(process.pid)) fs.unlinkSync(path.join(__dirname, '.engine', 'server.pid')); } catch (_) {}
     for (const [, w] of watchers) { try { w.close(); } catch (_) {} }
     for (const res of clients) { try { res.end(); } catch (_) {} }
     server.close(() => process.exit(0));

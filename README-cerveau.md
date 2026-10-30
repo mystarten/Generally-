@@ -22,6 +22,36 @@ node server.js
 Puis http://localhost:3000. La même page sert les deux usages : si un serveur répond, elle passe en direct
 par Server-Sent Events ; sinon elle affiche le dernier instantané publié.
 
+## Aujourd'hui (le tableau de bord, gratuit)
+
+Le panneau de gauche (bouton « Aujourd'hui » sur téléphone) est calculé à partir du cerveau, **sans aucun token** :
+
+- **Ta semaine** : les séances de la semaine en cours de la trame. En local, une case à cocher écrit
+  « 30 octobre 2026 : séance faite (S3) » dans la fiche de la séance et publie ;
+- **Échéances** : les dates trouvées dans les faits, avec compte à rebours (J-2, J-16…) ;
+- **Pour toi** : les questions que les agents te posent, et les points « À vérifier » ;
+- **Récemment** : les faits datés des trois dernières semaines ;
+- **Ton équipe** : les tâches en cours et tes dernières questions, **relisibles sans les reposer**.
+
+Pendant que tu tapes une question, la barre montre ce que le cerveau sait déjà sur le sujet (gratuit) :
+souvent, la réponse est là et tu n'as pas besoin d'envoyer.
+
+## Ce qui tourne tout seul
+
+Tant que le serveur local tourne :
+
+- **Synchro** (gratuite) : toutes les 5 minutes, il récupère ce qui a été noté ailleurs (l'app Claude, une
+  autre session) par un `git pull --ff-only`. Jamais pendant une question, jamais s'il reste des
+  changements locaux non publiés : rien n'est écrasé.
+- **Bilan du dimanche** (au plus 0,60 $ par semaine) : le dimanche à 19 h, `bilan-hebdo` fait le point de la
+  semaine. Ordinateur éteint, il est rattrapé à la prochaine occasion de la semaine. Reporté si ton quota
+  5 h dépasse 80 %. Les deux se coupent dans les réglages (clic sur le compteur sous la barre).
+
+**Démarrage automatique sous Windows** : double-clic une fois sur `installer-demarrage-auto.bat`. Le cerveau
+démarre alors, caché, à chaque ouverture de session ; ouvre http://localhost:3000. Journal :
+`.engine\server.log`. Pour l'enlever : `retirer-demarrage-auto.bat`. Lancer le cerveau alors qu'il tourne
+déjà ne fait rien de mal (le second s'arrête aussitôt).
+
 ## Poser une question (la barre en bas)
 
 En local (`demarrer-cerveau.command` ou `.bat`, ou `node server.js`), la barre en bas de la page envoie ta
@@ -168,7 +198,9 @@ L'axe d'un nœud vient de `axis:`, sinon du hub le plus proche par les liens.
 | `GET /api/search?q=...` | nœuds correspondants et extraits |
 | `GET /api/node/:nom` | un nœud, son axe, ses faits et ses voisins |
 | `GET /api/agents` | l'équipe d'agents, les tâches et les messages |
-| `GET /api/engine` | moteur : Claude Code détecté, réglages, consommation du jour, quota, dernière question |
+| `GET /api/engine` | moteur : Claude Code détecté, réglages, consommation du jour, quota, dernière question, état de la synchro et du bilan |
+| `GET /api/runs` | les 30 dernières questions, avec leur réponse (relecture gratuite) |
+| `POST /api/brain/session-done` | coche une séance de la trame (`{session, week}`) : écrit le fait daté et publie (machine locale uniquement) |
 | `POST /api/ask` | pose une question (`{question, conversation}`), une à la fois (machine locale uniquement) |
 | `POST /api/run/cancel` · `/api/engine/config` | annule la question, change les réglages (machine locale uniquement) |
 | `POST /api/agents/task` | crée une tâche de la part de Mats (machine locale uniquement) |

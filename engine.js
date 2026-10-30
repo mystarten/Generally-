@@ -28,9 +28,26 @@ const ROOT = brain.ROOT;
 const ENGINE_DIR = process.env.ENGINE_DIR ? path.resolve(process.env.ENGINE_DIR) : path.join(ROOT, '.engine');
 const CONFIG_FILE = path.join(ENGINE_DIR, 'config.json');
 const LEDGER_FILE = path.join(ENGINE_DIR, 'runs.ndjson');
-const claudeBin = () => process.env.CLAUDE_BIN || 'claude';
+/*
+ * Comment lancer Claude Code. Sous Windows, Node ne sait pas lancer un « .cmd »
+ * sans passer par cmd.exe (qui abimerait la longue consigne passee en argument) :
+ *  - installeur officiel : claude.exe, lance directement ;
+ *  - installation npm : on lance son script avec Node, sans le .cmd.
+ */
+function claudeCommand() {
+  if (process.env.CLAUDE_BIN) return { cmd: process.env.CLAUDE_BIN, pre: [] };
+  if (process.platform === 'win32') {
+    const home = process.env.USERPROFILE || '', appdata = process.env.APPDATA || '';
+    const exe = [path.join(home, '.local', 'bin', 'claude.exe'), path.join(home, 'AppData', 'Local', 'Programs', 'claude', 'claude.exe')].find(f => home && fs.existsSync(f));
+    if (exe) return { cmd: exe, pre: [] };
+    const cli = ['cli.js', 'cli.mjs'].map(f => path.join(appdata, 'npm', 'node_modules', '@anthropic-ai', 'claude-code', f)).find(f => appdata && fs.existsSync(f));
+    if (cli) return { cmd: process.execPath, pre: [cli] };
+  }
+  return { cmd: 'claude', pre: [] };
+}
 
-const DEFAULTS = { model: 'sonnet', maxBudgetUsd: 1.5, dailyCapUsd: 15, maxTurns: 40, timeoutMin: 15, publishAfterRun: true };
+const DEFAULTS = { model: 'sonnet', maxBudgetUsd: 1.5, dailyCapUsd: 15, maxTurns: 40, timeoutMin: 15, publishAfterRun: true,
+  autoPull: true, weeklyReview: true, weeklyDay: 0, weeklyHour: 19 };
 const MAX_QUESTION = 4000;
 const ORCHESTRATOR = 'orchestrateur';
 
@@ -68,7 +85,11 @@ function sanitizeConfig(c) {
     dailyCapUsd: clampNum(c.dailyCapUsd, 0.5, 200, DEFAULTS.dailyCapUsd),
     maxTurns: Math.round(clampNum(c.maxTurns, 5, 100, DEFAULTS.maxTurns)),
     timeoutMin: clampNum(c.timeoutMin, 1, 60, DEFAULTS.timeoutMin),
-    publishAfterRun: typeof c.publishAfterRun === 'boolean' ? c.publishAfterRun : DEFAULTS.publishAfterRun
+    publishAfterRun: typeof c.publishAfterRun === 'boolean' ? c.publishAfterRun : DEFAULTS.publishAfterRun,
+    autoPull: typeof c.autoPull === 'boolean' ? c.autoPull : DEFAULTS.autoPull,
+    weeklyReview: typeof c.weeklyReview === 'boolean' ? c.weeklyReview : DEFAULTS.weeklyReview,
+    weeklyDay: Math.round(clampNum(c.weeklyDay, 0, 6, DEFAULTS.weeklyDay)),
+    weeklyHour: Math.round(clampNum(c.weeklyHour, 0, 23, DEFAULTS.weeklyHour))
   };
 }
 
@@ -258,7 +279,8 @@ class Engine extends EventEmitter {
     if (this._avail && Date.now() - this._avail.t < 60000) return this._avail;
     let ok = false, version = null, error = null;
     try {
-      const r = spawnSync(claudeBin(), ['--version'], { encoding: 'utf8', timeout: 8000 });
+      const cc = claudeCommand();
+      const r = spawnSync(cc.cmd, [...cc.pre, '--version'], { encoding: 'utf8', timeout: 8000 });
       if (r.error) error = r.error.code === 'ENOENT' ? 'Claude Code introuvable (commande « claude »). Installe-le puis connecte-toi.' : r.error.message;
       else if (r.status === 0) { ok = true; version = String(r.stdout).trim().split('\n')[0]; }
       else error = short(r.stderr || r.stdout, 200) || 'code ' + r.status;
@@ -301,7 +323,7 @@ class Engine extends EventEmitter {
     this.emit('event', e);
   }
 
-  start({ question, conversation } = {}) {
+  start({ question, conversation, routine = null, budgetCap = null } = {}) {
     const q = String(question || '').trim();
     const fail = (status, msg) => { const err = new Error(msg); err.status = status; throw err; };
     if (!q) fail(400, 'question vide');
@@ -313,7 +335,7 @@ class Engine extends EventEmitter {
     const cfg = readConfig();
     const used = today().costUsd;
     if (used >= cfg.dailyCapUsd) fail(429, 'plafond du jour atteint (' + used.toFixed(2) + ' $ sur ' + cfg.dailyCapUsd + ' $) : augmente-le dans les reglages, ou attends demain');
-    const budget = Math.max(0.05, Math.min(cfg.maxBudgetUsd, cfg.dailyCapUsd - used));
+    const budget = Math.max(0.05, Math.min(cfg.maxBudgetUsd, cfg.dailyCapUsd - used, budgetCap || Infinity));
 
     const args = ['-p', '--agent', ORCHESTRATOR, '--output-format', 'stream-json', '--verbose', '--include-partial-messages',
       '--max-turns', String(cfg.maxTurns), '--max-budget-usd', budget.toFixed(2), '--permission-mode', 'dontAsk',
@@ -325,12 +347,13 @@ class Engine extends EventEmitter {
     const env = { ...process.env, CERVEAU_ENGINE: '1', CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH: '3' };
     let child;
     try {
-      child = spawn(claudeBin(), args, { cwd: ROOT, env, stdio: ['pipe', 'pipe', 'pipe'], detached: process.platform !== 'win32' });
+      const cc = claudeCommand();
+      child = spawn(cc.cmd, [...cc.pre, ...args], { cwd: ROOT, env, stdio: ['pipe', 'pipe', 'pipe'], detached: process.platform !== 'win32' });
     } catch (err) { fail(503, 'lancement impossible : ' + err.message); }
 
-    const run = { id, child, args, budget, cfg, normalizer: new Normalizer(), buf: '', stderr: '', bad: 0, cancelled: false, timedOut: false, state: emptyState(), finalResult: null };
+    const run = { id, child, args, budget, cfg, routine, normalizer: new Normalizer(), buf: '', stderr: '', bad: 0, cancelled: false, timedOut: false, state: emptyState(), finalResult: null };
     this.run = run;
-    this._emit(run, { type: 'run_start', id, question: q, conversation: conversation || null, budget, t: Date.now() });
+    this._emit(run, { type: 'run_start', id, question: q, conversation: conversation || null, budget, routine, t: Date.now() });
 
     child.stdin.on('error', () => {});
     child.stdin.end(q + '\n');
@@ -399,7 +422,8 @@ class Engine extends EventEmitter {
       ensureDir();
       fs.appendFileSync(LEDGER_FILE, JSON.stringify({ id: run.id, t: new Date().toISOString(), day: localDay(), question: short(run.state.question, 300),
         cost: r ? r.cost : 0, turns: r ? r.turns : 0, tokens: r ? r.tokens : null, ms: Date.now() - run.state.startedAt,
-        agents: usedAgents, lit: [...new Set(run.state.lit.map(l => l.node))].length, ok, error, session: run.state.session, badLines: run.bad }) + '\n');
+        agents: usedAgents, lit: [...new Set(run.state.lit.map(l => l.node))], ok, error, session: run.state.session, badLines: run.bad,
+        routine: run.routine || null, answer: String(answer).slice(0, 8000) }) + '\n');
     } catch (_) {}
 
     this.last = run.state;
@@ -425,7 +449,7 @@ class Engine extends EventEmitter {
 }
 
 module.exports = {
-  Engine, Normalizer, applyEvent, emptyState, brainReadsInCommand,
+  Engine, Normalizer, applyEvent, claudeCommand, emptyState, brainReadsInCommand,
   readConfig, writeConfig, sanitizeConfig, today, readLedger,
   ALLOWED_TOOLS, ENGINE_PROMPT, ENGINE_DIR, DEFAULTS
 };

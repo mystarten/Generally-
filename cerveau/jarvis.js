@@ -353,6 +353,7 @@
     }
     A.seenMsg = A.seenMsg === null ? last : (last > A.seenMsg ? last : A.seenMsg);
     const layer = $('sw-agents'); if (layer) layer.querySelector('.count').textContent = A.list.length;
+    if (window.TODAY) TODAY.setAgents(state);
     if (A.selected && A.byId.has(A.selected)) select(A.selected, false);
   }
 
@@ -378,6 +379,7 @@
       if (e.ok && A.run.session) A.conversation = A.run.session;
       pulse('orchestrateur', 'mats', e.ok ? GREEN : RED, 1300);
       fetchEngine();
+      if (window.TODAY) setTimeout(() => TODAY.refreshRuns(), 300);
     }
     renderAnswer(e.type);
     refreshBar();
@@ -457,6 +459,7 @@
     }
     $('ans-lit-wrap').style.display = seen.size ? '' : 'none';
     const meta = [];
+    if (s.past) meta.push('relue, sans rien reconsommer');
     if (!s.running && s.cost) meta.push(s.cost.toFixed(2).replace('.', ',') + ' $');
     if (!s.running && s.endedAt && s.startedAt) meta.push(Math.round((s.endedAt - s.startedAt) / 1000) + ' s');
     if (team.length) meta.push(team.length + ' agent' + (team.length > 1 ? 's' : ''));
@@ -467,6 +470,71 @@
     const body = $('ans-body');
     if (s.running) body.scrollTop = body.scrollHeight;
     else if (kind === 'run_end') body.scrollTop = 0;
+  }
+
+  /** Relire une reponse passee (le journal du moteur) : rien n'est relance, zero token. */
+  function showPast(r) {
+    if (!r || (A.run && A.run.running)) return;
+    const agents = {};
+    for (const id of r.agents || []) agents[id] = { status: 'done', active: 0 };
+    const end = Date.parse(r.t) || Date.now();
+    A.run = { past: true, question: r.question, answer: r.answer || '(réponse non conservée : question posée avant la mise à jour)', ok: r.ok, error: r.error,
+      cost: r.cost, agents, lit: (Array.isArray(r.lit) ? r.lit : []).map(node => ({ node })), interim: [], running: false, startedAt: end - (r.ms || 0), endedAt: end };
+    A.lit.clear();
+    const t = now();
+    for (const l of A.run.lit) A.lit.set(l.node, { t, agent: 'orchestrateur' });
+    openAnswer(); renderAnswer('run_end');
+  }
+
+  // --------------------------------------------- pistes gratuites pendant la frappe
+
+  /*
+   * Pendant que Mats tape, on cherche dans le cerveau deja charge dans la page :
+   * si la reponse y est (un record, une date), il la voit sans rien depenser.
+   */
+  const STOP = new Set('les des une est pour que qui quoi dans sur avec mes mon mon ton tes son ses comment combien quel quelle quels quelles mais pas plus fait faire suis tu je il elle nous vous ils elles quand est-ce cette ces aux par'.split(' '));
+  const fold = x => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  function localHits(q) {
+    const words = fold(q).split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !STOP.has(w));
+    if (!words.length || typeof S === 'undefined' || !S.ready) return [];
+    const out = [];
+    for (const n of S.nodes) {
+      if (n.type === 'profile') continue;
+      const name = fold(n.name + ' ' + (n.aliases || []).join(' '));
+      let score = 0, best = null, bestScore = 0;
+      for (const w of words) if (name.includes(w)) score += 3;
+      for (const f of n.facts || []) {
+        if (f.tag === 'links') continue;
+        const ft = fold(f.text); let fs = 0;
+        for (const w of words) if (ft.includes(w)) fs++;
+        if (fs && fs >= bestScore) { bestScore = fs; best = f.text; } // a egalite, le plus recent (plus bas dans la fiche)
+      }
+      score += bestScore;
+      if (score >= Math.min(2, words.length)) out.push({ n, score, fact: best });
+    }
+    return out.sort((a, b) => b.score - a.score || (b.n.degree || 0) - (a.n.degree || 0)).slice(0, 3);
+  }
+  let hintTimer = null;
+  function hints() {
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(() => {
+      const box = $('ask-hints'); if (!box) return;
+      const q = $('ask-text').value.trim();
+      box.textContent = '';
+      const hits = q.length >= 4 ? localHits(q) : [];
+      box.classList.toggle('open', hits.length > 0);
+      if (!hits.length) return;
+      box.append(Object.assign(document.createElement('div'), { className: 'label', textContent: 'Déjà dans ton cerveau (gratuit)' }));
+      for (const h of hits) {
+        const b = document.createElement('button');
+        b.className = 'hint-row'; b.style.setProperty('--c', h.n.color || '#4fd8ff');
+        const strip = t => String(t || '').replace(/\[\[([^\[\]|]+)(?:\|([^\[\]]*))?\]\]/g, (_, a, c) => c || a).replace(/\s+/g, ' ').trim();
+        const fact = strip(h.fact || h.n.description || '');
+        b.innerHTML = '<b>' + esc(h.n.name) + '</b> ' + esc(fact.length > 120 ? fact.slice(0, 119) + '…' : fact);
+        b.onclick = () => focusNode(h.n.id, true);
+        box.append(b);
+      }
+    }, 160);
   }
 
   // ------------------------------------------------------------- barre
@@ -556,11 +624,19 @@
       const c = A.engine.config;
       $('cfg-model').value = c.model; $('cfg-run').value = c.maxBudgetUsd; $('cfg-day').value = c.dailyCapUsd;
       $('cfg-pub').checked = !!c.publishAfterRun;
+      $('cfg-pull').checked = !!c.autoPull;
+      $('cfg-weekly').checked = !!c.weeklyReview;
+      const ap = A.engine.autopilot || {};
+      const info = [];
+      if (ap.pull) info.push('synchro : ' + ap.pull.text);
+      if (ap.state && ap.state.lastWeekly) info.push('dernier bilan : ' + ap.state.lastWeekly);
+      if (ap.weekly && !ap.weekly.ok) info.push('bilan : ' + ap.weekly.text);
+      $('cfg-err').textContent = info.join(' · ');
     }
   }
   async function saveSettings() {
     try {
-      const j = await post('/api/engine/config', { model: $('cfg-model').value, maxBudgetUsd: Number($('cfg-run').value), dailyCapUsd: Number($('cfg-day').value), publishAfterRun: $('cfg-pub').checked });
+      const j = await post('/api/engine/config', { model: $('cfg-model').value, maxBudgetUsd: Number($('cfg-run').value), dailyCapUsd: Number($('cfg-day').value), publishAfterRun: $('cfg-pub').checked, autoPull: $('cfg-pull').checked, weeklyReview: $('cfg-weekly').checked });
       if (A.engine) A.engine.config = j.config;
       $('ask-settings').classList.remove('open'); refreshBar();
     } catch (e) { $('cfg-err').textContent = e.message; }
@@ -570,9 +646,9 @@
 
   async function boot(live) {
     A.live = live;
-    $('ask-text').addEventListener('input', autosize);
+    $('ask-text').addEventListener('input', () => { autosize(); hints(); });
     $('ask-text').addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(); }
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(); $('ask-hints').classList.remove('open'); }
       if (e.key === 'Escape') { e.stopPropagation(); $('ask-text').blur(); }
     });
     $('ask-send').onclick = submit;
@@ -590,10 +666,11 @@
     if (S.ready && A.list.length && !panel.classList.contains('open')) overview(1500);
     if (live) await fetchEngine();
     refreshBar();
+    if (window.TODAY) TODAY.setLive(live);
   }
 
   window.AG = {
-    A, draw, labels, pick, points, select, clearSelection, hover, tipText, onAgents, onRun, boot,
+    A, draw, labels, pick, points, select, clearSelection, hover, tipText, onAgents, onRun, boot, showPast, localHits,
     panelOpen: () => A.panelOpen, md, treePath,
     selected: () => A.selected
   };
