@@ -1,0 +1,14 @@
+{
+  "name": "cerveau",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cerveau IA vivant : graphe interactif des notes de brain/, mis a jour en direct.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "brain": "node brain.js",
+    "list": "node brain.js list"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {}
+}
