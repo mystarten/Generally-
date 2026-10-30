@@ -348,7 +348,7 @@
     #layers.open .layers-body { display: block; }
     #dock { top: auto; bottom: 118px; right: 12px; gap: 6px; padding: 6px; }
     #ask { bottom: 10px; }
-    #answer { bottom: 92px; max-height: 46vh; }
+    #answer { bottom: 116px; max-height: 44vh; }
     #ask-settings.open { grid-template-columns: 1fr 1fr; }
     .btn { padding: 8px 10px; letter-spacing: .1em; }
     #panel {
@@ -666,7 +666,7 @@ function freeZone() {
   const z = { l: narrow ? 18 : 260, r: W - (narrow ? 18 : 260), t: narrow ? 150 : 96, b: H - (narrow ? 120 : 112) };
   if (answerOpen()) {
     if (W >= 1100) { z.l = 280; z.r = W - 470; }
-    else z.b = H - ((narrow ? H * .46 + 92 : Math.min(H * .44, 520) + 104) + 12);
+    else z.b = H - ((narrow ? H * .44 + 116 : Math.min(H * .44, 520) + 104) + 12);
   }
   return z;
 }
@@ -1191,8 +1191,9 @@ function pick(mx, my) {
   for (const n of S.nodes) {
     if (!n.on || !n.vis) continue;
     if (S.matches && !S.matches.has(n.id)) continue;
-    const r = Math.max(10, n.rs * 1.5);
-    if (Math.hypot(n.sx - mx, n.sy - my) <= r && n.sz < bestZ) { best = n; bestZ = n.sz; }
+    // le plus proche du doigt gagne (pas le plus proche de la camera) : en vue large, les noeuds sont petits et serres
+    const r = Math.max(10, n.rs * 1.5), d = Math.hypot(n.sx - mx, n.sy - my);
+    if (d <= r && d / r < bestZ) { best = n; bestZ = d / r; }
   }
   return best;
 }
