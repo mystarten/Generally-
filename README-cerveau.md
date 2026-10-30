@@ -22,6 +22,36 @@ node server.js
 Puis http://localhost:3000. La même page sert les deux usages : si un serveur répond, elle passe en direct
 par Server-Sent Events ; sinon elle affiche le dernier instantané publié.
 
+## Poser une question (la barre en bas)
+
+En local (`demarrer-cerveau.command` ou `.bat`, ou `node server.js`), la barre en bas de la page envoie ta
+question à **ton Claude Code**, qui joue l'orchestrateur :
+
+- question simple (« c'est quoi mon record ? ») : Claude lit le cerveau et répond seul, sans agent ;
+- grosse tâche à plusieurs compétences (programme, plan, script, candidature) : il réveille les chefs
+  d'équipe concernés, qui lancent leurs spécialistes.
+
+Pendant ce temps, tu vois ce qui se passe vraiment, lu dans le flux de Claude Code et non simulé :
+
+- les agents lancés brillent et affichent ce qu'ils font ;
+- les délégations voyagent du chef jusqu'au spécialiste, et les rapports reviennent en vert ;
+- les fiches du cerveau qui sont lues s'allument.
+
+La réponse est celle de Claude, avec l'équipe consultée et les fiches lues (cliquables).
+Entrée envoie, Maj+Entrée va à la ligne. Le micro dicte sans envoyer : tu relis d'abord.
+Chrome peut envoyer l'audio à son service de reconnaissance.
+
+**Consommation.** Une question à la fois, plafond par question (1,50 $ par défaut) et par jour (15 $),
+modèle `sonnet`. Tout se règle en cliquant sur le compteur. Le compteur montre aussi ton **quota Claude
+Code** (5 h et 7 jours) ; au-delà de 90 %, une confirmation est demandée. Repères mesurés :
+une question simple ≈ 0,10 $ (11 s), une question à 3 agents ≈ 0,19 $ (20 s).
+Le registre reste sur ta machine (`.engine/`, jamais publié).
+
+En ligne (GitHub Pages), la barre est désactivée : il n'y a pas de serveur pour lancer Claude.
+
+Le serveur n'écoute que ta machine (127.0.0.1). `HOST=0.0.0.0 node server.js` pour l'ouvrir au réseau local,
+à tes risques : la page donne accès à tout le cerveau.
+
 ## Se déplacer
 
 | Action | Souris / clavier | Tactile |
@@ -138,6 +168,9 @@ L'axe d'un nœud vient de `axis:`, sinon du hub le plus proche par les liens.
 | `GET /api/search?q=...` | nœuds correspondants et extraits |
 | `GET /api/node/:nom` | un nœud, son axe, ses faits et ses voisins |
 | `GET /api/agents` | l'équipe d'agents, les tâches et les messages |
+| `GET /api/engine` | moteur : Claude Code détecté, réglages, consommation du jour, quota, dernière question |
+| `POST /api/ask` | pose une question (`{question, conversation}`), une à la fois (machine locale uniquement) |
+| `POST /api/run/cancel` · `/api/engine/config` | annule la question, change les réglages (machine locale uniquement) |
 | `POST /api/agents/task` | crée une tâche de la part de Mats (machine locale uniquement) |
 | `POST /api/agents/task/:id/status` · `/message` | change le statut, ou répond sur une tâche (machine locale uniquement) |
 

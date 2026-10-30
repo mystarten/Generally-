@@ -20,6 +20,14 @@ Mats → orchestrateur → chef d'équipe → spécialiste
   adressée à `mats`), visible dans le bouton « Questions » du tableau de bord.
 - Les agents « communiquent » par ces tâches et leurs messages : tout est écrit, versionné, visible.
 
+## Leur parler
+
+- **Dans la page** (en local) : la barre en bas. Claude décide seul s'il faut des agents ; tu les vois
+  travailler dans le nuage. Clic sur un agent, puis « Lui poser une question » pour viser un spécialiste.
+- **Dans Claude Code**, ouvert sur ce dépôt : parle normalement, ou nomme l'agent
+  (« demande à coach-course… »), ou `claude --agent coach-force` pour une conversation entière avec lui.
+- **Pas dans Claude normal (claude.ai)** : il n'a accès ni au dépôt, ni aux agents, ni au cerveau.
+
 ## Les agents
 
 | Équipe | Chef d'équipe | Spécialistes |

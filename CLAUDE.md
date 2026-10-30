@@ -64,6 +64,12 @@ dans `.claude/agents/` (fichiers générés, ne pas les modifier).
     `archiviste` pour un gros lot. Un agent qui ne peut pas lancer ses spécialistes (profondeur de délégation
     limitée dans les sessions cloud) laisse leurs sous-tâches ouvertes : c'est à toi de les lancer.
 
+## L'interface (barre de question)
+
+`engine.js` lance l'orchestrateur avec `claude -p` quand Mats pose une question dans la page locale.
+Ces lancements portent `CERVEAU_ENGINE=1` (le hook Stop se tait) et une consigne « MODE MOTEUR » :
+le moteur publie lui-même à la fin, ne lance donc ni `publish` ni `git` dans ce mode.
+
 ## Commandes
 
 ```bash
