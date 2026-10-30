@@ -215,10 +215,12 @@ const server = http.createServer((req, res) => {
     if (!name) return sendJson(res, 400, { error: 'nom manquant' });
     const node = brain.findNode(nodes, decodeURIComponent(name));
     if (!node) return sendJson(res, 404, { error: 'noeud introuvable', query: decodeURIComponent(name) });
+    const gn = graph.nodes.find(n => n.id === node.id);
     return sendJson(res, 200, {
       id: node.id,
       name: node.name,
       type: node.type,
+      axis: gn ? gn.axis : null,
       description: node.description,
       aliases: node.aliases,
       facts: node.facts,

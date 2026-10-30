@@ -5,10 +5,16 @@
  * brain.js — cerveau IA : parseur, graphe et CLI.
  * Zero dependance. Sert aussi de module a server.js.
  *
- *   node brain.js add --type area --name starten --fact "..." --link starten,zenithia
+ *   node brain.js add --type topic --name tractions --axis sport --fact "..." --link street-workout
  *   node brain.js search "mot"
  *   node brain.js show nom
+ *   node brain.js remove nom
  *   node brain.js import <fichier|dossier>
+ *   node brain.js publish
+ *
+ * Chaque ecriture (add, remove, import) regenere cerveau/data.json puis le
+ * publie : commit et push, pour que la page en ligne suive tout de suite.
+ * --no-push ou BRAIN_NO_PUSH=1 pour ne rien envoyer.
  */
 
 const fs = require('fs');
@@ -16,17 +22,22 @@ const path = require('path');
 
 const ROOT = __dirname;
 const BRAIN_DIR = path.join(ROOT, 'brain');
+const DATA_FILE = path.join(ROOT, 'cerveau', 'data.json');
 
 const TYPE_TO_DIR = {
   profile: '.',
+  hub: 'hubs',
   area: 'areas',
+  project: 'projects',
   person: 'people',
   topic: 'topics',
   agent: 'agents'
 };
 const DIR_TO_TYPE = {
   '.': 'profile',
+  hubs: 'hub',
   areas: 'area',
+  projects: 'project',
   people: 'person',
   topics: 'topic',
   agents: 'agent'
@@ -60,12 +71,25 @@ function titleize(s) {
     .join(' ');
 }
 
-// Regle 5 : jamais de numeros de carte, identifiants ou mots de passe.
+function escapeRe(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function sleep(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function firstLine(err) {
+  return String((err && (err.stderr || err.message)) || err).trim().split('\n')[0];
+}
+
+// Regle 6 : jamais de numeros de carte, identifiants ou mots de passe.
 const SECRET_PATTERNS = [
   /\b(?:\d[ -]?){13,19}\b/,
   /\b(mot\s+de\s+passe|password|passwd|pwd)\b/i,
   /\b(api[\s_-]?key|cle\s+api|secret\s+key|client\s+secret|private\s+key)\b/i,
-  /\b(cvv|cvc|iban|bic)\b/i
+  /\b(cvv|cvc|iban|bic)\b/i,
+  /[\w.+-]+@[\w-]+\.[a-z]{2,}/i
 ];
 
 function looksSecret(text) {
@@ -92,6 +116,10 @@ function walkMarkdown(dir) {
     }
   }
   return out;
+}
+
+function stripQuotes(s) {
+  return String(s).trim().replace(/^["']|["']$/g, '').trim();
 }
 
 function parseFrontmatter(raw) {
@@ -124,16 +152,31 @@ function parseFrontmatter(raw) {
   return { data, body };
 }
 
-function stripQuotes(s) {
-  return String(s).trim().replace(/^["']|["']$/g, '').trim();
-}
+const WIKILINK_RE = /\[\[([^\[\]|]+)(?:\|[^\[\]]*)?\]\]/g;
 
 function extractWikilinks(text) {
   const out = [];
-  const re = /\[\[([^\[\]|]+)(?:\|[^\[\]]*)?\]\]/g;
   let m;
-  while ((m = re.exec(text)) !== null) out.push(m[1].trim());
+  WIKILINK_RE.lastIndex = 0;
+  while ((m = WIKILINK_RE.exec(text)) !== null) out.push(m[1].trim());
   return out;
+}
+
+function parseFacts(body) {
+  const facts = [];
+  for (const line of body.split(/\r?\n/)) {
+    const t = line.trim();
+    if (!t || t.startsWith('#') || t.startsWith('<!--')) continue;
+    const m = /^\[([a-zA-Z]+)\]\s*(.+)$/.exec(t);
+    if (m) facts.push({ tag: m[1].toLowerCase(), text: m[2].trim() });
+  }
+  return facts;
+}
+
+function parseAliases(value) {
+  let aliases = value;
+  if (typeof aliases === 'string') aliases = aliases.split(',');
+  return (Array.isArray(aliases) ? aliases : []).map(a => String(a).trim()).filter(Boolean);
 }
 
 function typeFromPath(abs) {
@@ -153,18 +196,7 @@ function parseFile(abs) {
     ? data.name.trim()
     : titleize(path.basename(abs, path.extname(abs)));
 
-  let aliases = data.aliases;
-  if (typeof aliases === 'string') aliases = aliases.split(',');
-  aliases = (Array.isArray(aliases) ? aliases : []).map(a => String(a).trim()).filter(Boolean);
-
-  const facts = [];
-  for (const line of body.split(/\r?\n/)) {
-    const t = line.trim();
-    if (!t || t.startsWith('#') || t.startsWith('<!--')) continue;
-    const m = /^\[([a-zA-Z]+)\]\s*(.+)$/.exec(t);
-    if (m) facts.push({ tag: m[1].toLowerCase(), text: m[2].trim() });
-  }
-
+  const facts = parseFacts(body);
   let mtime = Date.now();
   try { mtime = fs.statSync(abs).mtimeMs; } catch (_) {}
 
@@ -178,7 +210,8 @@ function parseFile(abs) {
     name,
     slug: slugify(name),
     description,
-    aliases,
+    aliases: parseAliases(data.aliases),
+    axis: typeof data.axis === 'string' ? data.axis.trim() : '',
     facts,
     wikilinks: extractWikilinks(searchText),
     updated: mtime
@@ -198,24 +231,26 @@ function readAllNodes() {
 
 // -------------------------------------------------------------------- graphe
 
+/** Retrouve un noeud par son nom, un alias, son slug ou son nom de fichier. */
 function buildResolver(nodes) {
   const index = new Map();
   const put = (key, id) => {
-    const k = norm(key);
-    if (k.length >= 2 && !index.has(k)) index.set(k, id);
+    for (const k of [norm(key), slugify(key)]) {
+      if (k.length >= 2 && !index.has(k)) index.set(k, id);
+    }
   };
   for (const n of nodes) {
     put(n.name, n.id);
-    put(n.slug, n.id);
     put(n.id, n.id);
     put(path.basename(n.id), n.id);
     for (const a of n.aliases) put(a, n.id);
   }
-  return term => index.get(norm(term)) || null;
+  return term => index.get(norm(term)) || index.get(slugify(term)) || null;
 }
 
 function buildGraph(nodes) {
   const resolve = buildResolver(nodes);
+  const byId = new Map(nodes.map(n => [n.id, n]));
   const profile = nodes.find(n => n.type === 'profile');
   const pairs = new Map();
 
@@ -242,7 +277,10 @@ function buildGraph(nodes) {
     }
   }
   for (const n of nodes) {
-    const haystack = norm([n.description, ...n.facts.map(f => f.text)].join(' \n '));
+    // Les [[liens]] sont deja comptes en 1. On les retire du texte scanne, sinon
+    // les mots de leurs slugs creent de faux liens ([[equipement-sport]] -> Sport).
+    const prose = [n.description, ...n.facts.map(f => f.text)].join(' \n ').replace(WIKILINK_RE, ' ');
+    const haystack = norm(prose);
     if (!haystack) continue;
     for (const t of terms) {
       if (t.id === n.id) continue;
@@ -256,6 +294,36 @@ function buildGraph(nodes) {
   }
 
   const links = [...pairs.values()];
+
+  // 4. axe de chaque noeud : le hub declare dans « axis: », sinon le hub le
+  //    plus proche par les liens. Le profil est le centre et n'a pas d'axe ;
+  //    il ne sert pas de pont, sinon tout serait a un saut de chaque hub.
+  const adj = new Map(nodes.map(n => [n.id, []]));
+  for (const l of links) {
+    if (l.kind === 'weak') continue;
+    adj.get(l.source).push(l.target);
+    adj.get(l.target).push(l.source);
+  }
+  const axisOf = new Map();
+  for (const n of nodes) if (n.type === 'hub') axisOf.set(n.id, n.id);
+  for (const n of nodes) {
+    if (axisOf.has(n.id) || n.type === 'profile' || !n.axis) continue;
+    const hub = byId.get(resolve(n.axis));
+    if (hub && hub.type === 'hub') axisOf.set(n.id, hub.id);
+  }
+  let frontier = [...axisOf.keys()];
+  while (frontier.length) {
+    const next = [];
+    for (const id of frontier) {
+      for (const nb of adj.get(id) || []) {
+        if (axisOf.has(nb) || byId.get(nb).type === 'profile') continue;
+        axisOf.set(nb, axisOf.get(id));
+        next.push(nb);
+      }
+    }
+    frontier = next;
+  }
+
   const degree = new Map();
   for (const l of links) {
     if (l.kind === 'weak') continue;
@@ -269,6 +337,7 @@ function buildGraph(nodes) {
       id: n.id,
       name: n.name,
       type: n.type,
+      axis: axisOf.get(n.id) || null,
       description: n.description,
       aliases: n.aliases,
       facts: n.facts,
@@ -278,10 +347,6 @@ function buildGraph(nodes) {
     })),
     links
   };
-}
-
-function escapeRe(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function neighborsOf(graph, id) {
@@ -315,6 +380,7 @@ function searchNodes(nodes, query) {
     if (n.aliases.some(a => norm(a).includes(q))) score += 4;
     if (norm(n.description).includes(q)) { score += 2; hits.push(n.description); }
     for (const f of n.facts) {
+      if (f.tag === 'links') continue;
       if (norm(f.text).includes(q)) { score += 1; hits.push('[' + f.tag + '] ' + f.text); }
     }
     if (score > 0) results.push({ node: n, score, hits });
@@ -336,6 +402,7 @@ function fileForType(type, name) {
 function renderFrontmatter(meta) {
   const lines = ['---', 'name: ' + meta.name, 'description: ' + (meta.description || '')];
   lines.push('aliases: [' + (meta.aliases || []).join(', ') + ']');
+  if (meta.axis) lines.push('axis: ' + meta.axis);
   lines.push('---', '');
   return lines.join('\n');
 }
@@ -352,88 +419,6 @@ function factKey(text) {
     .trim();
 }
 
-/** Ajoute (ou complete) un fait dans un fichier. Retourne un rapport. */
-function addFact(opts) {
-  const { type, name, fact, links = [], description, aliases = [], tag = 'stated' } = opts;
-  if (!type) throw new Error('--type est requis');
-  if (!name) throw new Error('--name est requis');
-  if (fact && looksSecret(fact)) {
-    throw new Error('refus : ce fait ressemble a un secret (carte, identifiant, mot de passe). Rien n’a ete ecrit.');
-  }
-
-  const abs = fileForType(type, name);
-  fs.mkdirSync(path.dirname(abs), { recursive: true });
-
-  const created = !fs.existsSync(abs);
-  let parsed;
-  if (created) {
-    const meta = { name: titleizeIfSlug(name), description: description || '', aliases };
-    fs.writeFileSync(abs, renderFrontmatter(meta), 'utf8');
-    parsed = parseFile(abs);
-  } else {
-    parsed = parseFile(abs);
-    patchFrontmatter(abs, { description, aliases });
-    parsed = parseFile(abs);
-  }
-
-  // Resolution des cibles de liens vers des noms canoniques quand ils existent.
-  const allNodes = readAllNodes();
-  const resolve = buildResolver(allNodes);
-  const linkLabels = [];
-  for (const l of links) {
-    const target = resolve(l);
-    const node = target ? allNodes.find(n => n.id === target) : null;
-    const label = node ? node.name : titleizeIfSlug(l);
-    if (node && node.id === parsed.id) continue; // pas d'auto-lien
-    if (!linkLabels.some(x => norm(x) === norm(label))) linkLabels.push(label);
-  }
-
-  const report = { file: path.relative(ROOT, abs), created, factAdded: false, linksAdded: [], skipped: false };
-
-  if (!fact && linkLabels.length === 0) {
-    report.skipped = true;
-    return report;
-  }
-
-  const content = fs.readFileSync(abs, 'utf8');
-  const existing = parsed.facts;
-
-  if (fact) {
-    const key = factKey(fact);
-    const match = existing.find(f => factKey(f.text) === key);
-    if (match) {
-      // Fait deja present : on complete seulement ses liens manquants.
-      const missing = linkLabels.filter(l => !new RegExp('\\[\\[\\s*' + escapeRe(l) + '\\s*\\]\\]', 'i').test(match.text));
-      if (missing.length) {
-        const oldLine = '[' + match.tag + '] ' + match.text;
-        const newLine = oldLine + ' ' + missing.map(l => '[[' + l + ']]').join(' ');
-        fs.writeFileSync(abs, content.replace(oldLine, newLine), 'utf8');
-        report.linksAdded = missing;
-      }
-      return report;
-    }
-    let line = '[' + tag + '] ' + fact.trim();
-    const missing = linkLabels.filter(l => !new RegExp('\\[\\[\\s*' + escapeRe(l) + '\\s*\\]\\]', 'i').test(line));
-    if (missing.length) line += ' ' + missing.map(l => '[[' + l + ']]').join(' ');
-    appendLine(abs, line);
-    report.factAdded = true;
-    report.linksAdded = missing;
-    report.line = line;
-    return report;
-  }
-
-  // Pas de fait : on ajoute une ligne de liens, sans dupliquer.
-  const bodyNorm = existing.map(f => f.text).join('\n');
-  const missing = linkLabels.filter(l => !new RegExp('\\[\\[\\s*' + escapeRe(l) + '\\s*\\]\\]', 'i').test(bodyNorm));
-  if (missing.length) {
-    const line = '[' + tag + '] ' + missing.map(l => '[[' + l + ']]').join(' ');
-    appendLine(abs, line);
-    report.linksAdded = missing;
-    report.line = line;
-  }
-  return report;
-}
-
 /** Un nom deja ecrit avec des majuscules est respecte tel quel (« ZenithIA »). */
 function titleizeIfSlug(name) {
   return /[A-Z]/.test(name) ? name.trim() : titleize(name);
@@ -445,7 +430,91 @@ function appendLine(abs, line) {
   fs.writeFileSync(abs, content + line + '\n', 'utf8');
 }
 
-/** Complete description/aliases d'un fichier existant sans rien ecraser. */
+/** Ajoute (ou complete) un fait dans un fichier. Retourne un rapport. */
+function addFact(opts) {
+  const { type, name, fact, links = [], description, aliases = [], axis = '', tag = 'stated' } = opts;
+  if (!type) throw new Error('--type est requis');
+  if (!name) throw new Error('--name est requis');
+  if (fact && looksSecret(fact)) {
+    throw new Error('refus : ce fait ressemble a un secret (carte, identifiant, e-mail, mot de passe). Rien n’a ete ecrit.');
+  }
+
+  const abs = fileForType(type, name);
+  fs.mkdirSync(path.dirname(abs), { recursive: true });
+
+  const created = !fs.existsSync(abs);
+  if (created) {
+    const meta = { name: titleizeIfSlug(name), description: description || '', aliases, axis };
+    fs.writeFileSync(abs, renderFrontmatter(meta), 'utf8');
+  } else {
+    patchFrontmatter(abs, { description, aliases, axis });
+  }
+  const parsed = parseFile(abs);
+
+  // Cibles des liens, resolues vers des noeuds existants quand c'est possible.
+  const allNodes = readAllNodes();
+  const resolve = buildResolver(allNodes);
+  const targets = [];
+  for (const l of links) {
+    const id = resolve(l);
+    const node = id ? allNodes.find(n => n.id === id) : null;
+    if (node && node.id === parsed.id) continue; // pas d'auto-lien
+    const label = node ? node.name : titleizeIfSlug(l);
+    if (!targets.some(t => (id && t.id === id) || norm(t.label) === norm(label))) targets.push({ id, label });
+  }
+  const hasLink = (text, t) => extractWikilinks(text).some(w => (t.id && resolve(w) === t.id) || norm(w) === norm(t.label));
+  const asLinks = list => list.map(t => '[[' + t.label + ']]').join(' ');
+
+  const report = { file: path.relative(ROOT, abs), created, factAdded: false, linksAdded: [], skipped: false };
+
+  if (!fact && targets.length === 0) {
+    report.skipped = !created;
+    return report;
+  }
+
+  const content = fs.readFileSync(abs, 'utf8');
+  const existing = parsed.facts;
+
+  if (fact) {
+    const key = factKey(fact);
+    const match = existing.find(f => factKey(f.text) === key);
+    if (match) {
+      // Fait deja present : on complete seulement ses liens manquants.
+      const missing = targets.filter(t => !hasLink(match.text, t));
+      if (missing.length) {
+        const oldLine = '[' + match.tag + '] ' + match.text;
+        fs.writeFileSync(abs, content.replace(oldLine, oldLine + ' ' + asLinks(missing)), 'utf8');
+        report.linksAdded = missing.map(t => t.label);
+      }
+      return report;
+    }
+    let line = '[' + tag + '] ' + fact.trim();
+    const missing = targets.filter(t => !hasLink(line, t));
+    if (missing.length) line += ' ' + asLinks(missing);
+    appendLine(abs, line);
+    report.factAdded = true;
+    report.linksAdded = missing.map(t => t.label);
+    report.line = line;
+    return report;
+  }
+
+  // Pas de fait : les liens vont sur la ligne [links] du fichier, sans doublon.
+  const body = existing.map(f => f.text).join('\n');
+  const missing = targets.filter(t => !hasLink(body, t));
+  if (missing.length) {
+    const linksFact = existing.find(f => f.tag === 'links');
+    if (linksFact) {
+      const oldLine = '[links] ' + linksFact.text;
+      fs.writeFileSync(abs, content.replace(oldLine, oldLine + ' ' + asLinks(missing)), 'utf8');
+    } else {
+      appendLine(abs, '[links] ' + asLinks(missing));
+    }
+    report.linksAdded = missing.map(t => t.label);
+  }
+  return report;
+}
+
+/** Complete description, aliases et axe d'un fichier existant sans rien ecraser. */
 function patchFrontmatter(abs, patch) {
   const raw = fs.readFileSync(abs, 'utf8');
   const m = /^﻿?---\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n?/.exec(raw);
@@ -474,9 +543,25 @@ function patchFrontmatter(abs, patch) {
     changed = true;
   }
 
+  if (patch.axis && !parsed.axis) {
+    block += '\naxis: ' + patch.axis;
+    changed = true;
+  }
+
   if (!changed) return false;
   fs.writeFileSync(abs, raw.replace(m[0], '---\n' + block + '\n---\n'), 'utf8');
   return true;
+}
+
+/** Supprime un noeud. Correspondance exacte seulement : jamais d'a-peu-pres pour effacer. */
+function removeNode(query) {
+  const nodes = readAllNodes();
+  const id = buildResolver(nodes)(query);
+  const node = id ? nodes.find(n => n.id === id) : null;
+  if (!node) throw new Error('noeud introuvable : « ' + query + ' » (nom exact, alias ou nom de fichier)');
+  if (node.type === 'profile') throw new Error('le profil ne se supprime pas');
+  fs.unlinkSync(path.join(BRAIN_DIR, node.file));
+  return node;
 }
 
 /** Fusionne un .md externe (meme format) sans ecraser les faits presents. */
@@ -489,15 +574,14 @@ function importPath(target) {
   for (const file of files) {
     if (path.resolve(file).startsWith(path.resolve(BRAIN_DIR) + path.sep)) continue; // deja dans le cerveau
     const src = parseFileExternal(file);
-    const type = src.type;
-    const dest = fileForType(type, src.name);
+    const dest = fileForType(src.type, src.name);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
 
     const created = !fs.existsSync(dest);
     if (created) {
-      fs.writeFileSync(dest, renderFrontmatter({ name: src.name, description: src.description, aliases: src.aliases }), 'utf8');
+      fs.writeFileSync(dest, renderFrontmatter(src), 'utf8');
     } else {
-      patchFrontmatter(dest, { description: src.description, aliases: src.aliases });
+      patchFrontmatter(dest, src);
     }
 
     const present = new Set(parseFile(dest).facts.map(f => factKey(f.text)));
@@ -511,7 +595,7 @@ function importPath(target) {
       added++;
     }
     reports.push({
-      source: path.relative(process.cwd(), file),
+      source: path.isAbsolute(target) ? file : path.relative(process.cwd(), file),
       dest: path.relative(ROOT, dest),
       created, added, skippedSecret,
       total: src.facts.length
@@ -528,36 +612,23 @@ function parseFileExternal(abs) {
     ? data.name.trim()
     : titleize(path.basename(abs, path.extname(abs)));
 
-  let aliases = data.aliases;
-  if (typeof aliases === 'string') aliases = aliases.split(',');
-  aliases = (Array.isArray(aliases) ? aliases : []).map(a => String(a).trim()).filter(Boolean);
-
   let type = typeof data.type === 'string' ? data.type.trim().toLowerCase() : '';
   if (!TYPE_TO_DIR[type]) {
     const parent = path.basename(path.dirname(abs));
     type = DIR_TO_TYPE[parent] || (path.basename(abs).toLowerCase() === 'profile.md' ? 'profile' : 'topic');
   }
 
-  const facts = [];
-  for (const line of body.split(/\r?\n/)) {
-    const t = line.trim();
-    if (!t || t.startsWith('#')) continue;
-    const m = /^\[([a-zA-Z]+)\]\s*(.+)$/.exec(t);
-    if (m) facts.push({ tag: m[1].toLowerCase(), text: m[2].trim() });
-  }
-
   return {
     name,
     type,
-    aliases,
+    aliases: parseAliases(data.aliases),
+    axis: typeof data.axis === 'string' ? data.axis.trim() : '',
     description: typeof data.description === 'string' ? data.description.trim() : '',
-    facts
+    facts: parseFacts(body)
   };
 }
 
 // ----------------------------------------------------------------- publication
-
-const DATA_FILE = path.join(ROOT, 'cerveau', 'data.json');
 
 /**
  * Ecrit l'instantane du graphe lu par la page en ligne (GitHub Pages n'execute
@@ -570,35 +641,136 @@ function exportStatic() {
   return { file: path.relative(ROOT, DATA_FILE), nodes: graph.nodes.length, links: graph.links.length };
 }
 
-/** Regenere l'instantane puis l'envoie sur GitHub, si quelque chose a change. */
-function publish() {
+function makeGit() {
   const { execFileSync } = require('child_process');
-  const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' }).trim();
+  return (...args) => execFileSync('git', args, {
+    cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']
+  }).trim();
+}
 
-  const snapshot = exportStatic();
-  const paths = ['brain', 'cerveau/data.json'];
-  git('add', '--', ...paths);
-  const staged = git('diff', '--cached', '--name-only', '--', ...paths);
-  if (!staged) return { pushed: false, reason: 'rien de nouveau', snapshot };
+function rebaseInProgress(git) {
+  const dir = path.resolve(ROOT, git('rev-parse', '--git-dir'));
+  return fs.existsSync(path.join(dir, 'rebase-merge')) || fs.existsSync(path.join(dir, 'rebase-apply'));
+}
 
-  const branch = git('rev-parse', '--abbrev-ref', 'HEAD');
-  const count = staged.split('\n').filter(Boolean).length;
-  git('commit', '-m', 'cerveau : mise a jour (' + count + ' fichier(s))');
-
-  let lastErr = null;
-  for (const wait of [0, 2000, 4000, 8000, 16000]) {
-    if (wait) execFileSync('sleep', [String(wait / 1000)]);
+/**
+ * Recupere ce qui a ete pousse ailleurs (une autre machine, une autre session).
+ *
+ * Les fiches brain/*.md fusionnent seules : on n'y fait qu'ajouter des lignes,
+ * et .gitattributes leur donne merge=union. Reste cerveau/data.json, genere sur
+ * une seule ligne, qui entre forcement en conflit : on le regenere. Tout autre
+ * conflit annule le rebase, pour ne jamais laisser le depot a moitie rebase.
+ */
+function pullRebase(git, branch) {
+  try {
+    git('pull', '--rebase', 'origin', branch);
+    return;
+  } catch (_) {
+    // conflits possibles, traites ci-dessous
+  }
+  for (let i = 0; i < 100 && rebaseInProgress(git); i++) {
+    const conflicted = git('diff', '--name-only', '--diff-filter=U').split('\n').filter(Boolean);
+    const others = conflicted.filter(f => f !== 'cerveau/data.json');
+    if (others.length) {
+      try { git('rebase', '--abort'); } catch (_) {}
+      throw new Error('conflit sur ' + others.join(', ') + ', a resoudre a la main (rebase annule, rien n\'est perdu)');
+    }
+    if (conflicted.length) {
+      exportStatic();
+      git('add', 'cerveau/data.json');
+    }
     try {
-      git('push', 'origin', branch);
-      return { pushed: true, branch, files: staged.split('\n').filter(Boolean), snapshot };
-    } catch (err) {
-      lastErr = err;
+      git('-c', 'core.editor=true', 'rebase', '--continue');
+    } catch (_) {
+      const left = git('diff', '--name-only', '--diff-filter=U');
+      if (!left && rebaseInProgress(git)) {
+        try { git('rebase', '--skip'); } catch (_) {} // commit devenu vide
+      }
     }
   }
-  throw new Error('push impossible apres 5 tentatives : ' + (lastErr && lastErr.message));
+  if (rebaseInProgress(git)) {
+    try { git('rebase', '--abort'); } catch (_) {}
+    throw new Error('rebase interminable, annule (rien n\'est perdu)');
+  }
+}
+
+/** Pousse, et en cas de refus (quelqu'un a pousse entre-temps) rebase puis reessaie. */
+function pushWithRetry(git, branch) {
+  let last = null;
+  for (const wait of [0, 2000, 4000, 8000, 16000]) {
+    if (wait) sleep(wait);
+    try {
+      git('push', '-u', 'origin', 'HEAD:' + branch);
+      return;
+    } catch (err) {
+      last = err;
+      if (/rejected|non-fast-forward|fetch first/i.test(String(err.stderr || err.message))) {
+        pullRebase(git, branch);
+        commitSnapshot(git); // l'instantane doit refleter les ecritures des deux cotes
+      }
+    }
+  }
+  throw new Error('push impossible apres 5 tentatives : ' + firstLine(last));
+}
+
+/** Regenere data.json et le commit s'il a change (apres un rebase par exemple). */
+function commitSnapshot(git) {
+  exportStatic();
+  git('add', '--', 'cerveau/data.json');
+  if (git('diff', '--cached', '--name-only', '--', 'cerveau/data.json')) {
+    git('commit', '-m', 'cerveau : instantane');
+  }
+}
+
+/**
+ * GitHub Pages publie la branche main. Si l'on travaille sur une autre branche,
+ * on y pousse aussi HEAD, mais seulement en avance rapide : jamais d'ecrasement.
+ */
+function mirrorMain(git) {
+  try {
+    git('fetch', 'origin', 'main');
+    try {
+      git('merge-base', '--is-ancestor', 'origin/main', 'HEAD');
+    } catch (_) {
+      return { ok: false, reason: 'main a diverge, fusion a faire a la main' };
+    }
+    git('push', 'origin', 'HEAD:main');
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, reason: firstLine(err) };
+  }
+}
+
+/** Regenere l'instantane, commit ce qui a change dans le cerveau, et pousse. */
+function publish() {
+  const git = makeGit();
+  if (rebaseInProgress(git)) throw new Error('un rebase git est en cours dans ce depot : le terminer ou l\'annuler d\'abord');
+  const snapshot = exportStatic();
+  const paths = ['brain', 'cerveau/data.json'];
+  git('add', '-A', '--', ...paths);
+  const staged = git('diff', '--cached', '--name-only', '--', ...paths).split('\n').filter(Boolean);
+
+  if (staged.length) {
+    const names = [...new Set(staged.filter(f => f.startsWith('brain/')).map(f => path.basename(f, '.md')))];
+    const label = names.length
+      ? names.slice(0, 5).join(', ') + (names.length > 5 ? ' +' + (names.length - 5) : '')
+      : 'instantane';
+    git('commit', '-m', 'cerveau : ' + label);
+  }
+
+  const branch = git('rev-parse', '--abbrev-ref', 'HEAD');
+  let ahead = 1;
+  try { ahead = Number(git('rev-list', '--count', '@{u}..HEAD')); } catch (_) { /* pas d'amont : on pousse */ }
+  if (!staged.length && ahead === 0) return { pushed: false, reason: 'rien de nouveau', snapshot };
+
+  pushWithRetry(git, branch);
+  const mirrored = branch !== 'main' ? mirrorMain(git) : null;
+  return { pushed: true, branch, files: staged, snapshot, mirrored };
 }
 
 // ------------------------------------------------------------------------ CLI
+
+const BOOLEAN_FLAGS = new Set(['no-push']);
 
 function parseArgs(argv) {
   const flags = {};
@@ -610,9 +782,10 @@ function parseArgs(argv) {
       if (eq > -1) {
         flags[a.slice(2, eq)] = a.slice(eq + 1);
       } else {
+        const key = a.slice(2);
         const next = argv[i + 1];
-        if (next === undefined || next.startsWith('--')) flags[a.slice(2)] = true;
-        else { flags[a.slice(2)] = next; i++; }
+        if (BOOLEAN_FLAGS.has(key) || next === undefined || next.startsWith('--')) flags[key] = true;
+        else { flags[key] = next; i++; }
       }
     } else {
       positional.push(a);
@@ -628,15 +801,38 @@ function listFlag(v) {
 
 const USAGE = `cerveau — capture et consultation
 
-  node brain.js add --type <profile|area|person|topic|agent> --name <nom> \\
-                    [--fact "..."] [--link a,b] [--description "..."] [--alias x,y]
+  node brain.js add --type <profile|hub|area|project|person|topic|agent> --name <nom> \\
+                    [--axis <hub>] [--fact "..."] [--link a,b] [--description "..."] [--alias x,y]
   node brain.js search "<mot>"
   node brain.js show <nom>
+  node brain.js remove <nom>
   node brain.js import <fichier|dossier>
   node brain.js list
+  node brain.js check              liens [[...]] introuvables, noeuds sans axe
   node brain.js publish            regenere cerveau/data.json, commit et push
   node brain.js export             regenere cerveau/data.json seulement
+
+  add, remove et import publient d'eux-memes. --no-push (ou BRAIN_NO_PUSH=1) pour ne rien envoyer.
 `;
+
+/** Apres chaque ecriture : instantane, puis publication sauf refus explicite. */
+function afterWrite(flags) {
+  if (flags['no-push'] || process.env.BRAIN_NO_PUSH === '1') {
+    exportStatic();
+    return;
+  }
+  try {
+    const r = publish();
+    if (!r.pushed) return;
+    let line = 'publie sur ' + r.branch;
+    if (r.mirrored) line += r.mirrored.ok ? ' + main (page en ligne)' : ' — main non mis a jour : ' + r.mirrored.reason;
+    console.log(line);
+  } catch (err) {
+    console.error('brain: ECRIT MAIS PAS PUBLIE — ' + err.message);
+    console.error('       relance « node brain.js publish » quand le reseau revient.');
+    process.exitCode = 3;
+  }
+}
 
 function cmdAdd(flags) {
   const report = addFact({
@@ -646,17 +842,18 @@ function cmdAdd(flags) {
     links: listFlag(flags.link).concat(listFlag(flags.links)),
     description: typeof flags.description === 'string' ? flags.description : '',
     aliases: listFlag(flags.alias).concat(listFlag(flags.aliases)),
+    axis: typeof flags.axis === 'string' ? flags.axis.trim() : '',
     tag: typeof flags.tag === 'string' ? flags.tag : 'stated'
   });
 
   const bits = [];
   if (report.created) bits.push('fichier cree');
   if (report.factAdded) bits.push('fait ajoute');
-  else if (!report.skipped && !report.linksAdded.length) bits.push('fait deja present');
+  else if (!report.skipped && !report.created && !report.linksAdded.length) bits.push('fait deja present');
   if (report.linksAdded.length) bits.push('liens : ' + report.linksAdded.map(l => '[[' + l + ']]').join(' '));
   if (report.skipped) bits.push('rien a ecrire (ni --fact ni --link)');
   console.log(report.file + ' — ' + (bits.join(', ') || 'inchange'));
-  if (!report.skipped) exportStatic();
+  if (!report.skipped) afterWrite(flags);
 }
 
 function cmdSearch(query) {
@@ -683,7 +880,8 @@ function cmdShow(query) {
     return;
   }
   const graph = buildGraph(nodes);
-  console.log('\n' + node.name + '  (' + node.type + ')');
+  const gn = graph.nodes.find(n => n.id === node.id);
+  console.log('\n' + node.name + '  (' + node.type + (gn.axis ? ', axe ' + path.basename(gn.axis) : '') + ')');
   console.log('fichier  : ' + node.file);
   console.log('maj      : ' + new Date(node.updated).toISOString());
   if (node.aliases.length) console.log('aliases  : ' + node.aliases.join(', '));
@@ -696,7 +894,13 @@ function cmdShow(query) {
   console.log('');
 }
 
-function cmdImport(target) {
+function cmdRemove(query, flags) {
+  const node = removeNode(query);
+  console.log('brain/' + node.file + ' — supprime (' + node.name + ')');
+  afterWrite(flags);
+}
+
+function cmdImport(target, flags) {
   const reports = importPath(target);
   if (!reports.length) {
     console.log('aucun .md importable dans ' + target);
@@ -707,15 +911,43 @@ function cmdImport(target) {
       + (r.created ? ', fichier cree' : '')
       + (r.skippedSecret ? ', ' + r.skippedSecret + ' ignore(s) (secret)' : ''));
   }
-  exportStatic();
+  afterWrite(flags);
 }
 
 function cmdList() {
   const graph = buildGraph(readAllNodes());
   for (const n of graph.nodes) {
-    console.log(String(n.degree).padStart(3) + '  ' + n.type.padEnd(8) + '  ' + n.name + '  (' + n.file + ')');
+    console.log(String(n.degree).padStart(3) + '  ' + n.type.padEnd(8) + '  '
+      + (n.axis ? path.basename(n.axis) : '—').padEnd(20) + '  ' + n.name + '  (' + n.file + ')');
   }
-  console.log('\n' + graph.nodes.length + ' noeuds, ' + graph.links.length + ' liens');
+  const axes = graph.nodes.filter(n => n.type === 'hub').length;
+  console.log('\n' + graph.nodes.length + ' noeuds, ' + graph.links.length + ' liens, ' + axes + ' axes');
+}
+
+function cmdCheck() {
+  const nodes = readAllNodes();
+  const resolve = buildResolver(nodes);
+  const graph = buildGraph(nodes);
+  let problems = 0;
+  for (const n of nodes) {
+    for (const w of n.wikilinks) {
+      if (!resolve(w)) { console.log('lien introuvable   ' + n.file + ' : [[' + w + ']]'); problems++; }
+    }
+  }
+  for (const n of graph.nodes) {
+    if (n.type !== 'profile' && !n.axis) { console.log('sans axe           ' + n.file); problems++; }
+    if (n.type !== 'profile' && n.degree === 0) { console.log('isole              ' + n.file); problems++; }
+  }
+  console.log(problems ? '\n' + problems + ' probleme(s)' : 'tout est relie : ' + graph.nodes.length + ' noeuds, ' + graph.links.length + ' liens');
+  if (problems) process.exitCode = 1;
+}
+
+function cmdPublish() {
+  const r = publish();
+  if (!r.pushed) return console.log('rien a publier (' + r.reason + ')');
+  let line = 'publie sur ' + r.branch;
+  if (r.mirrored) line += r.mirrored.ok ? ' + main (page en ligne)' : ' — main non mis a jour : ' + r.mirrored.reason;
+  console.log(line + '  (' + r.snapshot.nodes + ' noeuds, ' + r.snapshot.links + ' liens)');
 }
 
 function main(argv) {
@@ -726,17 +958,14 @@ function main(argv) {
       case 'add': return cmdAdd(flags);
       case 'search': return cmdSearch(positional.join(' ') || String(flags.q || ''));
       case 'show': return cmdShow(positional.join(' ') || String(flags.name || ''));
-      case 'import': return cmdImport(positional[0] || String(flags.path || ''));
+      case 'remove': return cmdRemove(positional.join(' ') || String(flags.name || ''), flags);
+      case 'import': return cmdImport(positional[0] || String(flags.path || ''), flags);
       case 'list': return cmdList();
+      case 'check': return cmdCheck();
+      case 'publish': return cmdPublish();
       case 'export': {
         const r = exportStatic();
         return console.log(r.file + ' — ' + r.nodes + ' noeuds, ' + r.links + ' liens');
-      }
-      case 'publish': {
-        const r = publish();
-        if (!r.pushed) return console.log('rien a publier (' + r.reason + ')');
-        return console.log('publie sur ' + r.branch + ' — ' + r.files.join(', ')
-          + '  (' + r.snapshot.nodes + ' noeuds, ' + r.snapshot.links + ' liens)');
       }
       case 'graph': return console.log(JSON.stringify(buildGraph(readAllNodes()), null, 2));
       default:
@@ -750,10 +979,10 @@ function main(argv) {
 }
 
 module.exports = {
-  BRAIN_DIR, ROOT, TYPE_TO_DIR, DIR_TO_TYPE,
-  readAllNodes, buildGraph, searchNodes, findNode, neighborsOf,
-  addFact, importPath, slugify, norm, looksSecret,
-  exportStatic, publish, DATA_FILE
+  BRAIN_DIR, ROOT, DATA_FILE, TYPE_TO_DIR, DIR_TO_TYPE,
+  readAllNodes, buildGraph, buildResolver, searchNodes, findNode, neighborsOf,
+  addFact, removeNode, importPath, exportStatic, publish,
+  slugify, norm, looksSecret
 };
 
 if (require.main === module) main(process.argv.slice(2));
