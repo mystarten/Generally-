@@ -175,6 +175,22 @@
   .td-cd.q { color: #ff8aa0; border-color: rgba(255, 77, 106, .5); min-width: 20px; }
   .td-note { margin: 8px 0 0; color: #ff8aa0; font: 11px var(--mono); }
   .td-note:empty { display: none; }
+  .td-cal-head { display: flex; align-items: center; gap: 10px; margin: 2px 0 6px; }
+  .td-cal-head .td-link { width: auto; padding: 2px 6px; border: 1px solid var(--line); }
+  .td-cal-title { flex: 1; text-align: center; font: 600 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: #dff3ff; }
+  .td-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .td-dow { text-align: center; font: 10px var(--mono); color: var(--muted); }
+  .td-blank { display: block; }
+  .td-day { position: relative; aspect-ratio: 1; padding: 0; background: rgba(2, 10, 20, .5); border: 1px solid rgba(79, 216, 255, .12); color: #b9dcee; font: 11px var(--mono); cursor: pointer; }
+  .td-day:hover { border-color: var(--line-strong); }
+  .td-day.today { border-color: #3dffa0; color: #3dffa0; }
+  .td-day.sel { background: rgba(79, 216, 255, .18); border-color: var(--line-strong); color: #fff; }
+  .td-day.has::after { content: ""; position: absolute; left: 50%; bottom: 3px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: #3dffa0; box-shadow: 0 0 6px #3dffa0; }
+  .td-form { display: grid; gap: 6px; margin-top: 10px; padding: 10px; border: 1px solid var(--line); background: rgba(2, 10, 20, .6); }
+  .td-input { width: 100%; padding: 6px 8px; background: #06182a; color: var(--text); border: 1px solid var(--line); font: 12.5px var(--sans); border-radius: 0; }
+  .td-save { padding: 7px; background: rgba(79, 216, 255, .16); border: 1px solid var(--line-strong); color: #eaf8ff; font: 600 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+  .td-save:disabled { opacity: .5; cursor: default; }
+  .td-ok { color: #3dffa0; margin-top: 8px; }
 
   /* ---- pistes gratuites sous la barre ---- */
   #ask-hints { display: none; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }

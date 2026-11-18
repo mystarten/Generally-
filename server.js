@@ -279,12 +279,38 @@ function publishBrainAsync(why) {
   p.on('error', () => {});
 }
 
+const SPORT_KINDS = { course: 'Course à pied', natation: 'Natation', muscu: 'Musculation', autre: 'Autre' };
+/** Une seance faite (course, natation, muscu, autre) : une ligne datee dans la fiche « Journal sport ». */
+function sportLog(body, res) {
+  const kind = SPORT_KINDS[body.kind];
+  if (!kind) return sendJson(res, 400, { error: 'type de séance inconnu' });
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(body.date || ''));
+  const d = m && new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  if (!d || d.getMonth() !== Number(m[2]) - 1) return sendJson(res, 400, { error: 'date invalide' });
+  const name = String(body.name || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  let dist = null;
+  if (body.kind === 'course' || body.kind === 'natation') {
+    if (body.distance !== '' && body.distance != null) {
+      dist = Number(String(body.distance).replace(',', '.'));
+      if (!(dist > 0 && dist <= 500)) return sendJson(res, 400, { error: 'distance invalide (en km)' });
+      dist = Math.round(dist * 100) / 100;
+    }
+  }
+  const fact = frenchDate(d) + ' : ' + kind + (name ? ' — ' + name : '') + (dist != null ? ' — ' + String(dist).replace('.', ',') + ' km' : '');
+  brain.addFact({ type: 'topic', name: 'Journal sport', axis: 'sport', fact, links: ['Sport'], description: 'Séances faites : course, natation, musculation, autre' });
+  log('seance notee : ' + fact);
+  rebuild('seance notee');
+  publishBrainAsync('seance notee');
+  return sendJson(res, 200, { ok: true, fact });
+}
+
 /** La case « seance faite » du tableau de bord : un fait date, ecrit au nom de Mats (c'est lui qui coche). */
 function handleBrainWrite(req, res, p) {
   const refusal = writeRefusal(req);
   if (refusal) return sendJson(res, 403, { error: refusal });
   readJson(req).then(body => {
     try {
+      if (p === '/api/brain/sport-log') return sportLog(body, res);
       if (p !== '/api/brain/session-done') return sendJson(res, 404, { error: 'route inconnue' });
       const node = nodes.find(n => n.id === String(body.session || ''));
       if (!node || !/^(T\d|M\d|P\d) ·/.test(node.name)) return sendJson(res, 400, { error: 'seance inconnue' });

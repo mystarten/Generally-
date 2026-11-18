@@ -135,7 +135,7 @@
   const $ = id => document.getElementById(id);
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
-  const T = { runs: [], live: false, agents: null, busy: new Set() };
+  const T = { runs: [], live: false, agents: null, busy: new Set(), sport: { month: null, day: null, draft: { kind: 'course', name: '', distance: '' }, busy: false, err: '', done: '' } };
 
   function section(title, count) {
     const s = el('section', 'td-sec');
@@ -162,6 +162,102 @@
       if (!r.ok) throw new Error(j.error || 'erreur ' + r.status);
     } catch (e) { const n = $('td-note'); if (n) n.textContent = e.message; }
     T.busy.delete(row.node); render();
+  }
+
+  // ------------------------------------------------------------- mon sport
+
+  const MOIS_LONG = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  const KINDS = [['course', 'Course à pied'], ['natation', 'Natation'], ['muscu', 'Musculation'], ['autre', 'Autre']];
+  const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const sameDay = (a, b) => a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+  function journal() {
+    const out = [];
+    const node = (S.nodes || []).find(n => n.id === 'topics/journal-sport');
+    for (const f of (node && node.facts) || []) {
+      if (f.tag === 'links') continue;
+      const text = strip(String(f.text).replace(/\s*\[\[[^\]]*\]\]/g, '')), ds = datesIn(text);
+      if (ds.length) out.push({ d: ds[0], text });
+    }
+    return out.sort((a, b) => b.d - a.d);
+  }
+
+  async function saveSport() {
+    const sp = T.sport;
+    if (sp.busy || !sp.day) return;
+    sp.busy = true; sp.err = ''; sp.done = ''; render();
+    try {
+      const r = await fetch('/api/brain/sport-log', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date: iso(sp.day), kind: sp.draft.kind, name: sp.draft.name, distance: sp.draft.distance }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'erreur ' + r.status);
+      sp.done = 'Noté : ' + j.fact;
+      sp.draft = { kind: sp.draft.kind, name: '', distance: '' };
+      sp.day = null;
+    } catch (e) { sp.err = e.message; }
+    sp.busy = false; render();
+  }
+
+  function sportBlock(box, now) {
+    const sp = T.sport;
+    if (!sp.month) sp.month = new Date(now.getFullYear(), now.getMonth(), 1);
+    const entries = journal();
+    const s = section('Mon sport');
+    const head = el('div', 'td-cal-head');
+    const prev = el('button', 'td-link', '◀'), next = el('button', 'td-link', '▶');
+    prev.onclick = () => { sp.month = new Date(sp.month.getFullYear(), sp.month.getMonth() - 1, 1); render(); };
+    next.onclick = () => { sp.month = new Date(sp.month.getFullYear(), sp.month.getMonth() + 1, 1); render(); };
+    head.append(prev, el('span', 'td-cal-title', MOIS_LONG[sp.month.getMonth()] + ' ' + sp.month.getFullYear()), next);
+    s.append(head);
+
+    const grid = el('div', 'td-grid');
+    for (const w of ['L', 'M', 'M', 'J', 'V', 'S', 'D']) grid.append(el('span', 'td-dow', w));
+    const first = (sp.month.getDay() + 6) % 7, days = new Date(sp.month.getFullYear(), sp.month.getMonth() + 1, 0).getDate();
+    for (let i = 0; i < first; i++) grid.append(el('span', 'td-blank'));
+    for (let day = 1; day <= days; day++) {
+      const d = new Date(sp.month.getFullYear(), sp.month.getMonth(), day);
+      const b = el('button', 'td-day', String(day));
+      if (entries.some(e => sameDay(e.d, d))) b.classList.add('has');
+      if (sameDay(d, now)) b.classList.add('today');
+      if (sameDay(d, sp.day)) b.classList.add('sel');
+      b.onclick = () => { sp.day = sp.day && sameDay(sp.day, d) ? null : d; sp.err = ''; sp.done = ''; render(); };
+      grid.append(b);
+    }
+    s.append(grid);
+
+    if (sp.day) {
+      const f = el('div', 'td-form');
+      f.append(el('div', 'td-sub', 'Séance du ' + sp.day.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })));
+      if (!T.live) f.append(el('p', 'td-sub', 'Pour noter une séance, ouvre le cerveau sur ton ordinateur (serveur local). En ligne, c\'est lecture seule.'));
+      else {
+        const kind = el('select', 'td-input');
+        for (const [v, l] of KINDS) { const o = el('option', null, l); o.value = v; if (sp.draft.kind === v) o.selected = true; kind.append(o); }
+        kind.onchange = () => { sp.draft.kind = kind.value; render(); };
+        const name = el('input', 'td-input'); name.placeholder = sp.draft.kind === 'course' ? 'Nom (ex. sortie longue)' : sp.draft.kind === 'natation' ? 'Nom (ex. fractionné)' : 'Nom de la séance';
+        name.value = sp.draft.name; name.oninput = () => { sp.draft.name = name.value; };
+        f.append(kind, name);
+        if (sp.draft.kind === 'course' || sp.draft.kind === 'natation') {
+          const dist = el('input', 'td-input'); dist.type = 'text'; dist.inputMode = 'decimal'; dist.placeholder = 'Distance en km (ex. 5,2)';
+          dist.value = sp.draft.distance; dist.oninput = () => { sp.draft.distance = dist.value; };
+          f.append(dist);
+        }
+        const go = el('button', 'td-save', sp.busy ? 'Enregistrement…' : 'Enregistrer');
+        go.disabled = sp.busy; go.onclick = saveSport;
+        f.append(go);
+      }
+      if (sp.err) f.append(el('p', 'td-note', sp.err));
+      s.append(f);
+    }
+    if (sp.done && !sp.day) s.append(el('p', 'td-sub td-ok', sp.done));
+
+    const mine = entries.filter(e => e.d.getFullYear() === sp.month.getFullYear() && e.d.getMonth() === sp.month.getMonth());
+    if (mine.length) {
+      for (const e of mine.slice(0, 8)) {
+        const row = el('div', 'td-row');
+        row.append(el('span', 'td-cd past', e.d.getDate() + ' ' + MONTH_NAMES[e.d.getMonth()].replace('.', '')), el('div', 'td-sub', e.text.replace(/^[^:]*:\s*/, '')));
+        s.append(row);
+      }
+    } else if (!sp.day) s.append(el('p', 'td-sub', 'Aucune séance notée ce mois-ci. Touche un jour pour en ajouter une.'));
+    box.append(s);
   }
 
   function render() {
@@ -194,6 +290,8 @@
       s.append(el('p', 'td-sub', 'Prochaine semaine : S' + tw.next.week + ', le ' + fmtDate(tw.next.start) + '.'));
       box.append(s);
     }
+
+    sportBlock(box, now);
 
     // echeances
     const tl = timeline(S.nodes, now);
